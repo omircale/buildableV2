@@ -23,7 +23,7 @@ export function LoginPage({ auth }: { auth: AuthState }) {
             לעורך
           </a>
           {auth.role === 'admin' && (
-            <a href="#/admin" className="rounded-md bg-white px-3 py-1.5 text-sm ring-1 ring-line">
+            <a href="#/admin" className="rounded-md bg-panel px-3 py-1.5 text-sm ring-1 ring-line">
               ממשק ניהול
             </a>
           )}
@@ -50,7 +50,7 @@ export function LoginPage({ auth }: { auth: AuthState }) {
   };
 
   return (
-    <form onSubmit={submit} className="mx-auto mt-16 max-w-sm space-y-3 rounded-xl bg-white p-6 ring-1 ring-line">
+    <form onSubmit={submit} className="mx-auto mt-16 max-w-sm space-y-3 rounded-xl bg-panel p-6 ring-1 ring-line">
       <h1 className="text-lg font-bold">{mode === 'signin' ? 'התחברות' : 'יצירת חשבון'}</h1>
       <p className="text-xs text-muted">גישה לנתונים ניתנת רק לחשבונות מאושרים. הרשמה לבדה אינה נותנת גישה.</p>
       <Field label="אימייל">

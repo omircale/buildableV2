@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif; background: #f6f3ee; color: #1c1a17; }
+    a { color: #9a5b2e; } a:hover { color: #7a4520; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div dir="rtl" style="width: 1440px; height: 900px; background: #f6f3ee; display: flex; flex-direction: column;">
+  <header style="height: 64px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border-bottom: 1px solid #e3ddd3;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#9a5b2e" stroke-width="2"><rect x="4" y="4" width="20" height="20" rx="3"></rect><path d="M4 11h20M4 18h20"></path></svg>
+      <span style="font-size: 20px; font-weight: 700;">Buildable</span>
+    </div>
+    <nav style="display: flex; gap: 8px;">
+      <a href="#" style="height: 40px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #1c1a17; text-decoration: none;">הפרויקטים שלי</a>
+      <a href="#" style="height: 40px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; color: #1c1a17; text-decoration: none; border: 1px solid #e3ddd3; border-radius: 8px;">כניסה</a>
+    </nav>
+  </header>
+
+  <main style="flex: 1; padding: 40px 120px; display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <h1 style="margin: 0; font-size: 40px; line-height: 1.15; font-weight: 700;">רעיונות שאפשר לבנות</h1>
+        <p style="margin: 0; font-size: 18px; color: #6f675c;">כל עיצוב כבר נבדק ומתומחר. פותחים, משנים מידות וצבע, ומזמינים.</p>
+      </div>
+      <a href="#" style="height: 44px; padding: 0 18px; display: flex; align-items: center; border: 1px solid #d6cec2; border-radius: 8px; font-size: 15px; color: #1c1a17; text-decoration: none; background: #ffffff;">להתחיל מאפס</a>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <span style="height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: #1c1a17; color: #ffffff; font-size: 15px;">הכול</span>
+      <span style="height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">סלון</span>
+      <span style="height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">חדר ילדים</span>
+      <span style="height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">מטבח</span>
+      <span style="height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">מחסן</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #e9dccb; display: flex; align-items: center; justify-content: center;">
+          <svg width="96" height="150" viewBox="0 0 96 150" fill="none" stroke="#5b3a1e" stroke-width="3"><rect x="6" y="4" width="84" height="142"></rect><path d="M6 40h84M6 76h84M6 112h84"></path></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">ספרייה קלאסית</span><span style="font-size: 14px; color: #6f675c;">ליבנה גלוי · 80×180×30</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #dfe0dc; display: flex; align-items: center; justify-content: center;">
+          <svg width="200" height="80" viewBox="0 0 200 80" fill="none" stroke="#3b342c" stroke-width="3"><rect x="4" y="6" width="192" height="60"></rect><path d="M68 6v60M132 6v60"></path><path d="M14 66v10M186 66v10"></path></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">מזנון נמוך</span><span style="font-size: 14px; color: #6f675c;">אפור גרפיט · 180×50×40</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #ece6dc; display: flex; align-items: center; justify-content: center;">
+          <svg width="130" height="130" viewBox="0 0 130 130" fill="none" stroke="#3b342c" stroke-width="3"><rect x="4" y="4" width="122" height="122"></rect><path d="M45 4v122M85 4v122M4 45h122M4 85h122"></path></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">קוביות לחדר ילדים</span><span style="font-size: 14px; color: #6f675c;">לבן מט · 110×110×35</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #e7e2d9; display: flex; align-items: center; justify-content: center;">
+          <svg width="170" height="90" viewBox="0 0 170 90" fill="none" stroke="#3b342c" stroke-width="3"><path d="M10 4v82" stroke="#c9c1b4"></path><rect x="14" y="30" width="146" height="10"></rect><path d="M38 40v22l-16-22M136 40v22l16-22"></path></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">מדף מעל שולחן עבודה</span><span style="font-size: 14px; color: #6f675c;">אלון מבוקע · 120×25</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #e2e6df; display: flex; align-items: center; justify-content: center;">
+          <svg width="170" height="80" viewBox="0 0 170 80" fill="none" stroke="#3b342c" stroke-width="3"><rect x="4" y="10" width="162" height="10"></rect><path d="M14 20v50M156 20v50M14 48h142"></path></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">ספסל כניסה</span><span style="font-size: 14px; color: #6f675c;">ליבנה גלוי · 100×45×35</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #e3ddd3; border-radius: 12px; overflow: hidden;">
+        <div style="height: 200px; background: #eee8df; display: flex; align-items: center; justify-content: center;">
+          <svg width="110" height="150" viewBox="0 0 110 150" fill="none" stroke="#3b342c" stroke-width="3"><rect x="6" y="4" width="98" height="142" stroke="#c9c1b4"></rect><rect x="12" y="64" width="86" height="8" fill="#e6c9a5"></rect></svg>
+        </div>
+        <div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 600;">מדף נוסף לארון בגדים</span><span style="font-size: 14px; color: #6f675c;">לבן מט · לפי מידה</span></div>
+          <span style="font-size: 15px; font-weight: 600;">₪[מחיר]</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

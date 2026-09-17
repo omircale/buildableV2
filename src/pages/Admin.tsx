@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase, type AuthState } from '../cloud/supabase';
 import { CONFIG_SOURCES, type EngineeringConfig } from '../engine/config';
-import { MATERIAL_LIBRARY, propertiesFor } from '../engine';
+import { HAYOZRIM_EXCLUDED, MATERIAL_LIBRARY, SUPPLIERS, getMaterial, propertiesFor } from '../engine';
 import { useDesign } from '../state/designStore';
 import { Button, Field, Section, inputClass } from '../ui/common';
 
@@ -31,7 +31,7 @@ export function AdminPage({ auth }: { auth: AuthState }) {
 
   return (
     <div className="min-h-full">
-      <header className="flex items-center justify-between border-b border-line bg-white px-5 py-3">
+      <header className="flex items-center justify-between border-b border-line bg-panel px-5 py-3">
         <div className="flex items-center gap-3">
           <a href="#/" className="font-bold">
             Buildable
@@ -46,7 +46,7 @@ export function AdminPage({ auth }: { auth: AuthState }) {
               ['config', 'ספים הנדסיים'],
             ] as [Tab, string][]
           ).map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} className={`rounded-md px-3 py-1.5 text-sm ${tab === id ? 'bg-accent text-white' : 'hover:bg-black/5'}`}>
+            <button key={id} onClick={() => setTab(id)} className={`rounded-md px-3 py-1.5 text-sm ${tab === id ? 'bg-accent text-on-accent' : 'hover:bg-black/5'}`}>
               {label}
             </button>
           ))}
@@ -100,14 +100,14 @@ function UsageTab() {
           ['גרסאות שמורות', rows.reduce((a, r) => a + Number(r.versions), 0)],
           ['נפח נתוני עיצוב', `${(totalBytes / 1024).toFixed(1)} KB`],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-lg bg-white p-4 ring-1 ring-line">
+          <div key={label} className="rounded-lg bg-panel p-4 ring-1 ring-line">
             <div className="text-xs text-muted">{label}</div>
             <div className="num mt-1 text-2xl font-bold">{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded-lg bg-white ring-1 ring-line">
+      <div className="rounded-lg bg-panel ring-1 ring-line">
         <Section title="הערכת עלות תפעול">
           <p className="text-xs text-muted">
             החישוב הוא עלות התוכנית החודשית חלקי מספר המשתמשים/הרהיטים. המחירים אינם קבועים במערכת — יש להזין את המחיר העדכני מדפי התמחור של Supabase ו-Cloudflare. כרגע הפרויקט על תוכנית חינמית.
@@ -134,7 +134,7 @@ function UsageTab() {
         </Section>
       </div>
 
-      <div className="rounded-lg bg-white p-4 ring-1 ring-line">
+      <div className="rounded-lg bg-panel p-4 ring-1 ring-line">
         <h3 className="mb-2 text-sm font-semibold">לפי משתמש</h3>
         <table className="w-full text-sm">
           <thead className="text-xs text-muted">
@@ -173,12 +173,70 @@ function UsageTab() {
   );
 }
 
+function SupplierCatalog() {
+  return (
+    <div className="space-y-3">
+      {SUPPLIERS.map((sup) => (
+        <div key={sup.id} className="rounded-lg bg-panel p-4 ring-1 ring-line">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">
+              ספק: {sup.nameHe}{' '}
+              <a href={sup.url} target="_blank" rel="noreferrer noopener" className="text-xs text-accent underline">
+                {sup.url}
+              </a>
+            </h3>
+            <span className="text-xs text-muted">נאסף {sup.capturedAt}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            משלוח ₪{sup.shippingIls.amount} ({sup.shippingIls.noteHe}) · {sup.leadTimeHe} · {sup.policyHe.join(' · ')}
+          </p>
+          <table className="mt-2 w-full text-xs">
+            <thead className="text-muted">
+              <tr>
+                <th className="text-right">מוצר</th>
+                <th className="text-right">עובי</th>
+                <th className="text-right">גוונים ומחיר למ"ר</th>
+                <th className="text-right">קנט</th>
+                <th className="text-right">ק"ג/מ"ר</th>
+                <th className="text-right">נתונים הנדסיים</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sup.products.map((p) => {
+                const m = getMaterial(`${sup.id}:${p.handle}`);
+                return (
+                  <tr key={p.handle} className="border-t border-line align-top">
+                    <td className="py-1">
+                      <a href={p.url} target="_blank" rel="noreferrer noopener" className="text-accent underline">
+                        {p.titleHe}
+                      </a>
+                      <div className="text-muted">{p.role === 'back' ? 'גב' : 'לוח'}</div>
+                    </td>
+                    <td className="num">{p.thicknessMm}</td>
+                    <td>{p.finishes.map((f) => `${f.nameHe} ₪${f.pricePerSqm}`).join(' · ')}</td>
+                    <td>{p.edgeBanding ? `₪${p.edgeBanding.pricePerMeter}/מ'` : '—'}</td>
+                    <td className="num">{p.weightKgPerSqm}</td>
+                    <td>{m?.properties.length ? (m.equivalence?.confirmed ? 'מאושר' : `מושאל מ-${getMaterial(m.equivalence!.referenceMaterialId)?.nameHe} (לא אושר)`) : 'אין'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-muted">לא מוצעים כרגע: {HAYOZRIM_EXCLUDED.map((x) => `${x.handle} — ${x.reasonHe}`).join(' · ')}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MaterialsTab() {
   return (
     <div className="space-y-3">
+      <SupplierCatalog />
+      <h2 className="pt-2 font-semibold">נתוני ייחוס הנדסיים</h2>
       <p className="text-sm text-muted">ספריית החומרים המובנית. כל ערך נושא סוג ומקור; ערך ללא מקור מוצג כהנחה או כלא ידוע. שינוי ערכים מתבצע בקוד עם בדיקות, כדי שכל שינוי יעבור רגרסיה.</p>
       {MATERIAL_LIBRARY.map((m) => (
-        <div key={m.id} className="rounded-lg bg-white p-4 ring-1 ring-line">
+        <div key={m.id} className="rounded-lg bg-panel p-4 ring-1 ring-line">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">
               {m.nameHe} <span className="text-xs font-normal text-muted">({m.nameEn})</span>
@@ -258,7 +316,7 @@ function ConfigTab({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="max-w-xl space-y-3 rounded-lg bg-white p-4 ring-1 ring-line">
+    <div className="max-w-xl space-y-3 rounded-lg bg-panel p-4 ring-1 ring-line">
       <p className="text-sm text-muted">אלה החלטות מוצר, לא עובדות פיזיקליות. טווח ההמלצה של Eurocode 5 לשקיעה סופית בקורה על שתי סמכות: L/150 עד L/300.</p>
       <p className="text-[11px] text-muted" dir="ltr">
         {CONFIG_SOURCES.deflection[0].title} — {CONFIG_SOURCES.deflection[0].reference}

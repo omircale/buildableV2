@@ -1,218 +1,412 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { logUsage, type AuthState } from '../cloud/supabase';
-import { cutListCsv, getMaterial, runDesign, type ComponentRole } from '../engine';
+import { allMaterials, cutListCsv, finishName, getMaterial, productTitle, runDesign, supplierProductFor, type ComponentRole, type DesignResult, type EngineLocale, type Status } from '../engine';
+import { useT } from '../i18n';
 import { useDesign, type ViewMode } from '../state/designStore';
-import { BuildStatusPanel } from '../ui/BuildStatusPanel';
-import { Button, StatusBadge, downloadText } from '../ui/common';
-import { ManufacturingPanel } from '../ui/ManufacturingPanel';
-import { ParamsPanel } from '../ui/ParamsPanel';
+import { useUi } from '../state/uiStore';
+import { AdvancedPanel } from '../ui/AdvancedPanel';
+import { AppHeader } from '../ui/AppHeader';
+import { useRegisterCommands, type Command } from '../ui/CommandPalette';
+import { Button, IconButton, Kbd, downloadText } from '../ui/common';
+import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
+import { BuildPill, FixesButton } from '../ui/Issues';
+import { IconCheck, IconChevron, IconFolder, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
 import { PrintPackage } from '../ui/PrintPackage';
 import { ProjectsDialog } from '../ui/ProjectsDialog';
-import { Viewport3D, type CameraPreset } from '../ui/Viewport3D';
+import { AssemblyBooklet } from '../ui/AssemblyBooklet';
+import { formatCm } from '../ui/measure';
+import { STATUS_COLOR, Viewport3D, type CameraPreset } from '../ui/Viewport3D';
+import { ReviewStep } from './design/ReviewStep';
+import { SetupStep } from './design/SetupStep';
 
-const VIEW_MODES: [ViewMode, string][] = [
-  ['design', 'עיצוב'],
-  ['structural', 'מבני'],
-  ['exploded', 'מפורק'],
-  ['measure', 'מידות'],
-  ['warnings', 'אזהרות'],
-];
+export const STEPS = ['setup', 'structure', 'look', 'review'] as const;
+export type Step = (typeof STEPS)[number];
 
-const ROLE_LABEL: Record<ComponentRole, string> = { side: 'דפנות', top: 'גג', bottom: 'תחתית', shelf: 'מדפים', divider: 'מחיצות', back: 'גב', plinth: 'סוקל' };
+const VIEW_MODES: ViewMode[] = ['design', 'structural', 'exploded', 'measure', 'warnings'];
+const CAMERAS: CameraPreset[] = ['iso', 'front', 'side', 'top'];
 
-export function DesignerPage({ auth }: { auth: AuthState }) {
-  const s = useDesign();
-  const result = useMemo(() => runDesign(s.params, s.config), [s.params, s.config]);
+function go(step: Step) {
+  window.location.hash = `#/design/${step}`;
+}
+
+function Stepper({ step, result }: { step: Step; result: DesignResult }) {
+  const t = useT();
+  const current = STEPS.indexOf(step);
+  return (
+    <nav aria-label={t.flow.stepOf(current + 1, STEPS.length)}>
+      <ol className="flex items-center gap-2">
+        {STEPS.map((s, i) => {
+          const done = i < current;
+          const active = i === current;
+          const blockedReview = s === 'review' && result.report.exportBlocked;
+          return (
+            <li key={s} className="flex items-center gap-2">
+              {i > 0 && <span className={`h-0.5 w-8 rounded ${i <= current ? 'bg-accent' : 'bg-line'}`} aria-hidden />}
+              <a
+                href={`#/design/${s}`}
+                aria-current={active ? 'step' : undefined}
+                className={`flex h-10 items-center gap-2 rounded-full pe-3 ps-1 transition hover:bg-sunken ${active ? 'font-semibold' : 'text-muted'}`}
+              >
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                    active ? 'bg-accent text-on-accent' : done ? (blockedReview ? 'bg-bad-soft text-bad' : 'bg-ok-soft text-ok') : 'text-muted ring-2 ring-line-strong'
+                  }`}
+                >
+                  {done ? <IconCheck size={14} strokeWidth={2.6} /> : i + 1}
+                </span>
+                <span className="text-[15px]">{t.flow.steps[s]}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+function LayersMenu({ roles }: { roles: ComponentRole[] }) {
+  const t = useT();
+  const hidden = useDesign((s) => s.hiddenRoles);
+  const toggleRole = useDesign((s) => s.toggleRole);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <IconButton label={t.viewport.layers} active={open || hidden.length > 0} onClick={() => setOpen(!open)}>
+        <IconLayers size={18} />
+      </IconButton>
+      {open && (
+        <div className="absolute bottom-12 start-0 z-20 w-48 rounded-xl bg-panel p-2 shadow-lg ring-1 ring-line">
+          <div className="px-2 pb-1 text-xs font-semibold text-muted">{t.viewport.layers}</div>
+          {roles.map((r) => (
+            <label key={r} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-[15px] hover:bg-sunken">
+              <input type="checkbox" className="h-4 w-4" checked={!hidden.includes(r)} onChange={() => toggleRole(r)} />
+              {t.viewport.roles[r]}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Viewport({ result }: { result: DesignResult }) {
+  const t = useT();
+  const viewMode = useDesign((s) => s.viewMode);
+  const setViewMode = useDesign((s) => s.setViewMode);
+  const advancedOpen = useUi((s) => s.advancedOpen);
+  const setAdvancedOpen = useUi((s) => s.setAdvancedOpen);
+  const viewStyle = useUi((s) => s.viewStyle);
+  const setViewStyle = useUi((s) => s.setViewStyle);
   const [preset, setPreset] = useState<{ name: CameraPreset; nonce: number }>({ name: 'iso', nonce: 0 });
+  const roles = [...new Set(result.model.components.map((c) => c.role))];
+
+  return (
+    <div className="relative min-h-0 min-w-0 flex-1 bg-sunken">
+      <Viewport3D result={result} preset={preset} />
+      <div className="pointer-events-none absolute inset-x-4 top-4 flex flex-wrap items-start justify-between gap-2 [&>*]:pointer-events-auto">
+        <BuildPill result={result} />
+        <Button variant={advancedOpen ? 'primary' : 'secondary'} onClick={() => setAdvancedOpen(!advancedOpen)} title={t.viewport.advancedShortcut} className="shadow-sm">
+          <IconPanel size={18} />
+          {t.viewport.advanced}
+          <Kbd>E</Kbd>
+        </Button>
+      </div>
+      {viewMode === 'structural' && (
+        <div className="absolute end-4 bottom-20 flex flex-col gap-1.5 rounded-xl bg-panel/95 px-3 py-2.5 text-[13px] shadow-sm ring-1 ring-line">
+          {(['GREEN', 'YELLOW', 'RED', 'GREY'] as Status[]).map((s) => (
+            <span key={s} className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-sm" style={{ background: STATUS_COLOR[s] }} />
+              {t.viewport.legend[s]}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-4 flex justify-center px-4">
+        {/* On narrower windows the toolbar scrolls inside itself instead of pushing the page sideways. */}
+        <div className="scrollbar-none flex max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-panel/95 p-1 shadow-md ring-1 ring-line backdrop-blur [&>*]:shrink-0">
+          <div role="radiogroup" aria-label={t.viewport.layers} className="flex">
+            {VIEW_MODES.map((m) => (
+              <button
+                key={m}
+                role="radio"
+                aria-checked={viewMode === m}
+                onClick={() => setViewMode(m)}
+                className={`h-10 rounded-lg px-3.5 text-[15px] ${viewMode === m ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-sunken'}`}
+              >
+                {t.viewport.modes[m]}
+              </button>
+            ))}
+          </div>
+          <span className="mx-1 h-6 w-px bg-line" aria-hidden />
+          {CAMERAS.map((c) => (
+            <button key={c} onClick={() => setPreset({ name: c, nonce: preset.nonce + 1 })} className="h-10 rounded-lg px-2.5 text-sm text-muted hover:bg-sunken hover:text-ink">
+              {t.viewport.cameras[c]}
+            </button>
+          ))}
+          <IconButton label={t.viewport.cameras.iso} onClick={() => setPreset({ name: 'iso', nonce: preset.nonce + 1 })}>
+            <IconFrame size={18} />
+          </IconButton>
+          <LayersMenu roles={roles} />
+          <span className="mx-1 h-6 w-px bg-line" aria-hidden />
+          <div role="radiogroup" aria-label={t.view.style} className="flex gap-0.5 rounded-lg bg-sunken p-0.5">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={viewStyle === 'realistic'}
+              title={t.view.realisticHint}
+              onClick={() => setViewStyle('realistic')}
+              className={`flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm ${viewStyle === 'realistic' ? 'bg-panel font-semibold shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              <IconSparkle size={15} />
+              {t.view.realistic}
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={viewStyle === 'illustration'}
+              title={t.view.illustrationHint}
+              onClick={() => setViewStyle('illustration')}
+              className={`flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm ${viewStyle === 'illustration' ? 'bg-panel font-semibold shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              <IconSquares size={15} />
+              {t.view.illustration}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
+  const t = useT();
+  const s = useDesign();
+  const advancedOpen = useUi((u) => u.advancedOpen);
+  const setAdvancedOpen = useUi((u) => u.setAdvancedOpen);
+  const locale = useUi((u) => u.locale) as EngineLocale;
+  const result = useMemo(() => runDesign(s.params, s.config, locale), [s.params, s.config, locale]);
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<string | null>(null);
-  const [bottomOpen, setBottomOpen] = useState(true);
-  const [paramsOpen, setParamsOpen] = useState(() => window.innerWidth >= 900);
-  const [statusOpen, setStatusOpen] = useState(() => window.innerWidth >= 1200);
+  const stepIndex = STEPS.indexOf(step);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (!(e.ctrlKey || e.metaKey)) return;
       const k = e.key.toLowerCase();
-      if (k === 'z' && !e.shiftKey) {
+      if (e.ctrlKey || e.metaKey) {
+        if (k === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          useDesign.getState().undo();
+        } else if (k === 'y' || (k === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          useDesign.getState().redo();
+        }
+        return;
+      }
+      if (k === 'e' && !e.altKey) {
         e.preventDefault();
-        useDesign.getState().undo();
-      } else if (k === 'y' || (k === 'z' && e.shiftKey)) {
-        e.preventDefault();
-        useDesign.getState().redo();
+        useUi.getState().setAdvancedOpen(!useUi.getState().advancedOpen);
+      } else if (k === 'escape') {
+        useDesign.getState().select(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const selected = result.model.components.find((c) => c.id === s.selectedId);
-  const selectedChecks = selected ? result.report.checks.filter((c) => c.componentIds.includes(selected.id)) : [];
-  const roles = [...new Set(result.model.components.map((c) => c.role))];
-
   const exportCsv = () => {
     downloadText(`${s.projectName || 'buildable'}-cut-list.csv`, cutListCsv(result.model.parts, getMaterial), 'text/csv;charset=utf-8');
     void logUsage('export_csv', 0);
   };
 
-  const printPackage = () => {
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  /** Generates a real, downloadable PDF (no print dialog) by rasterizing the print package — the browser
+   * shapes the Hebrew/RTL text correctly this way, which jsPDF's own text API cannot do on its own. */
+  const printPackage = async () => {
     const canvas = document.querySelector('canvas');
     setSnapshot(canvas ? canvas.toDataURL('image/png') : null);
     void logUsage('export_print', 0);
-    // Let React render the snapshot into the print section before opening the dialog.
-    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+    setPdfBusy(true);
+    try {
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const el = document.getElementById('print-package');
+      if (!el) return;
+      const previousStyle = el.getAttribute('style');
+      Object.assign(el.style, { display: 'block', position: 'fixed', left: '-10000px', top: '0', width: '210mm' });
+      try {
+        const { exportElementToPdf } = await import('../ui/pdfExport');
+        await exportElementToPdf(el, `${s.projectName || 'buildable'}.pdf`);
+      } finally {
+        if (previousStyle == null) el.removeAttribute('style');
+        else el.setAttribute('style', previousStyle);
+      }
+    } finally {
+      setPdfBusy(false);
+    }
   };
+
+  const [bookletBusy, setBookletBusy] = useState(false);
+  const downloadBooklet = async () => {
+    setBookletBusy(true);
+    try {
+      const el = document.getElementById('assembly-booklet');
+      if (!el) return;
+      const { exportPagesToPdf } = await import('../ui/pdfExport');
+      await exportPagesToPdf(el, `${s.projectName || 'buildable'} - ${t.booklet.title}.pdf`);
+    } finally {
+      setBookletBusy(false);
+    }
+  };
+
+  const commands = useMemo<Command[]>(() => {
+    const a = t.command.actions;
+    const p = s.params;
+    const list: Command[] = [
+      ...(p.template === 'open_shelf'
+        ? ([
+            { id: 'add-shelf', group: 'actions', label: a.addShelf, keywords: 'shelf מדף', disabled: p.shelfCount >= 12, run: () => s.update({ shelfCount: p.shelfCount + 1 }) },
+            { id: 'remove-shelf', group: 'actions', label: a.removeShelf, keywords: 'shelf מדף', disabled: p.shelfCount <= 0, run: () => s.update({ shelfCount: p.shelfCount - 1 }) },
+            { id: 'add-divider', group: 'actions', label: a.addDivider, keywords: 'divider מחיצה', disabled: p.dividerCount >= 6, run: () => s.update({ dividerCount: p.dividerCount + 1 }) },
+            { id: 'remove-divider', group: 'actions', label: a.removeDivider, keywords: 'divider מחיצה', disabled: p.dividerCount <= 0, run: () => s.update({ dividerCount: p.dividerCount - 1 }) },
+          ] as Command[])
+        : []),
+      { id: 'advanced', group: 'actions', label: a.toggleAdvanced, detail: 'E', keywords: 'engineering checks cut list הנדסה בדיקות חיתוך', run: () => setAdvancedOpen(!useUi.getState().advancedOpen) },
+      { id: 'csv', group: 'actions', label: a.exportCsv, keywords: 'export csv ייצוא', disabled: result.report.exportBlocked, run: exportCsv },
+      { id: 'pdf', group: 'actions', label: a.printPdf, keywords: 'print pdf הדפסה', disabled: result.report.exportBlocked, run: printPackage },
+      { id: 'projects', group: 'actions', label: a.projects, keywords: 'save versions שמירה גרסאות', run: () => setProjectsOpen(true) },
+      { id: 'undo', group: 'actions', label: t.common.undo, detail: 'Ctrl Z', disabled: !s.past.length, run: s.undo },
+      { id: 'redo', group: 'actions', label: t.common.redo, detail: 'Ctrl Shift Z', disabled: !s.future.length, run: s.redo },
+      ...STEPS.map((st, i) => ({ id: `step-${st}`, group: 'steps' as const, label: t.flow.steps[st], detail: t.flow.stepOf(i + 1, STEPS.length), run: () => go(st) })),
+      ...result.model.components.map((c) => ({
+        id: `part-${c.id}`,
+        group: 'parts' as const,
+        label: c.name,
+        detail: `${formatCm(c.size.x)} × ${formatCm(c.size.y)} × ${formatCm(c.size.z)}`,
+        keywords: `${c.id} ${t.viewport.roles[c.role]}`,
+        run: () => {
+          s.select(c.id);
+          if (step !== 'structure' && step !== 'look') go('structure');
+        },
+      })),
+    ];
+    for (const m of allMaterials()) {
+      const sp = supplierProductFor(m);
+      if (!sp || sp.product.role !== 'board') continue;
+      for (const f of sp.product.finishes) {
+        list.push({
+          id: `mat-${m.id}-${f.id}`,
+          group: 'materials',
+          label: `${productTitle(sp.product, locale)} · ${finishName(f, locale)}`,
+          detail: `₪${f.pricePerSqm}${t.structure.perSqm}`,
+          swatch: f.color,
+          keywords: `${sp.product.thicknessMm}`,
+          run: () => {
+            s.update({ materialId: m.id, thicknessMm: sp.product.thicknessMm, finishId: f.id, edgeOption: sp.product.edgeBanding ? p.edgeOption : 'none', finish: { ...p.finish, type: 'supplier' } });
+            if (step === 'setup' || step === 'review') go('look');
+          },
+        });
+      }
+    }
+    return list;
+    // exportCsv/printPackage close over the latest result through this memo's deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, s.params, s.past.length, s.future.length, result, step]);
+  useRegisterCommands('designer', commands);
+
+
+  const q = result.quote;
+  const showSidePanel = step === 'structure' || step === 'look';
 
   return (
     <>
-      <div className="no-print flex h-full flex-col">
-        <header className="flex flex-wrap items-center gap-2 border-b border-line bg-white px-4 py-2">
-          <span className="text-lg font-bold tracking-tight">Buildable</span>
-          <input value={s.projectName} onChange={(e) => s.setProjectName(e.target.value)} className="w-48 rounded-md border border-transparent px-2 py-1 text-sm hover:border-line focus:border-accent focus:outline-none" aria-label="שם הפרויקט" />
-          <StatusBadge
-            status={result.report.exportBlocked ? 'RED' : result.report.overall === 'GREEN' ? 'GREEN' : 'YELLOW'}
-            label={result.report.exportBlocked ? 'חסום לייצור' : 'ללא כשל חוסם · נדרש אימות פיזי'}
-          />
-          <div className="mx-2 flex rounded-md ring-1 ring-line">
-            {(['beginner', 'advanced'] as const).map((m) => (
-              <button key={m} onClick={() => s.setUserMode(m)} className={`px-2.5 py-1 text-xs ${s.userMode === m ? 'bg-accent text-white' : ''}`}>
-                {m === 'beginner' ? 'מתחיל' : 'מתקדם'}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1" />
-          <Button variant={paramsOpen ? 'secondary' : 'ghost'} onClick={() => setParamsOpen(!paramsOpen)}>
-            פרמטרים
-          </Button>
-          <Button variant={statusOpen ? 'secondary' : 'ghost'} onClick={() => setStatusOpen(!statusOpen)}>
-            בדיקות
-          </Button>
-          <Button variant="ghost" onClick={s.undo} disabled={!s.past.length} title="ביטול (Ctrl/⌘+Z)">
-            ↶ ביטול
-          </Button>
-          <Button variant="ghost" onClick={s.redo} disabled={!s.future.length} title="שחזור (Ctrl/⌘+Shift+Z)">
-            ↷ שחזור
-          </Button>
-          <Button onClick={() => setProjectsOpen(true)}>פרויקטים וגרסאות</Button>
-          <Button onClick={exportCsv} disabled={result.report.exportBlocked} title={result.report.exportBlocked ? 'ייצוא חסום עד תיקון הכשלים' : undefined}>
-            CSV לחיתוך
-          </Button>
-          <Button variant="primary" onClick={printPackage} disabled={result.report.exportBlocked} title={result.report.exportBlocked ? 'ייצוא חסום עד תיקון הכשלים' : 'שמירה כ-PDF דרך חלון ההדפסה'}>
-            חבילת הזמנה (PDF)
-          </Button>
-          {auth.role === 'admin' && (
-            <a href="#/admin" className="text-sm text-accent underline">
-              ניהול
-            </a>
-          )}
-          <a href="#/login" className="text-sm text-muted underline">
-            {auth.session ? auth.session.user.email : 'התחברות'}
-          </a>
-        </header>
+      <div className="no-print flex h-full flex-col bg-paper">
+        <AppHeader
+          auth={auth}
+          start={
+            <input
+              value={s.projectName}
+              onChange={(e) => s.setProjectName(e.target.value)}
+              aria-label={t.header.projectName}
+              className="h-10 w-52 min-w-0 rounded-lg border border-transparent bg-transparent px-2 text-base font-semibold hover:border-line focus:border-accent focus:outline-none"
+            />
+          }
+          center={<Stepper step={step} result={result} />}
+          end={
+            <>
+              <IconButton label={`${t.common.undo} (Ctrl/⌘ Z)`} onClick={s.undo} disabled={!s.past.length}>
+                <IconUndo size={18} />
+              </IconButton>
+              <IconButton label={`${t.common.redo} (Ctrl/⌘ Shift Z)`} onClick={s.redo} disabled={!s.future.length}>
+                <IconRedo size={18} />
+              </IconButton>
+              <IconButton label={t.command.actions.projects} onClick={() => setProjectsOpen(true)}>
+                <IconFolder size={18} />
+              </IconButton>
+              <span className="mx-1 hidden text-sm text-muted 2xl:inline">{t.common.saved}</span>
+            </>
+          }
+        />
 
         <div className="flex min-h-0 flex-1">
-          {paramsOpen && (
-          <aside className="w-72 shrink-0 overflow-y-auto border-l border-line bg-white">
-            <ParamsPanel />
-            <div className="p-4">
-              <Button
-                variant="danger"
-                onClick={() => {
-                  if (confirm('להתחיל עיצוב חדש? העיצוב הנוכחי יישאר זמין בביטול (Ctrl+Z).')) s.reset();
-                }}
-              >
-                עיצוב חדש
+          {step === 'setup' && <SetupStep result={result} />}
+          {showSidePanel && (
+            <>
+              <aside className="w-[360px] shrink-0 overflow-y-auto border-e border-line bg-panel" aria-label={t.flow.steps[step]}>
+                {s.selectedId ? <SelectedPartPanel result={result} /> : step === 'structure' ? <StructureControls result={result} /> : <LookControls />}
+              </aside>
+              <Viewport result={result} />
+              {advancedOpen && <AdvancedPanel result={result} />}
+            </>
+          )}
+          {step === 'review' && <ReviewStep result={result} onCsv={exportCsv} onPrint={printPackage} pdfBusy={pdfBusy} onBooklet={downloadBooklet} bookletBusy={bookletBusy} />}
+        </div>
+
+        {step !== 'review' && (
+          <footer className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-t border-line bg-panel px-6">
+            <div className="flex items-center gap-4">
+            <FixesButton result={result} />
+            <div className="flex items-baseline gap-2.5">
+              {q ? (
+                <>
+                  <span className="text-sm text-muted">{t.flow.estimatedPrice}</span>
+                  <span className="num text-2xl font-bold">{t.common.ils(q.totalIls)}</span>
+                  <span className="text-sm text-muted">{t.flow.inclShipping}</span>
+                </>
+              ) : (
+                <span className="text-sm text-muted">{t.flow.noPrice}</span>
+              )}
+            </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {stepIndex > 0 ? (
+                <Button variant="ghost" size="lg" onClick={() => go(STEPS[stepIndex - 1])}>
+                  {t.common.back}
+                </Button>
+              ) : (
+                <a href="#/" className="inline-flex h-12 items-center rounded-lg px-6 text-base hover:bg-sunken">
+                  {t.common.back}
+                </a>
+              )}
+              <Button variant="primary" size="lg" onClick={() => go(STEPS[stepIndex + 1])}>
+                {t.flow.next[step]}
+                <IconChevron size={18} className="ltr:rotate-180" />
               </Button>
             </div>
-          </aside>
-          )}
-
-          <main className="flex min-w-0 flex-1 flex-col">
-            <div className="relative min-h-0 flex-1">
-              <Viewport3D result={result} preset={preset} />
-              <div className="absolute right-3 top-3 flex flex-col gap-2">
-                <div className="flex rounded-lg bg-white/95 p-1 shadow ring-1 ring-line">
-                  {VIEW_MODES.map(([m, label]) => (
-                    <button key={m} onClick={() => s.setViewMode(m)} className={`rounded-md px-2.5 py-1 text-xs ${s.viewMode === m ? 'bg-accent text-white' : 'hover:bg-accent-soft'}`}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-1 rounded-lg bg-white/95 p-1 shadow ring-1 ring-line">
-                  {roles.map((r) => (
-                    <label key={r} className="flex items-center gap-1 px-1.5 text-[11px]">
-                      <input type="checkbox" checked={!s.hiddenRoles.includes(r)} onChange={() => s.toggleRole(r)} />
-                      {ROLE_LABEL[r]}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="absolute left-3 top-3 flex rounded-lg bg-white/95 p-1 shadow ring-1 ring-line">
-                {(
-                  [
-                    ['iso', 'איזומטרי'],
-                    ['front', 'חזית'],
-                    ['side', 'צד'],
-                    ['top', 'על'],
-                  ] as [CameraPreset, string][]
-                ).map(([name, label]) => (
-                  <button key={name} onClick={() => setPreset({ name, nonce: preset.nonce + 1 })} className="rounded-md px-2 py-1 text-xs hover:bg-accent-soft">
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {s.viewMode === 'structural' && (
-                <div className="absolute bottom-3 right-3 rounded-lg bg-white/95 px-3 py-2 text-[11px] shadow ring-1 ring-line">
-                  <div className="mb-1 font-semibold">צבע = סטטוס בדיקה</div>
-                  <div className="flex gap-2">
-                    <StatusBadge status="GREEN" />
-                    <StatusBadge status="YELLOW" />
-                    <StatusBadge status="RED" />
-                    <StatusBadge status="GREY" />
-                  </div>
-                </div>
-              )}
-              {selected && (
-                <div className="absolute bottom-3 left-3 w-64 rounded-lg bg-white/95 p-3 text-xs shadow ring-1 ring-line">
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="font-semibold">{selected.name}</span>
-                    <button onClick={() => s.select(null)} className="text-muted">
-                      ✕
-                    </button>
-                  </div>
-                  <div className="num text-muted">
-                    {Math.round(selected.size.x)} × {Math.round(selected.size.y)} × {Math.round(selected.size.z)} מ"מ
-                  </div>
-                  <div>
-                    {getMaterial(selected.materialId)?.nameHe} · {selected.thicknessMm} מ"מ
-                  </div>
-                  {selected.spanMm != null && <div>מפתח חופשי: {Math.round(selected.spanMm)} מ"מ</div>}
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {selectedChecks.map((c) => (
-                      <StatusBadge key={c.id} status={c.status} label={c.title.split(':').pop()?.trim()} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className={`${bottomOpen ? 'h-[38%]' : 'h-9'} shrink-0 border-t border-line bg-paper`}>
-              <button onClick={() => setBottomOpen(!bottomOpen)} className="absolute z-10 -mt-3 mr-3 rounded-full bg-white px-2 text-xs ring-1 ring-line">
-                {bottomOpen ? '▾ ייצור' : '▴ ייצור'}
-              </button>
-              {bottomOpen && <ManufacturingPanel result={result} />}
-            </div>
-          </main>
-
-          {statusOpen && (
-            <aside className="w-96 shrink-0 overflow-y-auto border-r border-line bg-paper">
-              <BuildStatusPanel result={result} />
-            </aside>
-          )}
-        </div>
+          </footer>
+        )}
       </div>
       <PrintPackage result={result} projectName={s.projectName} snapshot={snapshot} />
+      <AssemblyBooklet result={result} projectName={s.projectName} />
       <ProjectsDialog open={projectsOpen} onClose={() => setProjectsOpen(false)} result={result} signedIn={Boolean(auth.session)} isMember={auth.role != null} />
     </>
   );

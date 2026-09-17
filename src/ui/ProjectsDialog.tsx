@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cloudConfigured, createProject, deleteProject, listProjects, listVersions, saveVersion, type ProjectRow, type VersionRow } from '../cloud/supabase';
-import type { DesignResult } from '../engine';
+import { buildModel, withDefaults, type DesignResult } from '../engine';
+import { formatCm } from './measure';
+
+function versionSize(raw: unknown): string {
+  const params = withDefaults(raw);
+  if (!params) return '—';
+  const o = buildModel(params).overall;
+  return `${formatCm(o.x)}×${formatCm(o.y)}×${formatCm(o.z)} ס"מ`;
+}
 import { useDesign } from '../state/designStore';
-import { Button, StatusBadge, inputClass } from './common';
+import { Button, StatusBadge, downloadText, inputClass } from './common';
 
 export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { open: boolean; onClose: () => void; result: DesignResult; signedIn: boolean; isMember: boolean }) {
-  const { projectName, cloudProjectId, setCloudProjectId, replaceParams, setProjectName } = useDesign();
+  const { projectName, params, cloudProjectId, setCloudProjectId, replaceParams, setProjectName, importProject } = useDesign();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [versions, setVersions] = useState<VersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(cloudProjectId);
@@ -57,7 +67,7 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
   return (
     <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="max-h-[85vh] w-full max-w-3xl overflow-auto rounded-xl bg-paper shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-line bg-white px-4 py-3">
+        <div className="flex items-center justify-between border-b border-line bg-panel px-4 py-3">
           <h2 className="font-bold">פרויקטים וגרסאות</h2>
           <Button variant="ghost" onClick={onClose}>
             סגירה
@@ -72,6 +82,47 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
           )}
           {cloudConfigured && signedIn && !isMember && <p className="text-sm text-bad">החשבון מחובר אך אין לו הרשאת גישה. ההרשאה ניתנת ע"י מנהל.</p>}
           {error && <p className="mb-2 rounded bg-bad-soft px-2 py-1 text-xs text-bad">{error}</p>}
+
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-sunken p-3">
+            <span className="text-sm font-semibold">גיבוי לקובץ במחשב</span>
+            <span className="text-xs text-muted">שימושי עד שיהיה אפשר לנהל כמה פרויקטים במקביל באפליקציה עצמה</span>
+            <div className="ms-auto flex gap-2">
+              <Button
+                onClick={() =>
+                  downloadText(
+                    `${projectName || 'buildable'}.json`,
+                    JSON.stringify({ format: 'buildable-project', version: 1, projectName, params }, null, 2),
+                    'application/json;charset=utf-8',
+                  )
+                }
+              >
+                הורדת קובץ פרויקט
+              </Button>
+              <Button onClick={() => fileInputRef.current?.click()}>טעינת קובץ פרויקט</Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  setImportError(null);
+                  file
+                    .text()
+                    .then((text) => {
+                      const parsed = JSON.parse(text) as { projectName?: string; params?: unknown };
+                      const params = withDefaults(parsed.params);
+                      if (!params) throw new Error('קובץ לא מזוהה כפרויקט Buildable תקין.');
+                      importProject(params, parsed.projectName ?? projectName);
+                    })
+                    .catch((err: Error) => setImportError(err.message || 'שגיאה בקריאת הקובץ.'));
+                }}
+              />
+            </div>
+          </div>
+          {importError && <p className="mb-2 rounded bg-bad-soft px-2 py-1 text-xs text-bad">{importError}</p>}
 
           {cloudConfigured && signedIn && isMember && (
             <div className="grid gap-4 md:grid-cols-[1fr_1.3fr]">
@@ -99,7 +150,7 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
                 <h3 className="pt-3 text-sm font-semibold">הפרויקטים שלי</h3>
                 <ul className="space-y-1">
                   {projects.map((p) => (
-                    <li key={p.id} className={`flex items-center justify-between rounded-md px-2 py-1.5 text-sm ring-1 ${activeId === p.id ? 'bg-accent-soft ring-accent/40' : 'bg-white ring-line'}`}>
+                    <li key={p.id} className={`flex items-center justify-between rounded-md px-2 py-1.5 text-sm ring-1 ${activeId === p.id ? 'bg-accent-soft ring-accent/40' : 'bg-panel ring-line'}`}>
                       <button className="flex-1 text-right" onClick={() => setActiveId(p.id)}>
                         {p.name}
                         <span className="block text-[11px] text-muted">{new Date(p.updated_at).toLocaleString('he-IL')}</span>
@@ -131,19 +182,20 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
                 {!activeId && <p className="text-xs text-muted">בחרו פרויקט.</p>}
                 <ul className="space-y-1.5">
                   {versions.map((v) => (
-                    <li key={v.id} className="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs ring-1 ring-line">
+                    <li key={v.id} className="flex items-center gap-2 rounded-md bg-panel px-2 py-1.5 text-xs ring-1 ring-line">
                       <span className="font-mono font-bold">v{v.version_no}</span>
                       <span className="flex-1">
                         {v.label ?? <span className="text-muted">ללא תיאור</span>}
                         <span className="block text-[11px] text-muted">
-                          {new Date(v.created_at).toLocaleString('he-IL')} · {v.params.widthMm}×{v.params.heightMm}×{v.params.depthMm}
+                          {new Date(v.created_at).toLocaleString('he-IL')} · {versionSize(v.params)}
                         </span>
                       </span>
                       {v.summary.overall && <StatusBadge status={v.summary.overall as never} />}
                       <Button
                         onClick={() => {
                           const p = projects.find((x) => x.id === v.project_id);
-                          replaceParams(v.params, p?.name, v.project_id);
+                          const restored = withDefaults(v.params);
+                          if (restored) replaceParams(restored, p?.name, v.project_id);
                           onClose();
                         }}
                       >

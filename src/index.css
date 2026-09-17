@@ -1,22 +1,52 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Every text/background pair below meets WCAG 2.2 AA (≥ 4.5:1) in both themes. */
 @theme {
   --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif;
   --color-ink: #1c1a17;
   --color-paper: #f6f3ee;
   --color-panel: #ffffff;
+  --color-sunken: #efebe4;
   --color-line: #e3ddd3;
-  --color-muted: #6f675c;
+  --color-line-strong: #d6cec2;
+  --color-muted: #6b6358;
   --color-accent: #9a5b2e;
+  --color-accent-ink: #8a4f24;
+  --color-on-accent: #ffffff;
   --color-accent-soft: #f3e6da;
-  --color-ok: #2f7d4f;
+  --color-ok: #2a6b43;
   --color-ok-soft: #e4f2e9;
-  --color-warn: #a86b00;
+  --color-warn: #8a5a00;
   --color-warn-soft: #fbefd6;
-  --color-bad: #b3261e;
+  --color-bad: #a3231b;
   --color-bad-soft: #fbe3e1;
   --color-unknown: #5f6368;
   --color-unknown-soft: #eceef0;
+}
+
+[data-theme='dark'] {
+  --color-ink: #ece6dc;
+  --color-paper: #171512;
+  --color-panel: #211e1a;
+  --color-sunken: #1b1916;
+  --color-line: #36312b;
+  --color-line-strong: #4a443c;
+  --color-muted: #a89f92;
+  --color-accent: #d9955f;
+  --color-accent-ink: #e3a06b;
+  --color-on-accent: #1c1a17;
+  --color-accent-soft: #3b2a1c;
+  --color-ok: #7dd09d;
+  --color-ok-soft: #173323;
+  --color-warn: #e6b04f;
+  --color-warn-soft: #3a2d12;
+  --color-bad: #f2877d;
+  --color-bad-soft: #3f1c18;
+  --color-unknown: #b3b8bd;
+  --color-unknown-soft: #2b2e31;
+  color-scheme: dark;
 }
 
 html,
@@ -32,6 +62,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .num {
   font-variant-numeric: tabular-nums;
   direction: ltr;
@@ -40,15 +75,41 @@ body {
 
 input[type='number'] {
   direction: ltr;
-  text-align: right;
+  text-align: end;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media print {
   .no-print {
     display: none !important;
   }
+  [data-theme='dark'] {
+    --color-ink: #1c1a17;
+    --color-paper: #ffffff;
+    --color-panel: #ffffff;
+    --color-sunken: #efebe4;
+    --color-line: #e3ddd3;
+    --color-muted: #6b6358;
+    --color-accent: #9a5b2e;
+    color-scheme: light;
+  }
   body {
     background: white;
+    color: #1c1a17;
   }
   @page {
     size: A4;

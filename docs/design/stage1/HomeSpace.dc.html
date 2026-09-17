@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif; background: #f6f3ee; color: #1c1a17; }
+    a { color: #9a5b2e; } a:hover { color: #7a4520; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div dir="rtl" style="width: 1440px; height: 900px; background: #f6f3ee; display: flex; flex-direction: column;">
+  <header style="height: 64px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border-bottom: 1px solid #e3ddd3;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#9a5b2e" stroke-width="2"><rect x="4" y="4" width="20" height="20" rx="3"></rect><path d="M4 11h20M4 18h20"></path></svg>
+      <span style="font-size: 20px; font-weight: 700;">Buildable</span>
+    </div>
+    <nav style="display: flex; gap: 8px;">
+      <a href="#" style="height: 40px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #1c1a17; text-decoration: none;">הפרויקטים שלי</a>
+      <a href="#" style="height: 40px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; color: #1c1a17; text-decoration: none; border: 1px solid #e3ddd3; border-radius: 8px;">כניסה</a>
+    </nav>
+  </header>
+
+  <main style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 64px; padding: 64px 120px;">
+    <div style="display: flex; flex-direction: column; gap: 28px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <h1 style="margin: 0; font-size: 40px; line-height: 1.15; font-weight: 700;">ספרו לנו על המקום</h1>
+        <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #6f675c;">נציע רהיטים שנכנסים בדיוק ומחזיקים את מה שתשימו עליהם.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600;">כמה מקום יש?</span>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 14px; color: #6f675c;">רוחב</span>
+            <div style="height: 48px; background: #ffffff; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 17px;"><span>90</span><span style="font-size: 14px; color: #6f675c;">ס"מ</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 14px; color: #6f675c;">גובה</span>
+            <div style="height: 48px; background: #ffffff; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 17px;"><span>200</span><span style="font-size: 14px; color: #6f675c;">ס"מ</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 14px; color: #6f675c;">עומק</span>
+            <div style="height: 48px; background: #ffffff; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 17px;"><span>35</span><span style="font-size: 14px; color: #6f675c;">ס"מ</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600;">מה יעמוד שם?</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #1c1a17; color: #ffffff; font-size: 15px;">ספרים</span>
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">טלוויזיה ומדיה</span>
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">בגדים</span>
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">צעצועים</span>
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">כלי מטבח</span>
+          <span style="height: 44px; padding: 0 18px; display: flex; align-items: center; border-radius: 999px; background: #ffffff; border: 1px solid #d6cec2; font-size: 15px;">חפצי נוי</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <a href="#" style="height: 52px; padding: 0 28px; display: flex; align-items: center; background: #9a5b2e; color: #ffffff; border-radius: 10px; font-size: 17px; font-weight: 600; text-decoration: none;">הצג רהיטים שמתאימים</a>
+        <a href="#" style="font-size: 15px;">אני כבר יודע מה לבנות</a>
+      </div>
+    </div>
+
+    <div style="background: #efebe4; border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+      <svg width="460" height="560" viewBox="0 0 460 560" fill="none">
+        <rect x="0" y="0" width="460" height="500" fill="#e8e2d8"></rect>
+        <rect x="0" y="500" width="460" height="60" fill="#d9d0c3"></rect>
+        <rect x="140" y="140" width="180" height="360" fill="none" stroke="#9a5b2e" stroke-width="3" stroke-dasharray="10 8"></rect>
+        <path d="M140 110h180M140 102v16M320 102v16" stroke="#7a4520" stroke-width="2"></path>
+        <text x="230" y="96" text-anchor="middle" font-size="18" fill="#7a4520" font-family="Arial">90</text>
+        <path d="M350 140v360M342 140h16M342 500h16" stroke="#7a4520" stroke-width="2"></path>
+        <text x="372" y="326" text-anchor="middle" font-size="18" fill="#7a4520" font-family="Arial">200</text>
+        <circle cx="72" cy="360" r="14" stroke="#8a8175" stroke-width="2"></circle>
+        <path d="M72 374v70M72 444l-16 56M72 444l16 56M72 392l-22 36M72 392l22 36" stroke="#8a8175" stroke-width="2"></path>
+      </svg>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

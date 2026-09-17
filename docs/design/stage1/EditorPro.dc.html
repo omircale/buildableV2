@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif; background: #f6f3ee; color: #1c1a17; }
+    a { color: #9a5b2e; } a:hover { color: #7a4520; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div dir="rtl" style="width: 1440px; height: 900px; background: #f6f3ee; display: flex; flex-direction: column;">
+  <header style="height: 64px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border-bottom: 1px solid #e3ddd3;">
+    <div style="display: flex; align-items: center; gap: 12px; width: 320px;">
+      <svg width="24" height="24" viewBox="0 0 28 28" fill="none" stroke="#9a5b2e" stroke-width="2"><rect x="4" y="4" width="20" height="20" rx="3"></rect><path d="M4 11h20M4 18h20"></path></svg>
+      <span style="font-size: 16px; font-weight: 600;">מלון דן · ספריית לובי</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; font-size: 15px; color: #6f675c;">
+      <span>מקום ושימוש</span><span style="color: #c9c1b4;">›</span>
+      <span style="color: #1c1a17; font-weight: 600;">מבנה</span><span style="color: #c9c1b4;">›</span>
+      <span>מראה</span><span style="color: #c9c1b4;">›</span>
+      <span>סיכום ומחיר</span>
+    </div>
+    <div style="width: 320px; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+      <span style="height: 40px; padding: 0 12px; display: flex; align-items: center; gap: 8px; border: 1px solid #e3ddd3; border-radius: 8px; font-size: 14px; color: #6f675c;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6f675c" stroke-width="1.8"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3 3"></path></svg>
+        פקודה או חלק
+        <span style="font-size: 12px; background: #efebe4; padding: 2px 6px; border-radius: 4px;">⌘K</span>
+      </span>
+      <span style="font-size: 14px; color: #6f675c;">נשמר</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; min-height: 0;">
+    <aside style="width: 300px; background: #ffffff; border-left: 1px solid #e3ddd3; display: flex; flex-direction: column;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #e3ddd3; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 13px; color: #6f675c;">נבחרו 5 לוחות זהים</span>
+        <span style="font-size: 18px; font-weight: 700;">מדפים ותחתית</span>
+      </div>
+      <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: #6f675c;">אורך</span><div style="height: 40px; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px;"><span>760</span><span style="font-size: 13px; color: #6f675c;">מ"מ</span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: #6f675c;">עומק</span><div style="height: 40px; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px;"><span>290</span><span style="font-size: 13px; color: #6f675c;">מ"מ</span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: #6f675c;">עובי</span><div style="height: 40px; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px;"><span>18</span><span style="font-size: 13px; color: #6f675c;">מ"מ</span></div></div>
+          <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; color: #6f675c;">עומס למדף</span><div style="height: 40px; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px;"><span>20</span><span style="font-size: 13px; color: #6f675c;">ק"ג</span></div></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: #6f675c;">לוח</span>
+          <div style="height: 40px; border: 1px solid #d6cec2; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px;"><span>ליבנה 18 מ"מ · גלוי</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6f675c" stroke-width="2"><path d="M4 6l4 4 4-4"></path></svg></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: #6f675c;">קנט</span>
+          <div style="display: flex; gap: 6px;">
+            <span style="height: 36px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; background: #1c1a17; color: #ffffff; font-size: 14px;">בלי</span>
+            <span style="height: 36px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6cec2; font-size: 14px; color: #8a8175;">חזית</span>
+            <span style="height: 36px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6cec2; font-size: 14px; color: #8a8175;">מסביב</span>
+          </div>
+          <span style="font-size: 12px; color: #6f675c;">קנט לא זמין ללוח הזה</span>
+        </div>
+        <div style="height: 1px; background: #e3ddd3;"></div>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 14px; font-weight: 600;">כמות יחידות בפרויקט</span>
+          <div style="height: 40px; display: flex; align-items: center; border: 1px solid #d6cec2; border-radius: 8px;">
+            <span style="width: 36px; text-align: center; font-size: 18px;">+</span><span style="width: 36px; text-align: center; font-size: 15px; font-weight: 600;">12</span><span style="width: 36px; text-align: center; font-size: 18px;">−</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main style="flex: 1; position: relative; background: #efebe4; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; top: 16px; right: 16px; height: 44px; padding: 0 6px; background: #ffffff; border: 1px solid #e3ddd3; border-radius: 10px; display: flex; align-items: center; gap: 2px;">
+        <span style="height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; font-size: 14px;">עיצוב</span>
+        <span style="height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; font-size: 14px; background: #f3e6da; font-weight: 600;">מבני</span>
+        <span style="height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; font-size: 14px;">מפורק</span>
+        <span style="height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; font-size: 14px;">מידות</span>
+        <span style="height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; font-size: 14px;">בעיות</span>
+      </div>
+      <svg width="360" height="500" viewBox="0 0 360 520" fill="none">
+        <path d="M40 60l110-40 170 40-110 40z" fill="#e4f2e9" stroke="#2f7d4f" stroke-width="1.6"></path>
+        <path d="M40 60v420l110 40V100z" fill="#e4f2e9" stroke="#2f7d4f" stroke-width="1.6"></path>
+        <path d="M150 100l170-40v420l-170 40z" fill="#f7f5f1" stroke="#8a8175" stroke-width="1.4"></path>
+        <path d="M150 188l170-40M150 276l170-40M150 364l170-40M150 452l170-40M150 516l170-40" stroke="#a86b00" stroke-width="6"></path>
+        <path d="M150 20v500" stroke="#2f7d4f" stroke-width="1.6"></path>
+      </svg>
+      <div style="position: absolute; bottom: 16px; right: 16px; background: #ffffff; border: 1px solid #e3ddd3; border-radius: 10px; padding: 10px 14px; display: flex; gap: 16px; font-size: 13px;">
+        <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2f7d4f;"></span>עומד בבדיקה</span>
+        <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #a86b00;"></span>עובר, עם הסתייגות</span>
+        <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #b3261e;"></span>לא עובר</span>
+      </div>
+    </main>
+
+    <aside style="width: 480px; background: #ffffff; border-right: 1px solid #e3ddd3; display: flex; flex-direction: column;">
+      <div style="height: 52px; padding: 0 12px; display: flex; align-items: flex-end; gap: 4px; border-bottom: 1px solid #e3ddd3;">
+        <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; font-weight: 600; border-bottom: 3px solid #9a5b2e;">בדיקות</span>
+        <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #6f675c;">חיתוך</span>
+        <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #6f675c;">גיליונות</span>
+        <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #6f675c;">כמויות</span>
+        <span style="height: 44px; padding: 0 14px; display: flex; align-items: center; font-size: 15px; color: #6f675c;">הרכבה</span>
+      </div>
+      <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+        <div style="border: 1px solid #e3ddd3; border-radius: 10px; overflow: hidden;">
+          <div style="padding: 12px 14px; background: #fbefd6; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 12px; font-weight: 700; color: #5c3d00; background: #ffffff; padding: 2px 8px; border-radius: 999px;">הסתייגות</span>
+            <span style="font-size: 15px; font-weight: 600;">שקיעה וחוזק · 5 לוחות זהים</span>
+          </div>
+          <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+            <div style="direction: ltr; text-align: left; font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: #f6f3ee; padding: 8px 10px; border-radius: 6px; line-height: 1.6;">δ = 5·(w + w_self)·L⁴ / (384·E·I)<br>δ_fin = δ_inst·(1 + k_def)<br>σ = γ·M/W ≤ k_mod·f_m,k/γ_M</div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; color: #4a443c;">
+              <span>מפתח L: 760 מ"מ</span><span>E: 10,048 MPa (ממוצע)</span>
+              <span>עומס: 20 ק"ג + 2.78 עצמי</span><span>f_m,k: 40.2 MPa</span>
+              <span>k_def: 0.8</span><span>עובי: 18 מ"מ</span>
+            </div>
+            <div style="font-weight: 600;">δ_fin = 1.62 מ"מ · מותר עד 2.53 · ניצולת חוזק 9%</div>
+            <div style="color: #5c3d00;">החישוב עובר, אבל נתוני החוזק מושאלים מליבנה מקבילה ולא אושרו מול יצרן הלוח.</div>
+            <div style="display: flex; gap: 12px;"><a href="#">מקורות (2)</a><a href="#">הנחות (3)</a></div>
+          </div>
+        </div>
+        <div style="border: 1px solid #e3ddd3; border-radius: 10px;">
+          <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #efebe4;"><span style="width: 10px; height: 10px; border-radius: 999px; background: #2f7d4f;"></span><span style="font-size: 14px; flex: 1;">כל החלקים ניתנים להזמנה</span><span style="font-size: 13px; color: #6f675c;">ייצור</span></div>
+          <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #efebe4;"><span style="width: 10px; height: 10px; border-radius: 999px; background: #2f7d4f;"></span><span style="font-size: 14px; flex: 1;">זמין להזמנה: ליבנה 18 מ"מ</span><span style="font-size: 13px; color: #6f675c;">חומר</span></div>
+          <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #efebe4;"><span style="width: 10px; height: 10px; border-radius: 999px; background: #a86b00;"></span><span style="font-size: 14px; flex: 1;">המידות עוגלו לס"מ שלמים (79.6 במקום 80)</span><span style="font-size: 13px; color: #6f675c;">גאומטריה</span></div>
+          <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #efebe4;"><span style="width: 10px; height: 10px; border-radius: 999px; background: #a86b00;"></span><span style="font-size: 14px; flex: 1;">נדרש עיגון לקיר ובדיקה פיזית</span><span style="font-size: 13px; color: #6f675c;">בטיחות</span></div>
+          <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span style="width: 10px; height: 10px; border-radius: 999px; border: 2px solid #5f6368;"></span><span style="font-size: 14px; flex: 1;">לא נבדק בתוכנה: חוזק חיבורים, התהפכות</span><span style="font-size: 13px; color: #6f675c;">גבולות</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="height: 72px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border-top: 1px solid #e3ddd3;">
+    <div style="display: flex; align-items: baseline; gap: 10px;">
+      <span style="font-size: 14px; color: #6f675c;">יחידה אחת</span>
+      <span style="font-size: 20px; font-weight: 700;">₪879</span>
+      <span style="font-size: 14px; color: #6f675c;">· 12 יחידות: המחיר יחושב מחדש לפי שיבוץ משותף</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="#" style="height: 44px; padding: 0 16px; display: flex; align-items: center; border: 1px solid #d6cec2; border-radius: 8px; font-size: 15px; color: #1c1a17; text-decoration: none;">רשימת חיתוך CSV</a>
+      <a href="#" style="height: 44px; padding: 0 16px; display: flex; align-items: center; border: 1px solid #d6cec2; border-radius: 8px; font-size: 15px; color: #1c1a17; text-decoration: none;">חבילת PDF</a>
+      <a href="#" style="height: 44px; padding: 0 24px; display: flex; align-items: center; background: #9a5b2e; color: #ffffff; border-radius: 10px; font-size: 16px; font-weight: 600; text-decoration: none;">המשך למראה</a>
+    </div>
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>

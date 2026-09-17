@@ -1,6 +1,6 @@
 import { createClient, type Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
-import { ENGINE_VERSION, type OpenShelfParams, type ValidationReport } from '../engine';
+import { ENGINE_VERSION, type DesignParams, type ValidationReport } from '../engine';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -62,7 +62,7 @@ export interface VersionRow {
   project_id: string;
   version_no: number;
   label: string | null;
-  params: OpenShelfParams;
+  params: DesignParams;
   engine_version: string;
   summary: { overall?: string; coverage?: Record<string, string> };
   created_at: string;
@@ -87,7 +87,7 @@ export async function listVersions(projectId: string): Promise<VersionRow[]> {
   return data as VersionRow[];
 }
 
-export async function saveVersion(projectId: string, params: OpenShelfParams, report: ValidationReport, label: string | null): Promise<VersionRow> {
+export async function saveVersion(projectId: string, params: DesignParams, report: ValidationReport, label: string | null): Promise<VersionRow> {
   const c = client();
   const { data: last } = await c.from('project_versions').select('version_no').eq('project_id', projectId).order('version_no', { ascending: false }).limit(1).maybeSingle();
   const summary = { overall: report.overall, coverage: report.coverage };

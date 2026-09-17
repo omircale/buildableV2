@@ -1,0 +1,443 @@
+{
+  "retrievedAt": "2026-09-16",
+  "cards": [
+    {
+      "id": "mdf",
+      "kind": "board",
+      "nameHe": "MDF (סיבית בצפיפות בינונית)",
+      "nameEn": "MDF (Medium-Density Fiberboard) — standard & moisture-resistant (MR / MDF.H, \"green core\")",
+      "summaryHe": "לוח העשוי מסיבי עץ דחוסים עם שרפים תחת חום ולחץ, ללא מרקם סיבים גלוי. הגרסה העמידה בפני לחות (MR, לרוב בליבה ירוקה) מיוצרת עם שרף מועשר במלמין ותוספי שעווה בהתאם לתקן EN 622-5 סוג MDF.H.",
+      "summaryEn": "A panel made from compressed wood fibers bonded with resin under heat and pressure, with no visible grain. The moisture-resistant variant (MR, usually dyed green) uses a melamine-fortified resin per EN 622-5 type MDF.H.",
+      "properties": [
+        {"labelHe":"צפיפות","labelEn":"Density","valueHe":"כ-600–900 ק\"ג/מ\"ק; מקור תעשייתי אחד מדווח על כ-700–800 ק\"ג/מ\"ק בגוף הלוח עם שכבות פנים צפופות יותר. הערך המדויק תלוי ביצרן ובדרגה ואינו מוגדר כדרישה קבועה בתקן EN 622-1 עצמו.","valueEn":"~600–900 kg/m³ overall; one industry source cites ~700–800 kg/m³ core with denser face layers. Exact value is manufacturer/grade-specific; EN 622-1 does not mandate a fixed figure.","sourceIds":["s3","s1"]},
+        {"labelHe":"אחיזת ברגים","labelEn":"Screw holding","valueHe":"כ-1000N בפני הלוח וכ-700–950N בקצה (מבחן EN 320, בורג 4.2 מ\"מ); אחיזה בקצה חלשה משמעותית מאשר בפנים.","valueEn":"~1000N on the face and ~700–950N on the edge (EN 320 test, 4.2mm screw); edge holding is notably weaker than face holding.","sourceIds":["s1"]},
+        {"labelHe":"התנהגות מול לחות","labelEn":"Moisture behavior","valueHe":"MDF רגיל תופח בחשיפה למים. הגרסה MR/MDF.H עומדת טוב יותר בלחות יחסית גבוהה (מבחן מחזורי EN 321, עד כ-80% לחות יחסית) אך אינה חסינת מים ותתפח אם תישרה או תוצף.","valueEn":"Standard MDF swells on water exposure. The MR/MDF.H grade performs better under high humidity (EN 321 cyclic test, up to ~80% RH) but is not waterproof and will still swell if soaked.","sourceIds":["s2","s1"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"מבנה הומוגני ללא סיבים גלויים מאפשר ניתוב (routing) חלק של פרופילים, שקעים וגילופים, ולאחר מכן צביעה — זהו אחד היתרונות המרכזיים של החומר.","valueEn":"A homogeneous, grain-free structure allows smooth routing of profiles, grooves and carved details, followed by painting — one of the material's main advantages.","sourceIds":["s1"]},
+        {"labelHe":"עיבוד קצוות","labelEn":"Edge treatment","valueHe":"קצוות גזורים סופגים צבע/לחות בצורה לא אחידה (\"מיתמלמלים\") ודורשים איטום/פריימר לפני צביעה, או הלבשת פס קצה (edge banding).","valueEn":"Cut edges absorb paint/moisture unevenly and are more porous/fuzzy, requiring sealing or primer before painting, or edge banding.","sourceIds":["s32"]},
+        {"labelHe":"עוביים נפוצים","labelEn":"Common thicknesses","valueHe":"בגרסת MR נמצאו בדפי מפרט: 6, 9, 12, 15, 18, 22, 25, 30 מ\"מ.","valueEn":"For the MR grade, spec sheets list: 6, 9, 12, 15, 18, 22, 25, 30 mm.","sourceIds":["s2"]},
+        {"labelHe":"פליטת פורמלדהיד","labelEn":"Formaldehyde emission","valueHe":"ניתן לייצור בדרגת E1 (עד 8 מ\"ג/100 גרם לוח יבש, לפי EN 13986) ובגרסאות פרימיום גם E0/CARB Phase 2/TSCA Title VI; יש לבדוק תעודת יצרן ספציפית ולא להניח דרגה כלשהי.","valueEn":"Can be produced to E1 (≤8 mg/100g dry board per EN 13986) and, in premium grades, E0/CARB Phase 2/TSCA Title VI; a specific manufacturer certificate should be checked rather than assumed.","sourceIds":["s25","s2","s24"]}
+      ],
+      "suitedForHe": ["רהיטים צבועים (ארונות, דלתות, מדפים)", "אלמנטים מנותבים/מגולפים ב-CNC המיועדים לצביעה", "יישומים פנימיים יבשים עד לחות בינונית (גרסת MR)", "רהיטי ילדים, בכפוף לבדיקת תעודת פליטה"],
+      "suitedForEn": ["Painted furniture (cabinets, doors, shelving)", "CNC-routed/carved elements intended for painting", "Dry to moderate-humidity interior use (MR grade)", "Children's furniture, subject to checking emission certification"],
+      "prosHe": ["משטח חלק ואחיד, אידיאלי לצביעה וגימור בתנור", "ניתוב CNC נוח לפרופילים ושקעים ללא סיבים גלויים", "מחיר נמוך יחסית וזמינות גבוהה", "גימור אחיד ללא ברקים/סדקים של עץ טבעי"],
+      "prosEn": ["Smooth, uniform surface ideal for painting and baked finishes", "Easy CNC routing of profiles/grooves with no visible grain", "Relatively low cost and high availability", "Uniform finish without natural-wood grain/knots"],
+      "consHe": ["כבד יחסית לנפחו", "רגיש ללחות — גם גרסת MR אינה חסינת מים", "אחיזת ברגים בקצה חלשה יחסית, מחייבת תכנון חיבורים ולעיתים אביזרי חיבור ייעודיים", "עיבוד מכני יוצר אבק עדין המחייב אוורור/שאיבה"],
+      "consEn": ["Heavy relative to its volume", "Moisture-sensitive — even MR grade is not waterproof", "Relatively weak edge screw-holding, requires joinery planning and sometimes dedicated fasteners", "Machining produces fine dust requiring ventilation/extraction"],
+      "careHe": "ניקוי במטלית לחה בלבד; יש להימנע מהצפה במים. פגיעות בצבע מתוקנות בטיפול מקומי (מילוי ושפשוף) ולא בליטוש עמוק, מכיוון שהליבה סיבית ולא עשויה סיבי עץ ארוכים.",
+      "careEn": "Clean with a damp cloth only; avoid standing water. Paint damage is repaired locally (fill and touch-up sanding) rather than deep refinishing, since the core is fibrous rather than long wood grain.",
+      "childNotesHe": "יש לבקש תעודת יצרן לדרגת פליטת פורמלדהיד (E1/E0 לפי EN 13986, או CARB Phase 2/TSCA Title VI בארה\"ב); ציפוי הצבע/הלכה על המשטח, אם מיועד למגע ילדים, כפוף בדרך כלל לתקן EN 71-3 למעבר יסודות מוגבלים (ראו כרטיס \"צבע בתנור\").",
+      "childNotesEn": "Request a manufacturer certificate for formaldehyde emission class (E1/E0 per EN 13986, or CARB Phase 2/TSCA Title VI in the US); the paint/lacquer coating on the surface, if intended for child contact, is generally subject to EN 71-3 for migration of certain elements (see the \"baked paint\" finish card).",
+      "compatibleFinishes": ["baked-paint", "powder-coating"],
+      "cncPatterns": true,
+      "sources": [
+        {"id":"s1","title":"European Panel Federation (EPF) — MDF properties assessment (EN 320/321/323)","url":"https://mdf-info.eu/technical/assessing-properties"},
+        {"id":"s2","title":"Medite MR (Moisture Resistant) MDF — Technical Datasheet","url":"https://www.pbplywood.com/liveagent/198440-Medite-Moisture-Resistant-MR-MDF-Datasheet"},
+        {"id":"s3","title":"ZhenShiJie Wood — \"What Is the Density of MDF?\"","url":"https://www.zhenshijiewood.com/what-is-the-density-of-mdf-why-it-matters-for-furniture-and-cabinets"},
+        {"id":"s25","title":"TÜV Rheinland — Guideline: Formaldehyde Release from Wood-Based Panels (EN 13986 E1/E2)","url":"https://www.tuv.com/content-media-files/master-content/services/products/0152-tuv-rheinland-construction-products-pollutants-and-emissions/tuv-rheinland-guideline-wood-based-panels-flyer-en.pdf"},
+        {"id":"s24","title":"US EPA — Formaldehyde Emission Standards for Composite Wood Products (TSCA Title VI)","url":"https://www.epa.gov/formaldehyde/formaldehyde-emission-standards-composite-wood-products"},
+        {"id":"s32","title":"WOODWEB — \"High Gloss White Paint on MDF\" (professional finishing forum)","url":"https://woodweb.com/knowledge_base/High_Gloss_White_Paint_on_MDF.html"}
+      ]
+    },
+    {
+      "id": "plywood-birch",
+      "kind": "board",
+      "nameHe": "לבידים מבירך (בלטי/פיני)",
+      "nameEn": "Birch Plywood (Baltic / Finnish birch)",
+      "summaryHe": "לוח עשוי שכבות דיקט מגולגלות של עץ ליבנה (בירך), מודבקות בכיוונים מנוגדים. \"בירך בלטי\" מתייחס בדרך כלל ללוח עם ליבה עשויה כולה מבירך וללא חללים (void-free), במספר שכבות רב יחסית לעוביו.",
+      "summaryEn": "A panel made of rotary-cut birch veneer layers glued with alternating grain direction. \"Baltic birch\" typically refers to an all-birch, void-free core with a relatively high ply count for its thickness.",
+      "properties": [
+        {"labelHe":"תכולת חללים","labelEn":"Void content","valueHe":"ליבת בירך בלטי עשויה שכבות בירך רצופות היוצרות ליבה כמעט ללא חללים (void-free), בשונה מדיקטים מסחריים עם ליבה מעורבת.","valueEn":"Baltic birch core layers form a nearly void-free core, unlike commercial plywood with mixed-species cores.","sourceIds":["s4"]},
+        {"labelHe":"צפיפות","labelEn":"Density","valueHe":"כ-650–700 ק\"ג/מ\"ק, עם לוחות איכותיים המגיעים עד כ-760 ק\"ג/מ\"ק בהתאם למין הליבנה, לחות הייצור ומבנה הליבה.","valueEn":"~650–700 kg/m³, with high-quality panels reaching up to ~760 kg/m³ depending on birch species, manufacturing moisture content and core structure.","sourceIds":["s5"]},
+        {"labelHe":"מבנה שכבות","labelEn":"Ply structure","valueHe":"לוח בעובי 18 מ\"מ (3/4 אינץ') מורכב מ-13 שכבות שוות בקירוב, לעומת 5–7 שכבות בדיקט בירך רגיל; שכבות הפנים כ-1.5 מ\"מ.","valueEn":"An 18mm (3/4in) panel typically has ~13 roughly equal plies, versus 5–7 plies in standard birch plywood; face plies are about 1.5mm.","sourceIds":["s4"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"צפיפות אחידה לרוחב העובי מאפשרת גם חיתוך בלייזר וניתוב CNC נקי; קצוות החתך חושפים דוגמת \"פסים\" של השכבות, המהווה מאפיין עיצובי מוכר.","valueEn":"Uniform density through the thickness allows clean laser cutting and CNC routing; cut edges expose a striped ply pattern often used as a design feature.","sourceIds":["s4"]},
+        {"labelHe":"עיבוד קצוות","labelEn":"Edge treatment","valueHe":"לרוב אינו מולבש (edge banding) — קצה השכבות מושאר גלוי ומטופל בלכה/שמן שקוף להדגשת המרקם, אך ניתן גם להלביש פס קצה במידת הצורך.","valueEn":"Often left unbanded — the ply edge is exposed and treated with clear lacquer/oil to highlight the pattern, though banding is possible if desired.","sourceIds":["s4"]}
+      ],
+      "suitedForHe": ["רהיטים חשופי-קצה בסגנון תעשייתי/סקנדינבי", "מדפים ותושבות הנושאים עומס עם צורך באחיזת ברגים טובה", "חלקים מעוגלים/מכופפים (bent lamination)", "רהיטי ילדים בשל עמידות ומיעוט חומרי ליבה מעורבים"],
+      "suitedForEn": ["Exposed-edge furniture in Scandinavian/industrial style", "Load-bearing shelving needing good screw holding", "Curved/bent-lamination parts", "Children's furniture, due to durability and a simple all-birch core"],
+      "prosHe": ["אחיזת ברגים טובה גם בקצה בזכות הליבה הרציפה", "יציבות ממדית גבוהה ועמידות בשחיקה", "מראה קצה אסתטי המאפשר להשאיר קצוות חשופים", "משקל נמוך יחסית ל-MDF בעובי דומה"],
+      "prosEn": ["Good screw holding even at the edge thanks to the continuous core", "High dimensional stability and wear resistance", "Attractive edge appearance allows leaving edges exposed", "Lower weight than MDF at a comparable thickness"],
+      "consHe": ["יקר יותר מ-MDF וממרבית לוחות סיבית/סנדוויץ'", "גוון ומרקם עשויים להשתנות בין יצרנים ואצוות", "אינו מתאים לגימור צבע אחיד ללא הכנה (הסיבים גלויים)", "זמינות מקומית עשויה להיות מוגבלת יותר לעומת MDF/MFC"],
+      "consEn": ["More expensive than MDF and most MFC/particleboard", "Color and grain pattern can vary between manufacturers and batches", "Not ideal for a fully uniform painted finish without prep (grain shows through)", "Local availability may be more limited than MDF/MFC"],
+      "careHe": "ניקוי במטלית לחה; משטחי לכה/שמן שקופים ניתנים לחידוש מקומי בליטוש קל ומריחה חוזרת של שמן/לכה בזכות עומק הליבה.",
+      "careEn": "Clean with a damp cloth; clear lacquer/oil surfaces can be locally refreshed by light sanding and re-coating, thanks to the depth of the solid core.",
+      "childNotesHe": "יש לבדוק תעודת פליטת פורמלדהיד של הדבק (E1 לפי EN 13986 הוא הנפוץ ביותר עבור דיקט מיובא לאירופה); אין נתון ספציפי לבירך בלטי שאותר במחקר זה מעבר לתקן הכללי — יש לאמת מול ספק.",
+      "childNotesEn": "Check the adhesive's formaldehyde emission certificate (E1 per EN 13986 is most common for plywood sold in Europe); no birch-plywood-specific figure beyond the general standard was found in this research — verify with the supplier.",
+      "compatibleFinishes": ["clear-lacquer", "hardwax-oil", "stain", "baked-paint"],
+      "cncPatterns": true,
+      "sources": [
+        {"id":"s4","title":"Woodworkers Source — \"Your Ultimate Guide to Baltic Birch Plywood\"","url":"https://www.woodworkerssource.com/blog/woodworking-101/tips-tricks/your-ultimate-guide-to-baltic-birch-plywood-why-its-better-when-to-use-it/"},
+        {"id":"s5","title":"Kosmex Group — \"Density of Birch Plywood: Weight, Strength & Thickness\"","url":"https://kosmexgroup.com/density-of-birch-plywood/"}
+      ]
+    },
+    {
+      "id": "mfc",
+      "kind": "board",
+      "nameHe": "סיבית מצופה מלמין / עץ מעובד (MFC / סנדוויץ')",
+      "nameEn": "Melamine-Faced Chipboard / Particleboard (MFC)",
+      "summaryHe": "לוח נסורת עץ דחוסה (particleboard) המצופה בשתי פניו בנייר ספוג שרף מלמין הנצרב לגימור קשיח וצבעוני. נפוץ בישראל בכינוי \"סנדוויץ'\" או \"סיבית מצופה\".",
+      "summaryEn": "A pressed wood-particle board (particleboard) faced on both sides with melamine-resin-impregnated paper cured into a hard, decorative surface. Commonly called \"sandwich board\" in Israeli carpentry.",
+      "properties": [
+        {"labelHe":"צפיפות","labelEn":"Density","valueHe":"לרוב כ-620–680 ק\"ג/מ\"ק לדרגת רהיטים סטנדרטית (P2), עם גרסאות צפיפות-גבוהה עד כ-700–720 ק\"ג/מ\"ק.","valueEn":"Typically ~620–680 kg/m³ for standard furniture-grade (P2), with high-density variants up to ~700–720 kg/m³.","sourceIds":["s7"]},
+        {"labelHe":"סיווג לפי EN 312","labelEn":"EN 312 classification","valueHe":"תקן EN 312 מגדיר דרגות לפי שימוש: P2 — ריהוט פנימי בתנאים יבשים; P3 — לוח לא-נושא עומס לתנאים לחים.","valueEn":"EN 312 defines grades by use: P2 — general interior furniture in dry conditions; P3 — non-load-bearing board for humid conditions.","sourceIds":["s6"]},
+        {"labelHe":"אחיזת ברגים","labelEn":"Screw holding","valueHe":"אחיזת ברגים ותאחיזה פנימית (internal bond) של סיבית מעובדת נמוכות יחסית ל-MDF ולדיקט, במיוחד בקצה הלוח; מחקר בתחום מציין שיפור אחיזה עם חלקיקים גסים יותר בליבה.","valueEn":"Screw holding and internal bond of particleboard are relatively lower than MDF or plywood, especially at the panel edge; research notes improved holding with coarser core particles.","sourceIds":["s35"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"הליבה הגרגרית פחות אחידה מ-MDF, כך שניתוב עדין של פרופילים/גילופים נוטה ליצור קרעים בקצוות; משטח המלמין עצמו קשיח ועמיד בשחיקה אך אינו נצבע — לרוב לא מנתבים MFC לצביעה.","valueEn":"The granular core is less uniform than MDF, so fine routing of profiles/carving tends to tear out at edges; the melamine surface itself is hard and wear-resistant but is not painted — MFC is generally not routed for a paint finish.","sourceIds":["s6"]},
+        {"labelHe":"עיבוד קצוות","labelEn":"Edge treatment","valueHe":"קצוות גזורים חושפים את ליבת הנסורת ומחייבים כמעט תמיד הלבשת פס קצה (edge banding) מ-PVC/ABS/מלמין להגנה וגימור אחיד.","valueEn":"Cut edges expose the raw particle core and almost always require edge banding (PVC/ABS/melamine) for protection and a matching finish.","sourceIds":["s6"]}
+      ],
+      "suitedForHe": ["רהיטי ארונות/גופי אחסון עם משטח סופי מוכן (ללא צביעה)", "פרויקטים בתקציב מוגבל ותפוקה גבוהה", "משטחים ישרים עם קצוות מולבשים", "יישומים יבשים; P3 לתנאי לחות בינונית"],
+      "suitedForEn": ["Cabinet/carcass furniture with a ready-made finished surface (no painting needed)", "Budget-conscious, high-volume projects", "Flat surfaces with banded edges", "Dry-condition use; P3 grade for moderate humidity"],
+      "prosHe": ["משטח מוגמר מראש — אין צורך בצביעה נוספת", "עמיד בשחיקה, כתמים ושריטות קלות יחסית", "מחיר נמוך וזמינות גבוהה במגוון גוונים ודוגמאות", "משקל בינוני לעומת MDF"],
+      "prosEn": ["Pre-finished surface — no additional painting needed", "Resistant to wear, stains and light scratches", "Low cost and wide availability in many colors/patterns", "Moderate weight compared to MDF"],
+      "consHe": ["אחיזת ברגים ותאחיזה פנימית חלשות יותר מ-MDF/דיקט, בפרט בקצה", "פחות מתאים לניתוב CNC עדין/גילוף דקורטיבי", "קצוות חשופים רגישים ללחות ומחייבים הלבשה איכותית", "תיקון פגיעות מקומיות (שברי קצה, קילופי מלמין) קשה ולעיתים דורש החלפת לוח"],
+      "consEn": ["Weaker screw holding and internal bond than MDF/plywood, especially at edges", "Less suited to fine CNC routing/decorative carving", "Exposed edges are moisture-sensitive and require quality banding", "Local damage (chipped edges, peeled melamine) is hard to repair and sometimes requires panel replacement"],
+      "careHe": "ניקוי במטלית לחה; יש להימנע ממים עומדים בפרט סביב חיבורי קצה. אין ליטוש — פגיעה בשכבת המלמין חושפת את הליבה וברוב המקרים אינה ניתנת לתיקון אסתטי מלא.",
+      "careEn": "Clean with a damp cloth; avoid standing water, especially near edge joints. Do not sand — damage to the melamine layer exposes the core and generally cannot be fully cosmetically repaired.",
+      "childNotesHe": "נבדק לרוב לפי EN 312/EN 14322 ופליטת פורמלדהיד E1 לפי EN 13986; יש לבקש תעודה ספציפית מהיצרן/ספק, בפרט אם משמש לריהוט ילדים.",
+      "childNotesEn": "Typically tested to EN 312/EN 14322 with E1 formaldehyde emission per EN 13986; a specific manufacturer/supplier certificate should be requested, especially for children's furniture.",
+      "compatibleFinishes": [],
+      "cncPatterns": false,
+      "sources": [
+        {"id":"s6","title":"BSI Knowledge — EN 312 Particleboards: Specifications","url":"https://knowledge.bsigroup.com/products/particleboards-specifications-1"},
+        {"id":"s7","title":"Accio — \"Chipboard Density: Key for Furniture Quality\"","url":"https://www.accio.com/plp/chipboard-density"},
+        {"id":"s35","title":"USDA Forest Products Laboratory (McNatt) — Screw-holding, internal bond, and related properties of composite panel materials","url":"https://www.fpl.fs.usda.gov/documnts/pdf1989/mcnat89c.pdf"}
+      ]
+    },
+    {
+      "id": "hpl",
+      "kind": "board",
+      "nameHe": "HPL — למינציה בלחץ גבוה (\"פורמייקה\")",
+      "nameEn": "HPL — High-Pressure Laminate (\"Formica\")",
+      "summaryHe": "יריעה דקורטיבית העשויה שכבות נייר סלולוזי ספוגות שרפים תרמוסטיים, מוצמדות יחד בלחץ גבוה, ומודבקת על גבי ליבה (לרוב MDF/סנדוויץ'). מוגדרת בתקן EN 438.",
+      "summaryEn": "A decorative sheet made of layers of cellulose (paper) impregnated with thermosetting resins, fused together under high pressure and bonded to a core (usually MDF/particleboard). Defined by EN 438.",
+      "properties": [
+        {"labelHe":"הרכב","labelEn":"Composition","valueHe":"מעל כ-60% נייר ו-30–40% שרפים; היריעה עצמה אינה נקבובית, יציבה כימית ואינרטית.","valueEn":"Over ~60% paper and 30–40% resins; the sheet itself is non-porous, dimensionally stable and chemically inert.","sourceIds":["s8"]},
+        {"labelHe":"עמידות בשחיקה","labelEn":"Abrasion resistance","valueHe":"נבדקת לפי EN 438-2 באמצעות מבחן שחיקת Taber; HPL נחשב עמיד בשחיקה, פגיעה, שריטה, חום, לחות וכתמים ביחס לחומרי משטח אחרים.","valueEn":"Tested per EN 438-2 via Taber abrasion; HPL is considered resistant to abrasion, impact, scratching, heat, moisture and staining relative to other surface materials.","sourceIds":["s9","s8"]},
+        {"labelHe":"עמידות חשמלית-סטטית","labelEn":"Antistatic properties","valueHe":"התנגדות משטח של כ-10⁹–10¹² אוהם וטעינות ≤2kV לפי IEC 61340-4-1 — נחשב חומר אנטי-סטטי.","valueEn":"Surface resistivity of ~10⁹–10¹² Ohm and chargeability ≤2kV per IEC 61340-4-1 — considered an antistatic material.","sourceIds":["s8"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"היריעה עצמה דקה וקשיחה ומודבקת על ליבה שכבר עברה עיבוד/ניתוב; אינה מיועדת לניתוב תבניות/גילופים לאחר ההדבקה, ועקומות כיפוף חדות עלולות לגרום לסדיקה.","valueEn":"The sheet itself is thin and rigid and is bonded onto a core already machined/routed; it is not intended for pattern routing/carving after lamination, and tight bend radii can crack it.","sourceIds":["s8"]},
+        {"labelHe":"עוביים","labelEn":"Thickness range","valueHe":"יריעות דקורטיביות לרוב מתחת ל-2 מ\"מ (להדבקה על ליבה); לוחות \"קומפקט\" (ללא צורך בליבה) בעובי 2 מ\"מ ומעלה.","valueEn":"Decorative sheets are typically under 2mm (for bonding to a substrate); \"compact\" grade laminates (self-supporting, no core needed) are 2mm and thicker.","sourceIds":["s8"]}
+      ],
+      "suitedForHe": ["משטחי עבודה ומשטחים אופקיים בשימוש אינטנסיבי", "רהיטים במטבחים/חדרי אמבט הזקוקים לעמידות בלחות ובשחיקה", "יישומים מסחריים/ציבוריים בעומס גבוה", "משטחים שבהם נדרשת אחידות גימור ותחזוקה קלה"],
+      "suitedForEn": ["Worktops and horizontal surfaces under heavy use", "Kitchen/bathroom furniture needing moisture and abrasion resistance", "Commercial/public applications under high load", "Surfaces requiring uniform finish and easy maintenance"],
+      "prosHe": ["עמיד מאוד בשחיקה, שריטות, חום וכימיקלים ביתיים", "אינרטי כימית וניתן לניקוי קל", "מגוון רחב של גוונים ודוגמאות, כולל חיקויי עץ ואבן", "תקן EN 438 מספק מתודולוגיית בדיקה אחידה להשוואת מוצרים"],
+      "prosEn": ["Very resistant to abrasion, scratches, heat and household chemicals", "Chemically inert and easy to clean", "Wide range of colors/patterns, including wood and stone imitations", "EN 438 provides a uniform test methodology for comparing products"],
+      "consHe": ["פגיעה עמוקה/שבר בשכבה חושפת את הליבה ואינה ניתנת לתיקון עדין (בשונה מגימור צבע)", "אינו מתאים לניתוב תבניות דקורטיביות לאחר הדבקה", "חיבורי פינה/קצה גלויים לרוב, אלא אם נעשה עיבוד קצה ייעודי", "הדבקה איכותית דורשת ציוד/ידע מקצועי"],
+      "consEn": ["Deep damage/chips expose the substrate and cannot be finely repaired (unlike paint)", "Not suited to decorative pattern routing after lamination", "Visible seams/edges unless specific edge treatment is used", "Quality bonding requires professional equipment/know-how"],
+      "careHe": "ניקוי במטלית לחה וחומר ניקוי ביתי עדין; יש להימנע מחומרי שחיקה חזקים על גימורים מבריקים. אין אפשרות ל\"ליטוש מחדש\" — נזק משמעותי מחייב החלפת יריעה.",
+      "careEn": "Clean with a damp cloth and a mild household cleaner; avoid strong abrasives on glossy finishes. There is no way to \"resand\" — significant damage requires sheet replacement.",
+      "childNotesHe": "פורמלדהיד בהדבקה/שרפים כפוף בדרך כלל לתקני E1/EN 13986 באירופה; לא אותר בתקן EN 438 עצמו נתון פליטה ספציפי — יש לבדוק מול יצרן הליבה (MDF/סיבית) ומול ספק הדבק.",
+      "childNotesEn": "Formaldehyde in the adhesive/resins is generally subject to E1/EN 13986 in Europe; EN 438 itself does not specify an emission figure — check with the substrate (MDF/particleboard) manufacturer and adhesive supplier.",
+      "compatibleFinishes": [],
+      "cncPatterns": false,
+      "sources": [
+        {"id":"s8","title":"Pro-HPL (European Association for High Pressure Laminates) — Product Data Sheet for HPL","url":"https://www.pro-hpl.org/assets/uploads/prohpl/files/TL_220118_Product_data_sheet_for_HPL.pdf"},
+        {"id":"s9","title":"Industrial Physics — \"EN 438-2 testing\"","url":"https://industrialphysics.com/standards/en-438-2/"}
+      ]
+    },
+    {
+      "id": "thermofoil",
+      "kind": "board",
+      "nameHe": "פוליו/תרמופויל (PVC/PET) על MDF",
+      "nameEn": "Polymer / Thermofoil (PVC or PET foil, vacuum-pressed on MDF, e.g. RENOLIT)",
+      "summaryHe": "יריעת פולימר (בדרך כלל PVC, לעיתים PET) הנרכת בחום ונשאבת בריק (vacuum press) על גבי ליבת MDF שכבר עברה ניתוב/עיצוב תלת-ממדי, כך שהיריעה \"עוטפת\" את הפרופיל ללא תפרים גלויים.",
+      "summaryEn": "A polymer foil (usually PVC, sometimes PET) that is heat-softened and vacuum-pressed onto an MDF core that has already been routed/profiled in 3D, so the foil wraps the profile seamlessly.",
+      "properties": [
+        {"labelHe":"עובי היריעה","labelEn":"Foil thickness","valueHe":"כ-0.12–0.5 מ\"מ, ברוחבי גליל נפוצים של כ-1260/1400 מ\"מ.","valueEn":"~0.12–0.5mm, in common roll widths of ~1260/1400mm.","sourceIds":["s11"]},
+        {"labelHe":"תהליך ייצור","labelEn":"Manufacturing process","valueHe":"עיבוד תרמופלסטי (thermoforming) לעטיפת פרופילים תלת-ממדיים; קיימים גם תהליכי לינציה (2D) ועטיפה (wrapping) שטוחים יותר.","valueEn":"Thermoforming for wrapping 3D profiles; flatter 2D laminating and wrapping processes also exist.","sourceIds":["s11"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"הניתוב וה-CNC מתבצעים על ליבת ה-MDF *לפני* הלבשת היריעה — זהו למעשה היתרון המרכזי של השיטה: פרופילים, פאזות ושקעים מתקבלים עם כיסוי רציף וללא תפר גלוי.","valueEn":"Routing and CNC work happen on the MDF core *before* the foil is applied — this is the method's core advantage: profiles, chamfers and grooves get continuous coverage with no visible seam.","sourceIds":["s11"]},
+        {"labelHe":"עמידות חום","labelEn":"Heat resistance","valueHe":"כחומר PVC/PET, רגיש יחסית לחום גבוה ולקרינת UV ממושכת (עלול להתעוות/להיצהיב); לא אותר בדף מפרט RENOLIT ציבורי ערך מספרי מדויק לעמידות חום — יש לבדוק מול תעודת המוצר הספציפי.","valueEn":"As a PVC/PET material it is relatively sensitive to high heat and prolonged UV (can warp/yellow); no specific numeric heat-resistance figure was found in a public RENOLIT data sheet — check the specific product certificate.","sourceIds":["s10"]}
+      ],
+      "suitedForHe": ["דלתות ארונות מטבח/חדרי אמבט עם פרופילים מעוצבים (שייקר, פרופיל מסוגנן)", "יישומים הדורשים כיסוי רציף על גבי גיאומטריה תלת-ממדית", "רהיטים בתקציב בינוני-נמוך עם מראה \"עשוי צבע\" ללא עלות צביעה", "משטחים פנימיים יבשים עד לחות בינונית"],
+      "suitedForEn": ["Kitchen/bathroom cabinet doors with shaped profiles (shaker, styled profile)", "Applications needing continuous coverage over 3D geometry", "Low-to-mid budget furniture wanting a \"painted look\" without paint cost", "Interior dry-to-moderate-humidity surfaces"],
+      "prosHe": ["כיסוי רציף וללא תפר גם על פרופילים תלת-ממדיים מורכבים", "מראה אחיד וניקוי קל, עמיד בכתמים יומיומיים", "עלות ייצור נמוכה יחסית לצביעה בתנור על אותם פרופילים", "מגוון גוונים/מרקמים כולל חיקויי עץ"],
+      "consHe": ["רגישות לחום גבוה (למשל קרבה לתנור/כיריים) העלולה לגרום להתקלפות או עיוות", "תיקון מקומי של קילופים/שריטות עמוקות קשה ולרוב מחייב החלפת יריעה/דלת", "עמידות UV ארוכת טווח פחות מתועדת בהשוואה לצבע איכותי", "פחות \"פרימיום\" מבחינת תחושת יד לעומת עץ/צבע בתנור"],
+      "prosEn": ["Continuous, seamless coverage even over complex 3D profiles", "Uniform look, easy to clean, resistant to everyday stains", "Lower production cost than baked paint on the same profiles", "Wide range of colors/textures including wood imitations"],
+      "consEn": ["Sensitive to high heat (e.g. proximity to an oven/stove), which can cause peeling or warping", "Local repair of peeling/deep scratches is difficult and usually requires replacing the foil/door", "Long-term UV durability is less well documented than quality paint", "Less \"premium\" tactile feel compared to wood or baked paint"],
+      "careHe": "ניקוי במטלית לחה וחומר ניקוי עדין; יש להימנע ממקורות חום ישירים (תנור, כיריים, אור שמש ישיר ממושך) הקרובים לפני השטח.",
+      "careEn": "Clean with a damp cloth and mild cleaner; avoid direct heat sources (oven, stove, prolonged direct sunlight) near the surface.",
+      "childNotesHe": "לא אותר בתחקיר זה דף מפרט ציבורי של RENOLIT עם נתוני פליטת פורמלדהיד/מעבר יסודות ספציפיים ליריעת PVC; יש לבקש תעודת REACH/EN 71-3 רלוונטית ישירות מהיצרן/ספק לפני שימוש ברהיטי ילדים.",
+      "childNotesEn": "No public RENOLIT data sheet with specific formaldehyde/element-migration figures for the PVC foil itself was found in this research; a relevant REACH/EN 71-3 certificate should be requested directly from the manufacturer/supplier before use in children's furniture.",
+      "compatibleFinishes": [],
+      "cncPatterns": true,
+      "sources": [
+        {"id":"s10","title":"RENOLIT — Interior Surfaces","url":"https://www.renolit.com/en/company/market-units/interior-surfaces"},
+        {"id":"s11","title":"Vacuum Presses Europe — \"3D-PVC Coating | PVC Foil Hot Vacuum Presses\"","url":"https://vacuum-presses.eu/en/vacuum-presses/3d-coating.html"}
+      ]
+    },
+    {
+      "id": "acrylic-gloss",
+      "kind": "board",
+      "nameHe": "לוחות אקריליק בגימור מבריק (MDF מצופה אקריליק)",
+      "nameEn": "Acrylic High-Gloss Panels (acrylic-faced MDF)",
+      "summaryHe": "לוח MDF המצופה שכבת אקריליק (PMMA) קשיחה ומבריקה מאוד, לרוב על ידי הדבקה בלחץ של יריעת אקריליק לליבת MDF. קיימות גם משפחות \"אקריליק חדשני\" עם גימורים מט/רך-למגע (למשל Fenix).",
+      "summaryEn": "An MDF panel faced with a rigid, very high-gloss acrylic (PMMA) layer, typically bonded under pressure onto the MDF core. \"Next-generation\" acrylic families also exist with matte/soft-touch finishes (e.g. Fenix).",
+      "properties": [
+        {"labelHe":"עוביים נפוצים","labelEn":"Common thicknesses","valueHe":"6–18 מ\"מ בעובי סטנדרטי, וקיימים גם לוחות מלאים בעובי כ-19 מ\"מ (3/4 אינץ') ליציבות ממדית גבוהה יותר.","valueEn":"6–18mm standard thickness, with solid panels around 19mm (3/4in) also available for higher dimensional stability.","sourceIds":["s12"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"היריעה מודבקת על ליבה שטוחה שכבר גזורה/מעובדת; אינה מיועדת לניתוב תבניות/גילופים לאחר ההדבקה, וכיפוף/ניתוב לאחר הדבקה עלול לגרום לסדיקה או התקלפות.","valueEn":"The sheet is bonded onto a flat core already cut/machined; it is not intended for pattern routing/carving after bonding, and post-bond routing/bending can crack or delaminate it.","sourceIds":["s12"]},
+        {"labelHe":"עמידות שריטה","labelEn":"Scratch resistance","valueHe":"אקריליק נחשב עמיד יחסית לשריטות ולדהייה מ-UV לעומת PVC, אך גימורים מבריקים מציגים שריטות עדינות וטביעות אצבע בצורה בולטת יותר מגימורים מטיים.","valueEn":"Acrylic is relatively scratch- and UV-fade-resistant compared to PVC, but glossy finishes show fine scratches and fingerprints more visibly than matte finishes.","sourceIds":["s13"]},
+        {"labelHe":"יציבות UV","labelEn":"UV stability","valueHe":"אקריליק עמיד ב-UV באופן טבעי ואינו מצהיב לאורך זמן, בשונה מחומרים אחרים הזקוקים לציפוי הגנה נוסף.","valueEn":"Acrylic is naturally UV-resistant and does not yellow over time, unlike some materials that require an added protective coating.","sourceIds":["s13"]}
+      ],
+      "suitedForHe": ["חזיתות ארונות/מטבחים בסגנון מודרני-מינימליסטי מבריק", "פרויקטים המחפשים מראה \"מראה\" יוקרתי ואחיד", "משטחים המנוקים לעיתים קרובות (בשל רגישות לטביעות אצבע)", "רהיטים ללא צורך בגילוף/פרופיל תלת-ממדי"],
+      "suitedForEn": ["Modern minimalist glossy cabinet/kitchen fronts", "Projects seeking a premium, uniform \"mirror\" look", "Surfaces cleaned frequently (due to fingerprint sensitivity)", "Furniture without a need for 3D carving/profiling"],
+      "prosHe": ["מראה מבריק ועמוק, \"יוקרתי\" ואחיד", "עמידות טובה בשריטות ובדהיית UV ביחס לחלופות פולימריות אחרות", "עמיד יחסית בלאי יומיומי בשימוש רגיל", "קיימות גרסאות מט/רכות-למגע (למשל Fenix) המפחיתות בעיית טביעות אצבע"],
+      "prosEn": ["Deep, glossy, premium and uniform appearance", "Good scratch and UV-fade resistance compared to other polymer options", "Reasonably durable under normal daily wear", "Matte/soft-touch variants exist (e.g. Fenix) that reduce the fingerprint issue"],
+      "consHe": ["מציג טביעות אצבע וכתמי מגע בבירור, ודורש ניקוי תכוף", "יקר יחסית לחלופות (MFC, HPL רגיל)", "לא מיועד לניתוב תבניות/גילופים לאחר ההדבקה", "נזק/שבר עמוק בשכבה קשה לתיקון ומחייב לרוב החלפת חזית"],
+      "consEn": ["Shows fingerprints and touch marks clearly, requires frequent cleaning", "Relatively expensive compared to alternatives (MFC, standard HPL)", "Not designed for pattern routing/carving after bonding", "Deep damage/chipping is hard to repair and usually requires front replacement"],
+      "careHe": "ניקוי במטלית רכה ולחה, ללא חומרי שחיקה; טביעות אצבע מוסרות בקלות אך מופיעות מחדש במהירות בשימוש יומיומי.",
+      "careEn": "Clean with a soft damp cloth, no abrasives; fingerprints wipe off easily but reappear quickly with everyday use.",
+      "childNotesHe": "לא אותרו בתחקיר זה נתוני פליטת פורמלדהיד/מעבר יסודות ספציפיים למשפחת מוצרי האקריליק המבריק; יש לבדוק תעודת E1/EN 13986 עבור ליבת ה-MDF ותעודת בטיחות נפרדת לשכבת האקריליק/הדבק מול היצרן.",
+      "childNotesEn": "No formaldehyde/element-migration data specific to high-gloss acrylic product families was found in this research; check E1/EN 13986 certification for the MDF core and a separate safety certificate for the acrylic layer/adhesive with the manufacturer.",
+      "compatibleFinishes": [],
+      "cncPatterns": false,
+      "sources": [
+        {"id":"s12","title":"AGT Panel Catalog (acrylic/high-gloss MDF panel specifications)","url":"https://www.scribd.com/document/599866581/AGT-catalog"},
+        {"id":"s13","title":"Royale Touche — \"Acrylic vs High Gloss Laminates: Key Differences & Best Uses\"","url":"https://royaletouche.com/blog/acrylic-vs-high-gloss-laminates-differences-uses/"},
+        {"id":"s14","title":"Fenix NTM — Material Properties Data Sheet","url":"https://www.4willis.com/wp-content/uploads/2019/10/FENIX-NTM_MPDS_Solid_Material.pdf"}
+      ]
+    },
+    {
+      "id": "veneer-mdf",
+      "kind": "board",
+      "nameHe": "פורניר עץ טבעי על MDF/דיקט",
+      "nameEn": "Wood Veneer on MDF/Plywood",
+      "summaryHe": "שכבה דקה של עץ טבעי מגולגל, מודבקת על גבי ליבה יציבה (MDF או דיקט), המעניקה מראה ומרקם של עץ מלא במשקל ובעלות נמוכים יותר.",
+      "summaryEn": "A thin layer of natural rotary/sliced wood bonded onto a stable core (MDF or plywood), giving the look and grain of solid wood at lower weight and cost.",
+      "properties": [
+        {"labelHe":"עובי הפורניר","labelEn":"Veneer thickness","valueHe":"פורניר טבעי איכותי נע בטווח כ-0.1–6 מ\"מ; ערך נפוץ המצוין לגבי פורניר על MDF הוא כ-0.5 מ\"מ.","valueEn":"High-quality natural veneer ranges roughly 0.1–6mm; a commonly cited figure for veneer-on-MDF is ~0.5mm.","sourceIds":["s15"]},
+        {"labelHe":"עיבוד ו-CNC","labelEn":"Machinability / CNC","valueHe":"ליבת ה-MDF ניתנת לניתוב CNC לפני הדבקת הפורניר; לאחר ההדבקה, כיפוף/עיבוד על רדיוסים חדים עלול לסדוק את שכבת הפורניר הדקה.","valueEn":"The MDF core can be CNC-routed before the veneer is applied; after bonding, bending/machining over tight radii can crack the thin veneer layer.","sourceIds":["s16"]},
+        {"labelHe":"יכולת תיקון","labelEn":"Repairability","valueHe":"בניגוד לעץ מלא, פורניר פגוע לא תמיד ניתן לתיקון בליטוש עמוק — פורנירים טבעיים עבים יחסית סובלים שפשוף/גימור מחדש קל, אך פורניר דק/הנדסי אינו מתאים לתיקון עמוק; חבטה בקצה עלולה לחשוף את הליבה.","valueEn":"Unlike solid wood, damaged veneer cannot always be repaired by deep sanding — thicker natural veneers tolerate light sanding/refinishing, but thin/engineered veneer is not suited to deep repair; a hard knock on an edge can expose the core.","sourceIds":["s16"]},
+        {"labelHe":"רגישות ל-UV ולחות","labelEn":"UV and moisture sensitivity","valueHe":"חשיפה ל-UV גורמת עם הזמן לדהיית גוונים כהים/אדמדמים ולהצהבת גוונים בהירים; בתנאי לחות גבוהה (מעל כ-60% RH) עם איטום קצוות לקוי, ליבת ה-MDF עלולה לספוג לחות ולגרום להתנפחות/סדיקה של הפורניר.","valueEn":"UV exposure gradually fades dark/reddish tones and yellows light tones over time; in high humidity (above ~60% RH) with poor edge sealing, the MDF core can absorb moisture and cause the veneer to bubble/crack.","sourceIds":["s16"]}
+      ],
+      "suitedForHe": ["רהיטים שרוצים בהם מראה עץ טבעי במשקל ובעלות נמוכים מעץ מלא", "משטחים שטוחים או בעלי עיקולים מתונים בלבד", "יישומים פנימיים עם בקרת לחות סבירה", "רהיטים המשלבים אסתטיקה של עץ עם יציבות ממדית של MDF"],
+      "suitedForEn": ["Furniture wanting a natural-wood look at lower weight/cost than solid wood", "Flat surfaces or only gently curved shapes", "Interior applications with reasonable humidity control", "Furniture combining wood aesthetics with MDF's dimensional stability"],
+      "prosHe": ["מראה וטקסטורת עץ טבעי אמיתיים במשקל נמוך יותר מעץ מלא", "יציבות ממדית טובה יותר מעץ מלא (הליבה אינה \"עובדת\" כמו עץ מלא)", "ניצול חסכוני יותר של עצי פורניר יקרים", "ניתן לשלב עם גימורי לכה/שמן שקופים המדגישים את המרקם"],
+      "consHe": ["פגיעה/שבר בקצה חושף את הליבה ותיקון עדין מוגבל", "רגיש יחסית ל-UV (דהייה/הצהבה) ולחות גבוהה ממושכת", "לא מתאים לרדיוסי כיפוף/ניתוב חדים כמו MDF חשוף", "עלות גבוהה יותר מ-MFC/HPL רגיל"],
+      "prosEn": ["Real wood look and texture at lower weight than solid wood", "Better dimensional stability than solid wood (the core doesn't move like solid wood)", "More economical use of expensive veneer species", "Can be paired with clear lacquer/oil finishes that highlight the grain"],
+      "consEn": ["Edge damage/chipping exposes the core and fine repair is limited", "Relatively sensitive to UV (fading/yellowing) and prolonged high humidity", "Not suited to as tight bend/routing radii as bare MDF", "Higher cost than plain MFC/HPL"],
+      "careHe": "הימנעות מחשיפה ממושכת לאור שמש ישיר ומלחות גבוהה; ניקוי במטלית לחה בלבד; פגיעות קלות בגימור שקוף ניתנות לחידוש מקומי, פגיעות עמוקות החושפות את הליבה דורשות בדרך כלל טיפול מקצועי.",
+      "careEn": "Avoid prolonged direct sunlight and high humidity; clean with a damp cloth only; minor damage to a clear finish can be locally refreshed, but deep damage exposing the core generally needs professional repair.",
+      "childNotesHe": "יש לבדוק את דרגת פליטת הפורמלדהיד של הדבק/ליבת ה-MDF (E1/E0 לפי EN 13986) ואת בטיחות שכבת הגימור השקופה (לכה/שמן) לפי EN 71-3 אם מיועד למגע ילדים.",
+      "childNotesEn": "Check the formaldehyde emission class of the adhesive/MDF core (E1/E0 per EN 13986) and the safety of the clear top coat (lacquer/oil) per EN 71-3 if intended for child contact.",
+      "compatibleFinishes": ["clear-lacquer", "hardwax-oil", "stain"],
+      "cncPatterns": true,
+      "sources": [
+        {"id":"s15","title":"Decorative Hardwoods Association / HardwoodWeb — Veneer & Architectural Panels Technical Reference Guide","url":"https://www.hardwoodweb.com/wp-content/uploads/2019/11/veneer-technical-guide-19.pdf"},
+        {"id":"s16","title":"Cutr — \"Wood Veneer vs Solid Wood: Key Differences, Pros, and Cons\"","url":"https://www.cutr.com/articles/wood-veneer-vs-solid-wood-pros-cons-differences"}
+      ]
+    },
+    {
+      "id": "solid-wood",
+      "kind": "board",
+      "nameHe": "עץ מלא (מחטני: אורן/אשוח; רחב-עלים: אלון/אשור)",
+      "nameEn": "Solid Wood (softwood: pine/spruce; hardwood: oak/beech)",
+      "summaryHe": "לוחות/קורות מעץ טבעי מלא, ללא ליבה מהונדסת. עצי מחטניים (אורן, אשוח) רכים וקלים יחסית; עצי רחב-עלים (אלון, אשור) קשים וצפופים יותר.",
+      "summaryEn": "Boards/beams made of solid natural wood, with no engineered core. Softwoods (pine, spruce) are relatively soft and light; hardwoods (oak, beech) are harder and denser.",
+      "properties": [
+        {"labelHe":"צפיפות — אורן לבן","labelEn":"Density — Eastern White Pine","valueHe":"משקל יבש ממוצע כ-400 ק\"ג/מ\"ק (צפיפות יחסית 0.34–0.40).","valueEn":"Average dried weight ~400 kg/m³ (specific gravity 0.34–0.40).","sourceIds":["s17"]},
+        {"labelHe":"קשיות ג'נקה — אורן לבן","labelEn":"Janka hardness — Eastern White Pine","valueHe":"כ-380 lbf (כ-1,690 ניוטון).","valueEn":"~380 lbf (~1,690 N).","sourceIds":["s17"]},
+        {"labelHe":"צפיפות — אשוח נורווגי","labelEn":"Density — Norway Spruce","valueHe":"משקל יבש ממוצע כ-405 ק\"ג/מ\"ק (צפיפות יחסית כ-0.41).","valueEn":"Average dried weight ~405 kg/m³ (specific gravity ~0.41).","sourceIds":["s18"]},
+        {"labelHe":"קשיות ג'נקה — אשוח נורווגי","labelEn":"Janka hardness — Norway Spruce","valueHe":"כ-380 lbf (כ-1,680 ניוטון).","valueEn":"~380 lbf (~1,680 N).","sourceIds":["s18"]},
+        {"labelHe":"גימור/צביעה — אשוח","labelEn":"Finishing/staining — spruce","valueHe":"נוטה לגימור צביעה לא אחיד (\"כתמי\") עקב מבנה נקבובי סגור; מומלץ שימוש באוטם-לפני-כתם (sanding sealer) או ג'ל-כתם.","valueEn":"Tends to give blotchy, inconsistent staining results due to its closed pore structure; a sanding sealer or gel stain is recommended.","sourceIds":["s18"]},
+        {"labelHe":"צפיפות — אלון לבן","labelEn":"Density — White Oak","valueHe":"משקל יבש ממוצע כ-755 ק\"ג/מ\"ק (צפיפות יחסית 0.60–0.75) — צפיפות בינונית.","valueEn":"Average dried weight ~755 kg/m³ (specific gravity 0.60–0.75) — medium density.","sourceIds":["s19"]},
+        {"labelHe":"קשיות ג'נקה — אלון לבן","labelEn":"Janka hardness — White Oak","valueHe":"כ-1,350 lbf (כ-5,990 ניוטון).","valueEn":"~1,350 lbf (~5,990 N).","sourceIds":["s19"]},
+        {"labelHe":"יציבות ממדית — אלון","labelEn":"Dimensional stability — oak","valueHe":"ערכי כיווץ גבוהים יחסית וייצוב ממדי בינוני; עלול להכתים בתגובה לברזל בלחות (למשל מגע עם ברגי פלדה רטובים).","valueEn":"Relatively high shrinkage values and mediocre dimensional stability; can stain when reacting with iron in the presence of moisture (e.g. wet steel screws).","sourceIds":["s19"]},
+        {"labelHe":"צפיפות — אשור אירופי","labelEn":"Density — European Beech","valueHe":"משקל יבש ממוצע כ-710 ק\"ג/מ\"ק (צפיפות יחסית 0.53–0.71).","valueEn":"Average dried weight ~710 kg/m³ (specific gravity 0.53–0.71).","sourceIds":["s20"]},
+        {"labelHe":"קשיות ג'נקה — אשור אירופי","labelEn":"Janka hardness — European Beech","valueHe":"כ-1,450 lbf (כ-6,460 ניוטון).","valueEn":"~1,450 lbf (~6,460 N).","sourceIds":["s20"]},
+        {"labelHe":"עיבוד — אשור","labelEn":"Workability — beech","valueHe":"עיבוד טוב, מגיב היטב לכיפוף באדים (steam-bending); בעל תזוזה ממדית ניכרת בשירות ודורש התחשבות ביציבות העץ בתכנון.","valueEn":"Good overall workability, responds superbly to steam-bending; has significant in-service movement and requires accounting for wood stability in design.","sourceIds":["s20"]}
+      ],
+      "suitedForHe": ["רהיטים איכותיים עם דגש על עמידות ותחושת \"עץ אמיתי\"", "עצי מחטניים: מסגרות, גב ריהוט, אלמנטים קלים שאינם נושאי עומס גבוה", "עצי רחב-עלים (אלון/אשור): רגלי ריהוט, משטחים נושאי עומס ומשטחי עבודה", "רהיטים המיועדים לתיקון/חידוש לאורך שנים"],
+      "suitedForEn": ["Quality furniture emphasizing durability and an authentic \"real wood\" feel", "Softwoods: frames, furniture backs, light non-load-bearing elements", "Hardwoods (oak/beech): furniture legs, load-bearing surfaces, worktops", "Furniture intended for repair/refinishing over many years"],
+      "prosHe": ["ניתן לשיוף, תיקון וחידוש חוזר לאורך שנים רבות", "מרקם וגוון טבעיים ואותנטיים, ללא שני רהיטים זהים לחלוטין", "עצי רחב-עלים (אלון/אשור) מציעים קשיות וחוזק גבוהים לעומס", "עצי מחטניים קלים, זולים יחסית ונוחים לעיבוד ידני"],
+      "consHe": ["עץ \"עובד\" עם שינויי לחות/טמפרטורה (התכווצות/התרחבות, קשתות) ומחייב תכנון חיבורים מתאים", "עצי מחטניים רכים יחסית לשריטות ולחבטות", "עלות גבוהה יותר מרוב לוחות מהונדסים בעץ רחב-עלים איכותי", "גוונים/מרקמים אינם אחידים בין קרשים — מחייב מיון"],
+      "prosEn": ["Can be sanded, repaired and refinished repeatedly over many years", "Authentic, natural grain and color, with no two pieces exactly alike", "Hardwoods (oak/beech) offer high hardness and load-bearing strength", "Softwoods are light, relatively inexpensive and easy to hand-work"],
+      "consEn": ["Wood \"moves\" with humidity/temperature changes (shrinking/expanding, warping) and requires appropriate joinery design", "Softwoods are relatively soft against scratches and dents", "Quality hardwood costs more than most engineered panels", "Color/grain is not uniform between boards — requires sorting/matching"],
+      "careHe": "ניקוי במטלית לחה; יש לשלוט בתנודות לחות (הימנעות מקרבה ישירה למקורות חום/מיזוג) ולחדש גימור מגן (שמן/לכה) מעת לעת. שריטות ופגיעות ניתנות לשיוף ותיקון מקומי.",
+      "careEn": "Clean with a damp cloth; control humidity swings (avoid direct proximity to heat/AC sources) and periodically renew a protective finish (oil/lacquer). Scratches and damage can be sanded and repaired locally.",
+      "childNotesHe": "העץ המלא עצמו נטול פורמלדהיד מובנה; דרישות רגולציה (E1/E0, EN 71-3) חלות בעיקר על הדבק (בחיבורי אצבע/מגדל) ועל שכבת הגימור (צבע/לכה/שמן) — יש לבדוק את אלה בנפרד לפי כרטיס הגימור הרלוונטי.",
+      "childNotesEn": "Solid wood itself has no inherent formaldehyde; regulatory requirements (E1/E0, EN 71-3) mainly apply to any adhesive (finger-joints/glue-ups) and to the finish coating (paint/lacquer/oil) — check these separately via the relevant finish card.",
+      "compatibleFinishes": ["clear-lacquer", "hardwax-oil", "stain", "baked-paint"],
+      "cncPatterns": true,
+      "sources": [
+        {"id":"s17","title":"The Wood Database — Eastern White Pine","url":"https://www.wood-database.com/eastern-white-pine/"},
+        {"id":"s18","title":"The Wood Database — Norway Spruce","url":"https://www.wood-database.com/norway-spruce/"},
+        {"id":"s19","title":"The Wood Database — White Oak","url":"https://www.wood-database.com/white-oak/"},
+        {"id":"s20","title":"The Wood Database — European Beech","url":"https://www.wood-database.com/european-beech/"},
+        {"id":"s21","title":"The Wood Database — \"Janka Hardness\" (test methodology)","url":"https://www.wood-database.com/wood-articles/janka-hardness/"}
+      ]
+    },
+    {
+      "id": "osb",
+      "kind": "board",
+      "nameHe": "OSB (לוח שבבים מכוונים)",
+      "nameEn": "OSB (Oriented Strand Board)",
+      "summaryHe": "לוח מהונדס העשוי רצועות עץ מלבניות דקות המונחות בשכבות מוצלבות ומודבקות בלחץ וחום עם דבקים עמידים בלחות. משמש בעיקר לבנייה, אך גם ליישומים תעשייתיים/רהיטים מסוימים.",
+      "summaryEn": "An engineered panel made of thin rectangular wood strands laid in cross-oriented layers and bonded under heat and pressure with moisture-resistant adhesives. Used mainly in construction, but also in some industrial/furniture applications.",
+      "properties": [
+        {"labelHe":"סיווג ותקן","labelEn":"Classification/standard","valueHe":"EN 300:2006 מגדיר סוגי OSB וסובלנות סטייה בצפיפות של ±15% מהצפיפות הממוצעת בלוח (EN 323); מחקר מציין אפשרות ייצור לוח OSB Type 3 בצפיפות נמוכה עד כ-425 ק\"ג/מ\"ק תוך עמידה בדרישות התקן.","valueEn":"EN 300:2006 defines OSB types with a ±15% tolerance on mean board density (EN 323); research notes Type 3 boards can be produced at densities as low as ~425 kg/m³ while still meeting the standard.","sourceIds":["s23"]},
+        {"labelHe":"התנהגות מול לחות","labelEn":"Moisture behavior","valueHe":"OSB עלול להתרחב בחשיפה ללחות; המבנה המוצלב מסייע בהתנגדות לעיוות אך מומלץ להשאיר רווח (כ-3 מ\"מ) בין לוחות בהתקנה.","valueEn":"OSB can expand on moisture exposure; the cross-oriented structure helps resist warping, but a gap (~3mm) between panels is recommended during installation.","sourceIds":["s22"]},
+        {"labelHe":"פורמלדהיד","labelEn":"Formaldehyde","valueHe":"OSB בעל תו APA אינו מכיל דבק אוריאה-פורמלדהיד (המסיס מדי במים); משתמש בדבקים פנוליים או MDI פולימרי.","valueEn":"APA-trademarked OSB does not use urea-formaldehyde adhesive (too water-soluble); it uses phenolic or polymeric MDI adhesives instead.","sourceIds":["s22"]},
+        {"labelHe":"מראה ועיבוד","labelEn":"Appearance/machinability","valueHe":"מרקם רצועות העץ גלוי ובולט; פחות מתאים לגימור צבע אחיד או לניתוב פרופילים דקורטיביים עדינים לעומת MDF.","valueEn":"The strand texture is visible and pronounced; less suited to a uniform painted finish or fine decorative profile routing compared to MDF.","sourceIds":["s22"]}
+      ],
+      "suitedForHe": ["יישומי מבנה (תתי-רצפה, קירות, גגות) ולא בהכרח ריהוט מוגמר", "רהיטים תעשייתיים/גס-מרקם במכוון (סגנון \"תעשייתי\")", "יישומים בהם עלות נמוכה חשובה יותר ממראה אחיד", "אלמנטים מבניים פנימיים שאינם גלויים"],
+      "suitedForEn": ["Structural applications (subflooring, walls, roofing), not necessarily finished furniture", "Industrial/deliberately rough-textured furniture (\"industrial\" style)", "Applications where low cost matters more than a uniform look", "Internal structural elements that are not visible"],
+      "prosHe": ["חוזק מבני טוב יחסית למחיר", "לרוב נטול דבק אוריאה-פורמלדהיד (תו APA)", "מבנה מוצלב מסייע ביציבות ובהתנגדות לעיוות", "זמין וזול יחסית ללוחות עץ אחרים"],
+      "consHe": ["מרקם גס וגלוי, פחות מתאים לרהיטי גימור עדין", "מתרחב בחשיפה ללחות ודורש רווחי התקנה", "לא נפוץ בייצור רהיטים ביתיים מוגמרים", "פחות מתועד עבור יישומי ריהוט ביחס ל-MDF/דיקט"],
+      "prosEn": ["Relatively good structural strength for the price", "Usually free of urea-formaldehyde adhesive (APA trademark)", "Cross-oriented structure aids stability and warp resistance", "Widely available and relatively inexpensive compared to other wood panels"],
+      "consEn": ["Coarse, visible texture, less suited to fine finished furniture", "Expands on moisture exposure and needs installation gaps", "Not common in finished household furniture manufacturing", "Less well documented for furniture applications compared to MDF/plywood"],
+      "careHe": "ניקוי יבש/מטלית לחה קלה; יש להימנע מחשיפה ממושכת למים עומדים.",
+      "careEn": "Dry cleaning/light damp cloth; avoid prolonged exposure to standing water.",
+      "childNotesHe": "לוחות בעלי תו APA אינם מכילים אוריאה-פורמלדהיד, אך OSB אינו נפוץ ברהיטי ילדים מוגמרים ולא אותרו בתחקיר זה נתוני EN 71-3 ספציפיים לשימוש כזה — יש לבדוק בנפרד אם רלוונטי.",
+      "childNotesEn": "APA-trademarked boards do not contain urea-formaldehyde, but OSB is uncommon in finished children's furniture and no EN 71-3-specific data for such use was found in this research — check separately if relevant.",
+      "compatibleFinishes": ["clear-lacquer", "stain"],
+      "cncPatterns": false,
+      "sources": [
+        {"id":"s22","title":"APA — The Engineered Wood Association, \"OSB\"","url":"https://www.apawood.org/osb"},
+        {"id":"s23","title":"iTeh Standards — EN 300:2006, Oriented Strand Boards: Definitions, Classification and Specifications","url":"https://standards.iteh.ai/catalog/standards/cen/08948e55-7b1a-4e7f-bb10-8dc4dc6e01bf/en-300-2006"}
+      ]
+    },
+    {
+      "id": "baked-paint",
+      "kind": "finish",
+      "nameHe": "צבע בתנור / לכת ריסוס תעשייתית",
+      "nameEn": "Baked Paint / Factory Spray Lacquer (typically PU or acrylic lacquer, cured in a heated booth)",
+      "summaryHe": "בנגרות ישראלית, \"צבע בתנור\" מתייחס בדרך כלל לריסוס לכה פוליאוריתן (PU) או אקרילית בתא ריסוס ואיוד/ייבוש בחום מבוקר, המעניק גימור קשיח, אחיד וחלק על MDF, עץ מלא ופרופילי CNC.",
+      "summaryEn": "In Israeli carpentry, \"oven paint\" usually refers to spraying a polyurethane (PU) or acrylic lacquer in a spray booth with controlled heat curing, producing a hard, uniform, smooth finish on MDF, solid wood and CNC-routed profiles.",
+      "properties": [
+        {"labelHe":"תאימות חומרים","labelEn":"Substrate compatibility","valueHe":"מתאים היטב ל-MDF (משטח חלק, סופג צבע באחידות בתנאי שהקצוות נאטמו), לעץ מלא, ולפרופילים/שקעים מנותבים ב-CNC.","valueEn":"Suits MDF well (smooth surface, absorbs paint evenly if edges are sealed), solid wood, and CNC-routed profiles/grooves.","sourceIds":["s32"]},
+        {"labelHe":"עמידות","labelEn":"Durability","valueHe":"לכת PU/אקרילית מרוססת ומעובדת בחום נותנת גימור קשיח יחסית העמיד בשחיקה ובניקוי יומיומי; עמידות בפועל תלויה במספר שכבות, סוג הלכה ואיכות ההכנה.","valueEn":"Sprayed PU/acrylic lacquer with heat curing gives a relatively hard finish resistant to daily wear and cleaning; actual durability depends on the number of coats, lacquer type, and prep quality.","sourceIds":["s32"]},
+        {"labelHe":"יכולת תיקון","labelEn":"Repairability","valueHe":"תיקון מקומי (מילוי, שפשוף עדין, ריסוס חוזר של האזור) אפשרי אך דורש ציוד/מיומנות מקצועיים כדי להתאים גימור וגוון; ליטוש עמוק אינו אפשרי מעל ליבת MDF.","valueEn":"Local repair (filling, light sanding, re-spraying the area) is possible but requires professional equipment/skill to match finish and color; deep sanding is not possible over an MDF core.","sourceIds":["s32"]},
+        {"labelHe":"איטום קצוות","labelEn":"Edge sealing","valueHe":"קצוות MDF/עץ גזורים חייבים הכנה (שיוף, פריימר/אוטם) לפני ריסוס, אחרת סופגים צבע בעודף ומציגים גימור לא אחיד (\"מתמלמל\").","valueEn":"Cut MDF/wood edges must be prepped (sanding, primer/sealer) before spraying, otherwise they over-absorb paint and show an uneven, fuzzy finish.","sourceIds":["s32"]}
+      ],
+      "suitedForHe": ["חזיתות וגופי ארונות בגימור צבעוני אחיד ומבריק/מט", "אלמנטים מנותבים ב-CNC (שקעים, פרופילים, גילופים)", "רהיטים המחייבים גימור אחיד ללא סימני עץ/סיבית", "רהיטי ילדים בכפוף לעמידה בתקן EN 71-3"],
+      "suitedForEn": ["Cabinet fronts/carcasses in a uniform glossy/matte color finish", "CNC-routed elements (grooves, profiles, carvings)", "Furniture requiring a uniform finish with no wood-grain show-through", "Children's furniture, subject to EN 71-3 compliance"],
+      "prosHe": ["גימור חלק, אחיד וניתן להתאמה למגוון רחב של גוונים/מטים-מבריקים", "מתאים לפרופילים מורכבים ולניתוב CNC", "עמיד יחסית לשחיקה ולניקוי יומיומי כאשר מיושם כראוי", "מסתיר לחלוטין את מרקם ה-MDF/עץ שמתחת"],
+      "consHe": ["דורש תא ריסוס/ציוד תעשייתי ותהליך רב-שלבי (הכנה, פריימר, שכבות, ליטוש בין שכבות)", "פגיעה/שריטה עמוקה חושפת ליבה כהה ודורשת תיקון מקצועי להתאמת גוון", "עלות ייצור גבוהה יותר מפני מלמין/HPL מוכן", "רגיש לשריטות בגימור מבריק במיוחד ביחס לגימורי מט"],
+      "prosEn": ["Smooth, uniform finish adaptable to a wide range of colors/matte-gloss levels", "Suits complex profiles and CNC routing", "Reasonably wear- and cleaning-resistant when properly applied", "Fully hides the MDF/wood texture underneath"],
+      "consEn": ["Requires a spray booth/industrial equipment and a multi-step process (prep, primer, coats, sanding between coats)", "Deep damage/scratches expose a dark core and need professional repair to match color", "Higher production cost than pre-finished melamine/HPL", "Glossy finishes are more scratch-visible than matte ones"],
+      "careHe": "ניקוי במטלית לחה וחומר ניקוי עדין; יש להימנע מחומרי שחיקה. שריטות קלות ניתנות לטיפול נקודתי; פגיעות עמוקות דורשות תיקון מקצועי.",
+      "careEn": "Clean with a damp cloth and mild cleaner; avoid abrasives. Light scratches can be spot-treated; deep damage requires professional repair.",
+      "childNotesHe": "כאשר הגימור מיועד למגע ילדים (למשל רהיטי חדר ילדים/צעצועים מובנים), נהוג להחיל את תקן EN 71-3 (מעבר יסודות מסוימים כגון עופרת, כספית, קדמיום וכרום מציפויים) — יש לוודא שהלכה/הצבע שנבחרו מגובים בתעודת בדיקה מתאימה מהיצרן.",
+      "childNotesEn": "When the finish is intended for child contact (e.g. children's room furniture/built-in toys), EN 71-3 (migration of certain elements such as lead, mercury, cadmium and chromium from coatings) is commonly applied — ensure the chosen lacquer/paint is backed by an appropriate manufacturer test certificate.",
+      "compatibleFinishes": [],
+      "cncPatterns": null,
+      "sources": [
+        {"id":"s32","title":"WOODWEB — \"High Gloss White Paint on MDF\" (professional finishing forum)","url":"https://woodweb.com/knowledge_base/High_Gloss_White_Paint_on_MDF.html"},
+        {"id":"s26","title":"iTeh Standards — EN 71-3:2019, Safety of Toys – Migration of Certain Elements","url":"https://standards.iteh.ai/catalog/standards/cen/103791b1-943c-4d06-8200-b02e3c153400/en-71-3-2019"},
+        {"id":"s27","title":"TestingLab — \"EN 71-3: Migration of Hazardous Elements in Coatings\"","url":"https://www.testinglab.com/en-71-3-migration-of-hazardous-elements-in-coatings"}
+      ]
+    },
+    {
+      "id": "clear-lacquer",
+      "kind": "finish",
+      "nameHe": "לכה שקופה (PU / על בסיס מים)",
+      "nameEn": "Clear Lacquer (PU / water-based) on wood/veneer",
+      "summaryHe": "ציפוי שקוף היוצר \"פילם\" קשיח על פני העץ/הפורניר, מדגיש את המרקם הטבעי ומגן על המשטח. קיימות גרסאות מבוססות ממס (סולבנט) וגרסאות מבוססות מים בעלות פליטת VOC נמוכה יותר.",
+      "summaryEn": "A clear coating that forms a hard film on top of the wood/veneer, highlighting the natural grain while protecting the surface. Solvent-based and lower-VOC water-based versions both exist.",
+      "properties": [
+        {"labelHe":"סוג גימור","labelEn":"Finish type","valueHe":"גימור \"פילם\" (film-forming) הנוצר מעל פני השטח, בשונה משמן חודר; יוצר שכבת הגנה רציפה אך יכולה להתקלף/להישרט לאורך זמן.","valueEn":"A film-forming finish sitting on top of the surface, unlike a penetrating oil; creates a continuous protective layer but can chip/scratch over time.","sourceIds":["s30"]},
+        {"labelHe":"מראה","labelEn":"Appearance","valueHe":"נחשב לאחד הגימורים השקופים החלקים והמבריקים ביותר הזמינים.","valueEn":"Considered one of the smoothest, glossiest clear finishes available.","sourceIds":["s30"]}
+      ],
+      "suitedForHe": ["עץ מלא ופורניר המיועדים להישאר בגוון טבעי/מודגש", "משטחים הזקוקים להגנה טובה מפני לחות וכתמים עם מראה בוהק/סאטן", "רהיטים שבהם מבוקש מראה \"מלוטש\" אחיד"],
+      "suitedForEn": ["Solid wood and veneer intended to stay in a natural/enhanced tone", "Surfaces needing good protection from moisture and stains with a gloss/satin look", "Furniture where a uniform \"polished\" look is desired"],
+      "prosHe": ["הגנה טובה בפני לחות, כתמים ושחיקה יומיומית", "מגוון רמות ברק (מבריק/סאטן/מט)", "מדגיש ומחדד את מרקם וגוון העץ הטבעי", "גרסאות מבוססות מים מפחיתות פליטת VOC בהשוואה לגרסאות ממס"],
+      "consHe": ["גימור \"פילם\" עלול להתקלף/להישרט ולדרוש שיוף מלא לפני חידוש (בשונה משמן)", "תיקון נקודתי קשה יותר מגימורי שמן — לרוב נדרש שיוף של כל המשטח", "מריח בזמן היישום (בעיקר גרסאות ממס) ודורש אוורור טוב"],
+      "prosEn": ["Good protection against moisture, stains and daily wear", "Range of sheen levels (gloss/satin/matte)", "Highlights and sharpens the natural wood grain and tone", "Water-based versions reduce VOC emissions compared to solvent-based ones"],
+      "consEn": ["A film finish can chip/scratch and typically needs full sanding before renewal (unlike oil)", "Spot repair is harder than with oil finishes — usually the whole surface needs sanding", "Has an odor during application (especially solvent-based) and needs good ventilation"],
+      "careHe": "ניקוי במטלית לחה; יש להימנע מחומרי שחיקה. חידוש הגימור דורש שיוף קל של כל המשטח ולא רק את האזור הפגוע.",
+      "careEn": "Clean with a damp cloth; avoid abrasives. Renewing the finish requires light sanding of the entire surface, not just the damaged spot.",
+      "childNotesHe": "כמו כל ציפוי גימור על רהיטים המיועדים למגע ילדים, מומלץ לוודא עמידה בתקן EN 71-3 למעבר יסודות מוגבלים לאחר התייבשות/הקשייה מלאה.",
+      "childNotesEn": "As with any finish coating on furniture intended for child contact, it is advisable to confirm compliance with EN 71-3 for migration of restricted elements once fully cured.",
+      "compatibleFinishes": [],
+      "cncPatterns": null,
+      "sources": [
+        {"id":"s30","title":"Target Coatings — \"When to Use a Penetrating Wood Finish Instead of a Film-Forming Finish\"","url":"https://www.targetcoatings.com/2022/02/23/penetrating-wood-finish/"},
+        {"id":"s26","title":"iTeh Standards — EN 71-3:2019, Safety of Toys – Migration of Certain Elements","url":"https://standards.iteh.ai/catalog/standards/cen/103791b1-943c-4d06-8200-b02e3c153400/en-71-3-2019"}
+      ]
+    },
+    {
+      "id": "hardwax-oil",
+      "kind": "finish",
+      "nameHe": "שמן/שעווה קשה (Hardwax Oil)",
+      "nameEn": "Hardwax Oil / Oil Finishes",
+      "summaryHe": "תערובת שמנים טבעיים (לרוב פשתן) ושעוות המחלחלת אל תוך סיבי העץ ומתקשה בתוכם, במקום ליצור \"פילם\" מעל פני השטח.",
+      "summaryEn": "A blend of natural oils (often linseed) and waxes that penetrates into the wood fibers and cures within them, rather than forming a film on top of the surface.",
+      "properties": [
+        {"labelHe":"סוג גימור","labelEn":"Finish type","valueHe":"גימור חודר (penetrating) המתקשה בתוך סיבי העץ; נחשב עמיד בשחיטה/מים ברמה גבוהה למרות שאינו יוצר שכבת פילם עבה.","valueEn":"A penetrating finish that cures within the wood fibers; considered highly wear/water resistant despite not forming a thick surface film.","sourceIds":["s30","s28"]},
+        {"labelHe":"זמני ייבוש/הקשיה","labelEn":"Cure times","valueHe":"מוצר אחד (Rubio Monocoat Oil Plus 2C) מדווח על ~80% הקשיה תוך יומיים והקשיה מלאה תוך 5–7 ימים; מוצר אחר (Osmo Polyx-Oil) מדווח על 5–14 ימים עד הקשיה מלאה, עם מריחת שכבה שנייה כ-12–24 שעות אחרי הראשונה.","valueEn":"One product (Rubio Monocoat Oil Plus 2C) reports ~80% cure within 2 days and full cure in 5–7 days; another (Osmo Polyx-Oil) reports 5–14 days to full cure, with a second coat applied ~12–24 hours after the first.","sourceIds":["s28","s29"]},
+        {"labelHe":"יכולת תיקון","labelEn":"Repairability","valueHe":"תיקון נקודתי קל יחסית — ניתן למרוח שמן מחדש באזור פגוע ללא שיוף של כל המשטח, בניגוד לגימורי פילם.","valueEn":"Relatively easy spot repair — oil can be reapplied to a damaged area without sanding the entire surface, unlike film finishes.","sourceIds":["s30"]}
+      ],
+      "suitedForHe": ["רהיטי עץ מלא/פורניר שבהם רוצים מגע \"טבעי\" (לא פלסטי) של העץ", "משטחים שיזדקקו לתחזוקה/חידוש מקומי תכוף (שולחנות, משטחי עבודה)", "לקוחות המעדיפים מוצרים בעלי VOC נמוך/ללא ממסים"],
+      "suitedForEn": ["Solid wood/veneer furniture where a \"natural\" (non-plastic) wood feel is desired", "Surfaces needing frequent local maintenance/renewal (tables, worktops)", "Customers preferring low-VOC/solvent-free products"],
+      "prosHe": ["תיקון נקודתי קל ללא צורך בשיוף כל המשטח", "מגע טבעי ו\"חם\" של העץ נשמר (לא מרגיש כמו ציפוי פלסטי)", "חלק מהמוצרים נטולי VOC/ממסים", "מדגיש יפה את גוון וטקסטורת העץ"],
+      "consHe": ["זמן הקשיה מלא ארוך יחסית (מספר ימים) לפני שימוש מלא במשטח", "עמידות במים/שחיקה עשויה להיות נמוכה יותר מגימור לכה עבה בשימוש אינטנסיבי מאוד", "דורש חידוש תקופתי (מריחה מחדש) לשמירה על הגנה מיטבית", "פחות מתאים למשטחים המיועדים לגימור צבעוני אטום"],
+      "prosEn": ["Easy spot repair without sanding the whole surface", "Preserves a natural, \"warm\" wood feel (doesn't feel like a plastic coating)", "Some products are VOC/solvent-free", "Beautifully highlights wood tone and texture"],
+      "consEn": ["Relatively long full-cure time (several days) before full surface use", "Water/wear resistance may be lower than a thick lacquer film under very intensive use", "Requires periodic renewal (reapplication) to maintain optimal protection", "Less suited to surfaces intended for an opaque color finish"],
+      "careHe": "ניקוי במטלית לחה; יש למרוח שמן תחזוקה מעת לעת (כפי שממליץ היצרן) ולהימנע ממים עומדים ממושכים על המשטח.",
+      "careEn": "Clean with a damp cloth; periodically reapply maintenance oil (per manufacturer guidance) and avoid prolonged standing water on the surface.",
+      "childNotesHe": "מומלץ לבדוק תעודת יצרן לגבי בטיחות המוצר לאחר התייבשות מלאה (כולל אם רלוונטי עמידה ב-EN 71-3) לפני שימוש על רהיטי ילדים; חלק מהמוצרים משווקים כנטולי ממסים/VOC נמוך אך אין להניח זאת ללא אימות.",
+      "childNotesEn": "It is advisable to check a manufacturer certificate for product safety once fully cured (including EN 71-3 compliance if relevant) before use on children's furniture; some products are marketed as solvent-free/low-VOC but this should not be assumed without verification.",
+      "compatibleFinishes": [],
+      "cncPatterns": null,
+      "sources": [
+        {"id":"s28","title":"Rubio Monocoat — Oil Plus 2C Technical Data Sheet","url":"https://service.rubiomonocoat.com/hubfs/TDS%20Oil%20Plus%202C%20-%20EN-2.pdf?hsLang=en"},
+        {"id":"s29","title":"The Wood Whisperer — \"Hardwax Oil Comparison\" (incl. Osmo Polyx-Oil cure times)","url":"https://thewoodwhisperer.com/videos/step-aside-rubio-the-game-has-changed-hardwax-oil-comparison/"},
+        {"id":"s30","title":"Target Coatings — \"When to Use a Penetrating Wood Finish Instead of a Film-Forming Finish\"","url":"https://www.targetcoatings.com/2022/02/23/penetrating-wood-finish/"}
+      ]
+    },
+    {
+      "id": "stain",
+      "kind": "finish",
+      "nameHe": "כתם/צבע חדירה (Stain)",
+      "nameEn": "Stain",
+      "summaryHe": "תערובת פיגמנט, קושר ומדלל החודרת אל תוך נקבוביות העץ ומדגישה/משנה את הגוון, ללא יצירת שכבת הגנה משמעותית בפני עצמה — ולכן משמש בדרך כלל בשילוב עם שכבת גימור מגנה (לכה/שמן).",
+      "summaryEn": "A blend of pigment, binder and thinner that penetrates the wood's pores and enhances/changes its tone, without forming significant protection on its own — so it is typically paired with a protective top coat (lacquer/oil).",
+      "properties": [
+        {"labelHe":"תפקיד","labelEn":"Function","valueHe":"משמש בעיקר לשינוי/הדגשת גוון העץ ולא כשכבת הגנה עיקרית; פיגמנט חודר לסיבים ומוסיף ניגודיות ועומק לדוגמת העץ.","valueEn":"Used mainly to change/enhance wood tone rather than as the primary protective layer; pigment penetrates the grain and adds contrast/depth.","sourceIds":["s31"]},
+        {"labelHe":"התאמה לסוג עץ","labelEn":"Wood-species suitability","valueHe":"עצים בעלי מבנה נקבוביות סגור (כגון אשוח) נוטים לקבל כתם בצורה לא אחידה (\"מנומר\"); מומלץ אוטם-לפני-כתם (sanding sealer) או ג'ל-כתם עבורם.","valueEn":"Wood with a closed pore structure (e.g. spruce) tends to take stain unevenly (\"blotchy\"); a sanding sealer or gel stain is recommended for such species.","sourceIds":["s18"]}
+      ],
+      "suitedForHe": ["התאמת גוון עץ מלא/פורניר לפני יישום לכה/שמן מגן", "פרויקטים בהם רוצים גוון אחיד בין עצים שונים", "חידוש/שינוי גוון רהיט קיים לפני גימור סופי"],
+      "suitedForEn": ["Adjusting solid wood/veneer tone before applying a protective lacquer/oil", "Projects wanting a uniform tone across different wood pieces", "Refreshing/changing the tone of existing furniture before a final finish"],
+      "prosHe": ["מאפשר גיוון רחב של גוונים על אותו סוג עץ", "יכול להסוות הבדלי גוון טבעיים בין קרשים שונים", "עלות נמוכה ויישום פשוט יחסית"],
+      "consHe": ["אינו מספק הגנה מספקת בפני עצמו ומחייב שכבת גימור נוספת (לכה/שמן)", "עלול להיספג בצורה לא אחידה בעצים בעלי נקבוביות סגורה (כגון אשוח) וליצור מראה \"מנומר\"", "שינוי גוון הוא לרוב בלתי הפיך ללא שיוף מלא"],
+      "prosEn": ["Allows a wide range of tones on the same wood species", "Can mask natural tone differences between boards", "Low cost and relatively simple application"],
+      "consEn": ["Does not provide sufficient protection on its own and requires an additional top coat (lacquer/oil)", "Can absorb unevenly on closed-pore woods (e.g. spruce), creating a blotchy look", "Tone change is generally irreversible without full sanding"],
+      "careHe": "כתם עצמו אינו נדרש לתחזוקה שוטפת — הטיפול היומיומי תלוי בשכבת הגימור המגנה שמעליו (לכה/שמן).",
+      "careEn": "The stain itself needs no routine maintenance — daily care depends on the protective top coat applied over it (lacquer/oil).",
+      "childNotesHe": "בשל שילוב עם שכבת גימור (לכה/שמן), בדיקת עמידה ב-EN 71-3 צריכה להיעשות על המערכת המלאה (כתם + גימור עליון) ולא על הכתם בלבד.",
+      "childNotesEn": "Because it is combined with a top coat (lacquer/oil), EN 71-3 compliance should be checked on the full system (stain + top coat), not the stain alone.",
+      "compatibleFinishes": ["clear-lacquer", "hardwax-oil"],
+      "cncPatterns": null,
+      "sources": [
+        {"id":"s31","title":"Family Handyman — \"Different Types of Wood Stains and Finishes\"","url":"https://www.familyhandyman.com/article/types-of-wood-stains-finishes/"},
+        {"id":"s18","title":"The Wood Database — Norway Spruce","url":"https://www.wood-database.com/norway-spruce/"}
+      ]
+    },
+    {
+      "id": "powder-coating",
+      "kind": "finish",
+      "nameHe": "צביעה באבקה (Powder Coating)",
+      "nameEn": "Powder Coating",
+      "summaryHe": "ציפוי הנוצר מריסוס אבקת פוליאסטר/אפוקסי טעונה חשמלית והיתוך שלה בחום לגימור קשיח ואחיד. שימושו העיקרי הוא על מתכת; קיימות גם טכנולוגיות ייעודיות לצביעת MDF/עץ בטמפרטורות נמוכות יותר.",
+      "summaryEn": "A coating created by spraying electrostatically charged polyester/epoxy powder and melting it with heat into a hard, uniform finish. Its main use is on metal; dedicated lower-temperature technologies for coating MDF/wood also exist.",
+      "properties": [
+        {"labelHe":"יישום עיקרי","labelEn":"Primary application","valueHe":"מיועד באופן מסורתי למתכת, שם טמפרטורות ההיתוך הגבוהות (מעל 180°C בדרך כלל) אינן פוגעות בחומר.","valueEn":"Traditionally intended for metal, where the high curing temperatures (typically above 180°C) do not damage the substrate.","sourceIds":["s33"]},
+        {"labelHe":"התאמה ל-MDF","labelEn":"MDF compatibility","valueHe":"פותחו טכנולוגיות ייעודיות לצביעת MDF באבקה בטמפרטורות נמוכות יותר — למשל תהליך המדווח על חימום מקדים של הלוח לכ-350–375°F, ציפוי כשהלוח בין 170–240°F, והתקשות (post-cure) בין 250–375°F למשך 5–30 דקות, כאשר טמפרטורת הלוח לא אמורה לעבור כ-300°F; טכנולוגיות מתקדמות יותר מדווחות על התקשות אפשרית מתחת ל-130°C ואף מתחת ל-100°C.","valueEn":"Dedicated technologies for powder-coating MDF at lower temperatures have been developed — e.g. one reported process preheats the board to ~350–375°F, coats it at 170–240°F board temperature, and post-cures at 250–375°F for 5–30 minutes while keeping board temperature under ~300°F; more advanced systems report possible curing below 130°C and even below 100°C.","sourceIds":["s33","s34"]},
+        {"labelHe":"זמינות מסחרית","labelEn":"Commercial availability","valueHe":"צביעת MDF באבקה קיימת כטכנולוגיה ותועדה בספרות מקצועית ופטנטים, אך פחות נפוצה ביישומי רהיטים סטנדרטיים ביחס לצבע-בתנור/לכה נוזלית — יש לוודא זמינות אצל ספק/בית מלאכה ספציפי לפני תכנון פרויקט סביבה.","valueEn":"MDF powder coating exists as a documented technology in trade literature and patents, but is less common in standard furniture applications compared to liquid baked paint/lacquer — availability should be confirmed with a specific supplier/workshop before designing a project around it.","sourceIds":["s34"]}
+      ],
+      "suitedForHe": ["רגלי/מסגרות מתכת ברהיטים משולבי חומרים", "יישומי MDF ייעודיים אצל ספקים המצוידים בטכנולוגיית אבקה בטמפרטורה נמוכה", "משטחים הדורשים גימור עבה ועמיד בשחיקה במיוחד (בעיקר על מתכת)"],
+      "suitedForEn": ["Metal legs/frames in mixed-material furniture", "Dedicated MDF applications at suppliers equipped with low-temperature powder technology", "Surfaces needing an especially thick, wear-resistant finish (mainly on metal)"],
+      "prosHe": ["גימור עבה, קשיח ועמיד בשחיקה במיוחד (בפרט על מתכת)", "פליטת VOC נמוכה יחסית לצביעה בממס נוזלי", "יעילות חומרית גבוהה (פחות פסולת ריסוס) בתהליכים תעשייתיים"],
+      "consHe": ["על MDF/עץ נדרשת טכנולוגיה ייעודית בטמפרטורה מבוקרת ונמוכה, שאינה זמינה בכל בית מלאכה", "פחות מתועד ונפוץ ביישומי רהיטי עץ סטנדרטיים לעומת לכה/צבע נוזלי", "טמפרטורות עיבוד גבוהות מדי עלולות לפגוע/לעוות ליבת MDF אם התהליך אינו מכויל כראוי"],
+      "prosEn": ["Thick, hard, especially wear-resistant finish (particularly on metal)", "Relatively low VOC emissions compared to liquid solvent-based painting", "High material efficiency (less overspray waste) in industrial processes"],
+      "consEn": ["On MDF/wood it requires dedicated, carefully controlled low-temperature technology not available at every workshop", "Less documented and less common in standard wood-furniture applications than liquid lacquer/paint", "Excessive process temperatures can damage/warp an MDF core if the process is not properly calibrated"],
+      "careHe": "ניקוי במטלית לחה וחומר ניקוי עדין; גימור אבקה קשיח בדרך כלל ועמיד היטב בניקוי שוטף.",
+      "careEn": "Clean with a damp cloth and mild cleaner; powder coating is generally hard and holds up well to routine cleaning.",
+      "childNotesHe": "לא אותרו בתחקיר זה נתוני EN 71-3 ספציפיים לאבקות צביעה על MDF; יש לבדוק תעודת יצרן ייעודית אם מתוכנן שימוש ברהיטי ילדים.",
+      "childNotesEn": "No EN 71-3-specific data for MDF powder coatings was found in this research; a dedicated manufacturer certificate should be checked if use in children's furniture is planned.",
+      "compatibleFinishes": [],
+      "cncPatterns": null,
+      "sources": [
+        {"id":"s33","title":"PCI Magazine — \"Ultra-Low-Temperature Cure for MDF Applications\"","url":"https://www.pcimag.com/articles/109458-ultra-low-temperature-cure-for-mdf-applications"},
+        {"id":"s34","title":"Tiger Coatings — \"Powder Coating on MDF\"","url":"https://www.tiger-coatings.com/powder-coating/applications/special-substrates/mdf-powder-coating"}
+      ]
+    }
+  ]
+}

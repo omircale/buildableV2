@@ -1,3 +1,4 @@
+import { tr } from '../i18n';
 import type { Material, Part, StockSize } from '../types';
 
 export interface NestingOptions {
@@ -106,7 +107,7 @@ function packOnce(materialId: string, thicknessMm: number, pieces: Piece[], mate
   const unplaced: NestingGroupResult['unplaced'] = [];
   const stock = material?.stock ?? [];
   if (stock.length === 0) {
-    return { materialId, thicknessMm, sheets: [], unplaced: pieces.map((p) => ({ partId: p.partId, instance: p.instance, reason: 'אין מידות לוח ידועות לחומר' })) };
+    return { materialId, thicknessMm, sheets: [], unplaced: pieces.map((p) => ({ partId: p.partId, instance: p.instance, reason: tr('אין מידות לוח ידועות לחומר', 'No known sheet sizes for this material') })) };
   }
 
   const usable = (s: StockSize) => ({ l: s.lengthMm - 2 * opts.trimMarginMm, w: s.widthMm - 2 * opts.trimMarginMm });
@@ -131,7 +132,9 @@ function packOnce(materialId: string, thicknessMm: number, pieces: Piece[], mate
       unplaced.push({
         partId: pc.partId,
         instance: pc.instance,
-        reason: pc.grainLocked ? 'החלק גדול מהלוח בכיוון הסיבים (סיבוב אסור)' : 'החלק גדול מכל מידת לוח ידועה',
+        reason: pc.grainLocked
+          ? tr('החלק גדול מהלוח בכיוון הסיבים (סיבוב אסור)', 'The part is larger than the sheet along the grain direction (rotation not allowed)')
+          : tr('החלק גדול מכל מידת לוח ידועה', 'The part is larger than every known sheet size'),
       });
       continue;
     }
@@ -139,7 +142,7 @@ function packOnce(materialId: string, thicknessMm: number, pieces: Piece[], mate
     const sheet = { index: sheets.length + 1, stock: chosen, placements: [], usedAreaMm2: 0, wastePercent: 100, free: [{ x: opts.trimMarginMm, y: opts.trimMarginMm, l: u.l, w: u.w }] };
     sheets.push(sheet);
     if (!tryPlace(sheet, pc, opts.kerfMm)) {
-      unplaced.push({ partId: pc.partId, instance: pc.instance, reason: 'לא נמצא מקום בלוח חדש' });
+      unplaced.push({ partId: pc.partId, instance: pc.instance, reason: tr('לא נמצא מקום בלוח חדש', 'No room found on a new sheet') });
     }
   }
 

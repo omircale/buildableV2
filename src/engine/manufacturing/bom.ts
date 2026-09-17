@@ -1,3 +1,4 @@
+import { materialName, tr, type EngineLocale } from '../i18n';
 import type { FurnitureModel, HardwareLine, Material, Part } from '../types';
 import type { NestingGroupResult } from './nesting';
 
@@ -12,7 +13,6 @@ export interface SheetLine {
 }
 
 export interface EdgeBandLine {
-  thicknessMm: number;
   lengthM: number;
   basis: string;
 }
@@ -39,7 +39,7 @@ export function buildBom(model: FurnitureModel, nesting: NestingGroupResult[], m
       const used = list.reduce((a, s) => a + s.usedAreaMm2, 0);
       return {
         materialId: g.materialId,
-        materialName: m?.nameHe ?? g.materialId,
+        materialName: m ? materialName(m) : g.materialId,
         thicknessMm: g.thicknessMm,
         sheetSize: size,
         sheets: list.length,
@@ -49,18 +49,8 @@ export function buildBom(model: FurnitureModel, nesting: NestingGroupResult[], m
     });
   });
 
-  const bandByThickness = new Map<number, number>();
-  for (const p of model.parts) {
-    const e = p.edgeBanding;
-    const mm = (e.length1 ? p.lengthMm : 0) + (e.length2 ? p.lengthMm : 0) + (e.width1 ? p.widthMm : 0) + (e.width2 ? p.widthMm : 0);
-    const t = Math.max(e.length1, e.length2, e.width1, e.width2);
-    if (t > 0) bandByThickness.set(t, (bandByThickness.get(t) ?? 0) + mm * p.quantity);
-  }
-  const edgeBanding = [...bandByThickness.entries()].map(([t, mm]) => ({
-    thicknessMm: t,
-    lengthM: Math.ceil((mm / 1000) * EDGE_BAND_WASTE_FACTOR * 10) / 10,
-    basis: 'אורך נטו + 10% פחת (הנחה)',
-  }));
+  const bandMm = model.parts.reduce((a, p) => a + (Number(p.edges.long1) + Number(p.edges.long2)) * p.lengthMm * p.quantity + (Number(p.edges.short1) + Number(p.edges.short2)) * p.widthMm * p.quantity, 0);
+  const edgeBanding = bandMm > 0 ? [{ lengthM: Math.ceil((bandMm / 1000) * EDGE_BAND_WASTE_FACTOR * 10) / 10, basis: tr('אורך נטו + 10% פחת (הנחה). כשהקנט מודבק במפעל — כלול בהזמנה.', 'Net length + 10% waste (assumption). When edge banding is applied at the factory it is included in the order.') }] : [];
 
   return { sheets, edgeBanding, hardware: model.hardware, totalMassKg: estimateMass(model.parts, materials) };
 }
@@ -80,21 +70,27 @@ function csvCell(v: string | number): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export function cutListCsv(parts: Part[], materials: (id: string) => Material | undefined): string {
-  const header = ['Part_ID', 'Description', 'Material', 'Thickness_mm', 'Length_mm', 'Width_mm', 'Quantity', 'Grain_Locked', 'Edge_L1_mm', 'Edge_L2_mm', 'Edge_W1_mm', 'Edge_W2_mm'];
+/** `locale` selects the material name language (default: current engine locale, Hebrew unless changed). */
+export function cutListCsv(parts: Part[], materials: (id: string) => Material | undefined, locale?: EngineLocale): string {
+  const header = ['Part_ID', 'Description', 'Material', 'Finish', 'Thickness_mm', 'Length_mm', 'Width_mm', 'Quantity', 'Grain_Locked', 'Edge_Long_1', 'Edge_Long_2', 'Edge_Short_1', 'Edge_Short_2', 'Machining'];
   const rows = parts.map((p) => [
     p.id,
     p.name,
-    materials(p.materialId)?.nameEn ?? p.materialId,
+    (() => {
+      const m = materials(p.materialId);
+      return m ? materialName(m, locale) : p.materialId;
+    })(),
+    p.finishId,
     p.thicknessMm,
     p.lengthMm,
     p.widthMm,
     p.quantity,
     p.grainLocked ? 1 : 0,
-    p.edgeBanding.length1,
-    p.edgeBanding.length2,
-    p.edgeBanding.width1,
-    p.edgeBanding.width2,
+    Number(p.edges.long1),
+    Number(p.edges.long2),
+    Number(p.edges.short1),
+    Number(p.edges.short2),
+    (p.machining ?? []).join(' | '),
   ]);
   // BOM prefix makes Excel open Hebrew text correctly.
   return '﻿' + [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');

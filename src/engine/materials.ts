@@ -1,6 +1,15 @@
+import { buildSupplierMaterials } from './suppliers/catalogMaterials';
+import { HAYOZRIM } from './suppliers/hayozrim';
+import type { Supplier, SupplierProduct } from './suppliers/types';
 import type { Ec5Class, Material, Source, SourcedValue, StockSize } from './types';
 
 export const SOURCES = {
+  system32: {
+    title: '32 mm cabinetmaking system (Wikipedia, describing Hettich System 32)',
+    reference: 'מרווח בין חורים 32 מ"מ; קוטר 5 מ"מ; שורה ראשונה 37 מ"מ מהקצה הקדמי; עומק חור 12–14 מ"מ',
+    referenceEn: 'Hole pitch 32 mm; diameter 5 mm; first row 37 mm from the front edge; hole depth 12–14 mm',
+    url: 'https://en.wikipedia.org/wiki/32_mm_cabinetmaking_system',
+  },
   en622_5: {
     title: 'EN 622-5:2009 Fibreboards — Requirements for dry process boards (MDF)',
     reference: 'Table 3 (MDF general purpose, dry) / Table 5 (MDF.LA)',
@@ -39,13 +48,14 @@ const assumedSheet = (lengthMm: number, widthMm: number): StockSize => ({
   widthMm,
   kind: 'assumption',
   note: 'מידת לוח מקובלת — טרם אומתה מול ספק',
+  noteEn: 'Common sheet size — not yet confirmed with a supplier',
 });
 
 /**
  * Density for panels is not set by EN 622-5 / EN 312. Self-weight is a small part of shelf load, so an
  * explicitly-labelled upper-bound assumption is used and the structural result is capped at YELLOW.
  */
-const assumedDensity = (value: number, note: string): SourcedValue => ({ value, kind: 'assumption', sources: [], note });
+const assumedDensity = (value: number, note: string, noteEn: string): SourcedValue => ({ value, kind: 'assumption', sources: [], note, noteEn });
 
 export const MATERIAL_LIBRARY: Material[] = [
   {
@@ -53,6 +63,7 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: "סנדוויץ' ליבנה",
     nameEn: 'Birch plywood',
     descriptionHe: 'לבוד ליבנה פיני/בלטי. ערכי חוזק זמינים לעובי 18 מ"מ בלבד.',
+    descriptionEn: 'Finnish/Baltic birch plywood. Strength values are available for 18 mm thickness only.',
     category: 'plywood',
     ec5Class: 'plywood',
     thicknessesMm: [6.5, 12, 15, 18, 21, 24],
@@ -61,8 +72,8 @@ export const MATERIAL_LIBRARY: Material[] = [
       {
         minMm: 17,
         maxMm: 19,
-        eBendingMpa: { value: 10048, kind: 'mean', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים' },
-        fBendingMpa: { value: 40.2, kind: 'characteristic', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים' },
+        eBendingMpa: { value: 10048, kind: 'mean', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים', noteEn: 'Parallel to the face-ply grain' },
+        fBendingMpa: { value: 40.2, kind: 'characteristic', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים', noteEn: 'Parallel to the face-ply grain' },
       },
     ],
     structuralUse: true,
@@ -76,11 +87,12 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'MDF',
     nameEn: 'MDF (general purpose, dry)',
     descriptionHe: 'ערכי מינימום לפי EN 622-5. MDF רגיל אינו מכוסה ב-Eurocode 5 — זחילה מוערכת באנלוגיה ל-MDF.LA.',
+    descriptionEn: 'Minimum values per EN 622-5. General-purpose MDF is not covered by Eurocode 5 — creep is estimated by analogy with MDF.LA.',
     category: 'mdf',
     ec5Class: 'not_covered',
     ec5AnalogyClass: 'mdf_la',
     thicknessesMm: [16, 18, 19, 22, 25],
-    densityKgM3: assumedDensity(800, 'EN 622-5 אינו קובע צפיפות. 800 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.'),
+    densityKgM3: assumedDensity(800, 'EN 622-5 אינו קובע צפיפות. 800 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.', 'EN 622-5 does not specify density. 800 kg/m³ — upper-bound assumption for self-weight.'),
     properties: [
       {
         minMm: 12,
@@ -106,11 +118,12 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'סיבית (P2)',
     nameEn: 'Particleboard P2',
     descriptionHe: 'סיבית לריהוט פנים לפי EN 312. אינה מכוסה ב-Eurocode 5 — זחילה מוערכת באנלוגיה ל-P4.',
+    descriptionEn: 'Particleboard for interior fitments per EN 312. Not covered by Eurocode 5 — creep is estimated by analogy with P4.',
     category: 'particleboard',
     ec5Class: 'not_covered',
     ec5AnalogyClass: 'particleboard_p4',
     thicknessesMm: [16, 18],
-    densityKgM3: assumedDensity(750, 'EN 312 אינו קובע צפיפות. 750 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.'),
+    densityKgM3: assumedDensity(750, 'EN 312 אינו קובע צפיפות. 750 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.', 'EN 312 does not specify density. 750 kg/m³ — upper-bound assumption for self-weight.'),
     properties: [
       {
         minMm: 13,
@@ -130,6 +143,7 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'עץ רך מלא — מדורג C24',
     nameEn: 'Solid softwood, strength class C24',
     descriptionHe: 'עץ מחטני (אורן/אשוח) שעבר מיון חוזק ל-C24. לוח מודבק שלא עבר מיון — הערכים אינם חלים.',
+    descriptionEn: 'Softwood (pine/spruce) strength-graded to C24. For glued panels that were not graded, these values do not apply.',
     category: 'solid_softwood',
     ec5Class: 'solid_timber',
     thicknessesMm: [18, 20, 27, 40],
@@ -153,6 +167,7 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'עץ רך מלא — מדורג C16',
     nameEn: 'Solid softwood, strength class C16',
     descriptionHe: 'עץ מחטני שעבר מיון חוזק ל-C16.',
+    descriptionEn: 'Softwood strength-graded to C16.',
     category: 'solid_softwood',
     ec5Class: 'solid_timber',
     thicknessesMm: [18, 20, 27, 40],
@@ -176,6 +191,7 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'עץ קשה מלא — מדורג D30 (למשל אלון)',
     nameEn: 'Solid hardwood, strength class D30',
     descriptionHe: 'עץ נשיר שעבר מיון חוזק ל-D30. ערכי EN 338:2003.',
+    descriptionEn: 'Hardwood strength-graded to D30. EN 338:2003 values.',
     category: 'solid_hardwood',
     ec5Class: 'solid_timber',
     thicknessesMm: [20, 26, 40],
@@ -184,7 +200,7 @@ export const MATERIAL_LIBRARY: Material[] = [
       {
         minMm: 0,
         maxMm: 150,
-        eBendingMpa: { value: 10000, kind: 'mean', sources: [SOURCES.en338_2003], note: 'במהדורת 2016 ייתכן ערך שונה — לא אומת' },
+        eBendingMpa: { value: 10000, kind: 'mean', sources: [SOURCES.en338_2003], note: 'במהדורת 2016 ייתכן ערך שונה — לא אומת', noteEn: 'The 2016 edition may give a different value — not verified' },
         fBendingMpa: { value: 30, kind: 'characteristic', sources: [SOURCES.en338_2003] },
       },
     ],
@@ -199,10 +215,11 @@ export const MATERIAL_LIBRARY: Material[] = [
     nameHe: 'HDF לגב',
     nameEn: 'HDF back panel',
     descriptionHe: 'לוח גב דק. אינו רכיב נושא עומס; אין נתוני חוזק במערכת.',
+    descriptionEn: 'Thin back panel. Not a load-bearing member; no strength data in the system.',
     category: 'mdf',
     ec5Class: 'not_covered',
     thicknessesMm: [3, 4],
-    densityKgM3: assumedDensity(950, 'צפיפות HDF לא אומתה — הנחת גבול עליון לחישוב משקל בלבד.'),
+    densityKgM3: assumedDensity(950, 'צפיפות HDF לא אומתה — הנחת גבול עליון לחישוב משקל בלבד.', 'HDF density not verified — upper-bound assumption, used for weight only.'),
     properties: [],
     structuralUse: false,
     hasGrain: false,
@@ -213,6 +230,18 @@ export const MATERIAL_LIBRARY: Material[] = [
 ];
 
 const byId = new Map(MATERIAL_LIBRARY.map((m) => [m.id, m]));
+
+export const SUPPLIERS: Supplier[] = [HAYOZRIM];
+
+export const SUPPLIER_MATERIALS: Material[] = SUPPLIERS.flatMap((s) => buildSupplierMaterials(s, (id) => byId.get(id)));
+for (const m of SUPPLIER_MATERIALS) byId.set(m.id, m);
+
+export function supplierProductFor(material: Material | undefined): { supplier: Supplier; product: SupplierProduct } | null {
+  if (!material?.supplier) return null;
+  const supplier = SUPPLIERS.find((s) => s.id === material.supplier!.supplierId);
+  const product = supplier?.products.find((p) => p.handle === material.supplier!.handle);
+  return supplier && product ? { supplier, product } : null;
+}
 
 let customMaterials = new Map<string, Material>();
 
@@ -225,7 +254,7 @@ export function getMaterial(id: string): Material | undefined {
 }
 
 export function allMaterials(): Material[] {
-  return [...MATERIAL_LIBRARY, ...customMaterials.values()];
+  return [...MATERIAL_LIBRARY, ...SUPPLIER_MATERIALS, ...customMaterials.values()];
 }
 
 export function propertiesFor(material: Material, thicknessMm: number) {
