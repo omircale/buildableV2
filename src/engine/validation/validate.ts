@@ -746,14 +746,26 @@ export function projectStructureFixes(p: DesignParams, config: EngineeringConfig
       candidates.push({ label: tr(`הגדלת עובי ל-${t} מ"מ`, `Increase thickness to ${t} mm`), set: { thicknessMm: t } });
     }
   }
-  if (isOpenShelf(p))
-    for (let d = p.dividerCount + 1; d <= Math.min(p.dividerCount + 2, LIMITS.dividerCount[1]); d++) {
-    const added = d - p.dividerCount;
-    candidates.push({
-      label: added === 1 ? tr(`הוספת מחיצה אנכית (${d} סה"כ)`, `Add a vertical divider (${d} in total)`) : tr(`הוספת ${added} מחיצות אנכיות (${d} סה"כ)`, `Add ${added} vertical dividers (${d} in total)`),
-      set: { dividerCount: d },
-    });
+  if (isOpenShelf(p)) {
+    // The two nearest divider counts, plus the smallest count up to the maximum that actually passes —
+    // a wide unit with a heavy load may need more than two extra dividers.
+    const max = LIMITS.dividerCount[1];
+    const counts = new Set<number>();
+    for (let d = p.dividerCount + 1; d <= Math.min(p.dividerCount + 2, max); d++) counts.add(d);
+    for (let d = p.dividerCount + 3; d <= max; d++) {
+      if (governingShelf({ ...p, dividerCount: d }, config)?.passesLimits) {
+        counts.add(d);
+        break;
+      }
     }
+    for (const d of counts) {
+      const added = d - p.dividerCount;
+      candidates.push({
+        label: added === 1 ? tr(`הוספת מחיצה אנכית (${d} סה"כ)`, `Add a vertical divider (${d} in total)`) : tr(`הוספת ${added} מחיצות אנכיות (${d} סה"כ)`, `Add ${added} vertical dividers (${d} in total)`),
+        set: { dividerCount: d },
+      });
+    }
+  }
   const pool = m?.supplier
     ? allMaterials().filter((x) => x.supplier?.supplierId === m.supplier!.supplierId && x.structuralUse && x.properties.length > 0)
     : allMaterials().filter((x) => !x.supplier && x.structuralUse && x.verified);

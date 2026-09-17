@@ -33,6 +33,12 @@ export function ProjectCard({ project, compact }: { project: LocalProject; compa
   const o = result.model.overall;
   const active = project.id === activeId;
 
+  const commitRename = (value: string) => {
+    if (!editing) return;
+    if (value.trim() && value.trim() !== project.name) renameProject(project.id, value.trim());
+    setEditing(false);
+  };
+
   const open = () => {
     openProject(project.id);
     window.location.hash = '#/design/structure';
@@ -54,12 +60,10 @@ export function ProjectCard({ project, compact }: { project: LocalProject; compa
             aria-label={t.projects.rename}
             defaultValue={project.name}
             className={inputClass}
-            onBlur={(e) => {
-              if (e.target.value.trim()) renameProject(project.id, e.target.value.trim());
-              setEditing(false);
-            }}
+            onBlur={(e) => commitRename(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              // Enter saves directly (not via blur), so saving never depends on where focus is.
+              if (e.key === 'Enter') commitRename((e.target as HTMLInputElement).value);
               if (e.key === 'Escape') setEditing(false);
             }}
           />

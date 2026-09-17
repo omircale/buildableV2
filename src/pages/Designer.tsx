@@ -129,9 +129,9 @@ function Viewport({ result }: { result: DesignResult }) {
         </div>
       )}
       <div className="absolute inset-x-0 bottom-4 flex justify-center px-4">
-        {/* On narrower windows the toolbar scrolls inside itself instead of pushing the page sideways. */}
-        <div className="scrollbar-none flex max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-panel/95 p-1 shadow-md ring-1 ring-line backdrop-blur [&>*]:shrink-0">
-          <div role="radiogroup" aria-label={t.viewport.layers} className="flex">
+        {/* On narrower windows the toolbar wraps onto two rows; it must not scroll, or its pop-up menus get clipped. */}
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-1 rounded-xl bg-panel/95 p-1 shadow-md ring-1 ring-line backdrop-blur">
+          <div role="radiogroup" aria-label={t.viewport.modesLabel} className="flex">
             {VIEW_MODES.map((m) => (
               <button
                 key={m}
@@ -198,8 +198,8 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      // Typing in a field keeps the browser's own undo; the target may also be the window or document itself.
+      if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
       const k = e.key.toLowerCase();
       if (e.ctrlKey || e.metaKey) {
         if (k === 'z' && !e.shiftKey) {
@@ -237,8 +237,9 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
     void logUsage('export_print', 0);
     setPdfBusy(true);
     try {
-      await new Promise(requestAnimationFrame);
-      await new Promise(requestAnimationFrame);
+      // Let React commit the snapshot before rasterizing. A timer (not requestAnimationFrame) keeps the export
+      // going when the tab is in the background, where animation frames are paused.
+      await new Promise((r) => setTimeout(r, 60));
       const el = document.getElementById('print-package');
       if (!el) return;
       const previousStyle = el.getAttribute('style');

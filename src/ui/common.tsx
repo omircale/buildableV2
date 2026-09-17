@@ -249,5 +249,6 @@ export function downloadText(filename: string, content: string, mime: string) {
   a.href = url;
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+  // Revoking in the same tick can cancel the download in some browsers; release the blob a moment later.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
