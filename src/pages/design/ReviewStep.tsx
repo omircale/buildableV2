@@ -131,6 +131,11 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
               <p className="text-[17px] text-muted">
                 {t.review.summaryLine(cm(result.model.overall.x), cm(result.model.overall.y), cm(result.model.overall.z), (() => { const m = getMaterial(p.materialId); return m ? materialName(m, locale) : ''; })(), p.template === 'open_shelf' ? p.shelfCount : null)}
               </p>
+              {result.bom.totalMassKg != null && (
+                <p className="text-[15px] text-muted" title={t.review.weightHint}>
+                  {t.review.weight(result.bom.totalMassKg)}
+                </p>
+              )}
             </div>
           </div>
 

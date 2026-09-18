@@ -74,7 +74,8 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
         <h1 className="text-2xl font-bold">{t.booklet.title}</h1>
         <p className="mb-2 text-sm text-gray-600">{projectName}</p>
         <AssemblyDiagram model={model} steps={assembly} stepIndex={null} className="mx-auto h-[95mm] w-full" />
-        <h2 className="mt-3 mb-1 text-base font-bold">{t.booklet.parts}</h2>
+        {bom.totalMassKg != null && <p className="mt-2 text-[11px] font-semibold">{t.booklet.weight(bom.totalMassKg)}</p>}
+        <h2 className="mt-1 mb-1 text-base font-bold">{t.booklet.parts}</h2>
         <table className="w-full border-collapse text-[10px]">
           <thead>
             <tr>
