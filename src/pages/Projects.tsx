@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { AuthState } from '../cloud/supabase';
 import { runDesign } from '../engine';
 import { useT } from '../i18n';
 import { useDesign, type LocalProject } from '../state/designStore';
 import { useUi } from '../state/uiStore';
 import { AppHeader } from '../ui/AppHeader';
-import { buttonClass, inputClass } from '../ui/common';
+import { buttonClass, downloadText, inputClass } from '../ui/common';
 import { artKindFor } from '../ui/furnitureCatalog';
 import { FurnitureArt } from '../ui/icons';
 import { formatCm } from '../ui/measure';
@@ -118,6 +118,20 @@ export function ProjectCard({ project, compact }: { project: LocalProject; compa
 export function ProjectsPage({ auth }: { auth: AuthState }) {
   const t = useT();
   const projects = useDesign((s) => s.projects);
+  const saveError = useDesign((s) => s.saveError);
+  const exportAll = useDesign((s) => s.exportAll);
+  const importAll = useDesign((s) => s.importAll);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [restoreMessage, setRestoreMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const restore = async (file: File) => {
+    try {
+      const n = importAll(JSON.parse(await file.text()));
+      setRestoreMessage(n ? { ok: true, text: t.projects.restored(n) } : { ok: false, text: t.projects.restoreFailed });
+    } catch {
+      setRestoreMessage({ ok: false, text: t.projects.restoreFailed });
+    }
+  };
   return (
     <div className="flex min-h-full flex-col bg-paper">
       <AppHeader auth={auth} />
@@ -131,6 +145,11 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
             {t.projects.newProject}
           </a>
         </div>
+        {saveError && (
+          <p className="rounded-xl bg-bad-soft px-4 py-3 text-[15px] text-bad">
+            <strong>{t.projects.saveErrorTitle}</strong> {t.projects.saveErrorText}
+          </p>
+        )}
         {projects.length === 0 ? (
           <p className="rounded-xl bg-panel p-6 text-[15px] text-muted ring-1 ring-line">{t.projects.empty}</p>
         ) : (
@@ -143,6 +162,27 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
             </div>
           </>
         )}
+        <section className="flex flex-wrap items-center gap-3 rounded-xl bg-sunken p-4 text-[14px] text-muted">
+          <span className="flex-1 leading-relaxed">{t.projects.localOnly}</span>
+          <button type="button" className={buttonClass('secondary', 'sm')} onClick={() => downloadText(`buildable-projects-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(exportAll(), null, 2), 'application/json;charset=utf-8')}>
+            {t.projects.backupAll}
+          </button>
+          <button type="button" className={buttonClass('ghost', 'sm')} onClick={() => fileRef.current?.click()}>
+            {t.projects.restoreAll}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void restore(file);
+            }}
+          />
+        </section>
+        {restoreMessage && <p className={`rounded-xl px-4 py-3 text-[14px] ${restoreMessage.ok ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>{restoreMessage.text}</p>}
         <p className="rounded-xl bg-sunken p-4 text-[14px] leading-relaxed text-muted">{t.projects.cloudNote}</p>
       </main>
     </div>

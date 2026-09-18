@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DEFAULT_CONFIG, DEFAULT_OPEN_SHELF, withDefaults, type ComponentRole, type DesignChange, type DesignParams, type EngineeringConfig, type ParamsPatch } from '../engine';
+import { DEFAULT_CONFIG, DEFAULT_OPEN_SHELF, ENGINE_VERSION, withDefaults, type ComponentRole, type DesignChange, type DesignParams, type EngineeringConfig, type ParamsPatch } from '../engine';
 
 export type ViewMode = 'design' | 'structural' | 'exploded' | 'measure' | 'warnings';
 
@@ -26,8 +26,19 @@ interface Persisted {
   updatedAt: number | null;
 }
 
+/** A backup of every project on this device. */
+export interface ProjectsBackup {
+  format: 'buildable-projects';
+  version: 1;
+  engineVersion: string;
+  savedAt: string;
+  projects: LocalProject[];
+}
+
 interface DesignState extends Persisted {
   projects: LocalProject[];
+  /** Set when the browser refused to save (private mode, full storage) — the UI warns and offers a file backup. */
+  saveError: boolean;
   past: DesignParams[];
   future: DesignParams[];
   lastEdit: { key: string; at: number } | null;
@@ -61,6 +72,9 @@ interface DesignState extends Persisted {
   renameProject: (id: string, name: string) => void;
   duplicateProject: (id: string, copySuffix: string) => void;
   deleteProject: (id: string) => void;
+  exportAll: () => ProjectsBackup;
+  /** Restores a backup: same id replaces that project, unknown ids are added. Returns how many were restored. */
+  importAll: (backup: unknown) => number;
 }
 
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `p${Date.now()}${Math.random().toString(36).slice(2)}`);
@@ -102,12 +116,14 @@ function loadActive(): Persisted {
   return { projectId: newId(), params: DEFAULT_OPEN_SHELF, projectName: DEFAULT_NAME, cloudProjectId: null, updatedAt: null };
 }
 
-function writeStorage(active: Persisted, projects: LocalProject[]) {
+function writeStorage(active: Persisted, projects: LocalProject[]): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(active));
     localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+    return true;
   } catch {
-    // Storage may be full or disabled; the design stays in memory.
+    // Storage may be full or disabled; the design stays in memory and the UI says so.
+    return false;
   }
 }
 
@@ -126,14 +142,14 @@ export const useDesign = create<DesignState>((set, get) => {
     const s = get();
     const active: Persisted = { projectId: s.projectId, params: s.params, projectName: s.projectName, cloudProjectId: s.cloudProjectId, updatedAt: s.updatedAt };
     const projects = withActive(active, s.projects);
-    set({ projects });
-    writeStorage(active, projects);
+    set({ projects, saveError: !writeStorage(active, projects) });
   };
   const fresh = { past: [], future: [], previous: null, lastEdit: null, selectedId: null, isolated: false };
 
   return {
     ...initialActive,
     projects: withActive(initialActive, loadProjects()),
+    saveError: false,
     past: [],
     future: [],
     lastEdit: null,
@@ -233,6 +249,21 @@ export const useDesign = create<DesignState>((set, get) => {
         set({ projects: rest, ...fresh, ...(next ? { projectId: next.id, params: next.params, projectName: next.name, cloudProjectId: next.cloudProjectId, updatedAt: next.updatedAt } : { projectId: newId(), params: DEFAULT_OPEN_SHELF, projectName: DEFAULT_NAME, cloudProjectId: null, updatedAt: null }) });
       } else set({ projects: rest });
       persist();
+    },
+    exportAll: () => ({ format: 'buildable-projects', version: 1, engineVersion: ENGINE_VERSION, savedAt: new Date().toISOString(), projects: get().projects }),
+    importAll: (raw) => {
+      const backup = raw as Partial<ProjectsBackup> | null;
+      if (!backup || backup.format !== 'buildable-projects' || !Array.isArray(backup.projects)) return 0;
+      const restored = backup.projects.flatMap((p) => {
+        const params = withDefaults(p?.params);
+        return params && p?.id ? [{ id: p.id, name: p.name ?? DEFAULT_NAME, params, cloudProjectId: p.cloudProjectId ?? null, updatedAt: p.updatedAt ?? Date.now() }] : [];
+      });
+      if (!restored.length) return 0;
+      const ids = new Set(restored.map((p) => p.id));
+      const merged = [...restored, ...get().projects.filter((p) => !ids.has(p.id))].sort((a, b) => b.updatedAt - a.updatedAt);
+      set({ projects: merged });
+      persist();
+      return restored.length;
     },
   };
 });

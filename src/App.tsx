@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { supabase, useAuth } from './cloud/supabase';
 import { DEFAULT_CONFIG, type EngineeringConfig } from './engine';
 import { useT } from './i18n';
-import { AdminPage } from './pages/Admin';
-import { DesignerPage, STEPS, type Step } from './pages/Designer';
+// The editor (three.js) and the admin screen load only when they are opened.
+const DesignerPage = lazy(() => import('./pages/Designer').then((m) => ({ default: m.DesignerPage })));
+const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.AdminPage })));
+import { STEPS, type Step } from './pages/steps';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
 import { useDesign } from './state/designStore';
 import { useResolvedTheme, useUi } from './state/uiStore';
 import { CommandPalette, useRegisterCommands, type Command } from './ui/CommandPalette';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { FURNITURE_TYPES, presetFor } from './ui/furnitureCatalog';
 
 function useHashRoute(): string {
@@ -91,6 +94,8 @@ function useGlobalCommands() {
 }
 
 export default function App() {
+  const t = useT();
+  const locale = useUi((s) => s.locale);
   const route = useHashRoute();
   const auth = useAuth();
   const setConfig = useDesign((s) => s.setConfig);
@@ -120,7 +125,9 @@ export default function App() {
 
   return (
     <>
-      {page}
+      <ErrorBoundary locale={locale} key={route.split('/')[1]}>
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-paper text-muted">{t.common.loading}</div>}>{page}</Suspense>
+      </ErrorBoundary>
       <CommandPalette />
     </>
   );

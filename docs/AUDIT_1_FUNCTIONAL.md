@@ -6,7 +6,7 @@ Date: 2026-09-17. Method: every promise the product makes was turned into a chec
 2. **"One number everywhere"** — for all 16 catalog items, the cut list, order lines, CSV, copied order text, PDF package and assembly booklet are checked against each other (rendered, not assumed).
 3. **Real clicking in the browser** — a scripted run of ~100 checks through home, all four steps, the fix drawer, part panel, layers, view modes, engineering panel tabs, exports, search, My projects, backup files, language and theme. The user's saved projects were backed up first and restored exactly afterwards.
 
-Result: **2,720 automated tests pass**; the browser run ends with no console errors. 9 bugs found and fixed (below).
+Result: **2,719 automated tests pass**; the browser run ends with no console errors. 9 bugs found and fixed (below).
 
 ## 1. Hand-calculated values (all match the engine)
 

@@ -19,8 +19,8 @@ import { STATUS_COLOR, Viewport3D, type CameraPreset } from '../ui/Viewport3D';
 import { ReviewStep } from './design/ReviewStep';
 import { SetupStep } from './design/SetupStep';
 
-export const STEPS = ['setup', 'structure', 'look', 'review'] as const;
-export type Step = (typeof STEPS)[number];
+export { STEPS, type Step } from './steps';
+import { STEPS, type Step } from './steps';
 
 const VIEW_MODES: ViewMode[] = ['design', 'structural', 'exploded', 'measure', 'warnings'];
 const CAMERAS: CameraPreset[] = ['iso', 'front', 'side', 'top'];
