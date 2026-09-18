@@ -1,8 +1,9 @@
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Edges, Html, OrbitControls } from '@react-three/drei';
 import { useEffect, useMemo, useRef } from 'react';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { finishFor, getMaterial, supplierProductFor, type Component, type DesignResult, type Status } from '../engine';
 import { useT } from '../i18n';
 import { useDesign, type ViewMode } from '../state/designStore';
@@ -77,7 +78,7 @@ function finishColor(c: Component, result: DesignResult): string {
   return decor?.color ?? material?.defaultColor ?? '#cccccc';
 }
 
-function Board({ c, result, mode, status, selected, onSelect, edgeColor, viewStyle }: { c: Component; result: DesignResult; mode: ViewMode; status?: Status; selected: boolean; onSelect?: (id: string) => void; edgeColor: string; viewStyle: ViewStyle }) {
+function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdge, viewStyle }: { c: Component; result: DesignResult; mode: ViewMode; status?: Status; selected: boolean; onSelect?: (id: string) => void; edgeColor: string; softEdge: string; viewStyle: ViewStyle }) {
   const { x: W } = result.model.overall;
   const pos = new THREE.Vector3((c.origin.x + c.size.x / 2 - W / 2) * MM, (c.origin.y + c.size.y / 2) * MM, (c.origin.z + c.size.z / 2) * MM);
   if (mode === 'exploded') pos.add(explodeOffset(c, result).multiplyScalar(MM));
@@ -115,6 +116,7 @@ function Board({ c, result, mode, status, selected, onSelect, edgeColor, viewSty
         color={color}
         roughness={roughness}
         metalness={metalness}
+        envMapIntensity={realistic ? 0.9 : 0}
         flatShading={!realistic}
         transparent={opacity < 1}
         opacity={opacity}
@@ -122,7 +124,8 @@ function Board({ c, result, mode, status, selected, onSelect, edgeColor, viewSty
         emissiveIntensity={selected ? 0.35 : 0}
         toneMapped={realistic}
       />
-      <Edges threshold={15} color={selected ? '#c0763d' : edgeColor} lineWidth={selected ? (realistic ? 1.2 : 2) : realistic ? 0.6 : 1} />
+      {/* Outlines carry the diagram look; in realistic mode they are faint, and reference items (mattress, bar) have none. */}
+      {(!c.reference || !realistic) && <Edges threshold={15} color={selected ? '#c0763d' : realistic ? softEdge : edgeColor} lineWidth={selected ? (realistic ? 1.2 : 2) : realistic ? 0.5 : 1} />}
     </mesh>
   );
 }
@@ -213,6 +216,52 @@ function PartMeasurements({ result, c }: { result: DesignResult; c: Component })
   );
 }
 
+/**
+ * Image-based lighting from three's procedurally generated room (no external HDRI, no CDN): this is what makes
+ * a board look like a real surface instead of a flat colour. Illustration mode deliberately has none.
+ */
+function StudioEnvironment({ on, dark }: { on: boolean; dark: boolean }) {
+  const { scene, gl } = useThree();
+  useEffect(() => {
+    if (!on) {
+      scene.environment = null;
+      return;
+    }
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const envScene = new RoomEnvironment();
+    const target = pmrem.fromScene(envScene, 0.04);
+    scene.environment = target.texture;
+    scene.environmentIntensity = dark ? 0.3 : 0.5;
+    return () => {
+      scene.environment = null;
+      target.dispose();
+      pmrem.dispose();
+    };
+  }, [on, dark, scene, gl]);
+  return null;
+}
+
+/** Development-only handle on the renderer, for measuring frame cost in automated checks. */
+function DevRendererHandle() {
+  const state = useThree();
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __three?: unknown }).__three = { gl: state.gl, scene: state.scene, camera: state.camera };
+  }, [state]);
+  return null;
+}
+
+/** Keeps the renderer's tone mapping in step with the view style: filmic for realistic, plain for the diagram look. */
+function ToneMapping({ realistic }: { realistic: boolean }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    gl.toneMapping = realistic ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    gl.toneMappingExposure = realistic ? 0.95 : 1;
+  }, [gl, realistic]);
+  useFrame(() => undefined);
+  return null;
+}
+
 export type CameraPreset = 'iso' | 'front' | 'side' | 'top';
 
 function CameraRig({ preset, result, controls, focus }: { preset: { name: CameraPreset; nonce: number }; result: DesignResult; controls: React.RefObject<OrbitControlsImpl | null>; focus?: Component }) {
@@ -254,31 +303,46 @@ export function Viewport3D({ result, preset, preview = false }: { result: Design
   const statuses = useMemo(() => componentStatuses(result), [result]);
   const controls = useRef<OrbitControlsImpl>(null);
   const { x: W, y: H, z: D } = result.model.overall;
+  const realistic = viewStyle === 'realistic' && mode !== 'structural' && mode !== 'warnings';
 
   return (
     <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} camera={{ fov: 35, near: 0.01, far: 100, position: [-1.6, 1.6, 3.2] }} onPointerMissed={() => !preview && select(null)}>
       <color attach="background" args={[dark ? '#1b1916' : '#efebe4']} />
-      <hemisphereLight args={['#ffffff', dark ? '#6b6258' : '#d8cfc2', dark ? 0.75 : 0.9]} />
-      <directionalLight position={[-2.5, 4, 3]} intensity={1.6} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-3} shadow-camera-right={3} shadow-camera-top={3} shadow-camera-bottom={-3} />
-      <directionalLight position={[3, 2, -2]} intensity={0.35} />
-      {viewStyle === 'realistic' && (
-        <>
-          {/* A soft key/fill/rim trio (no external HDRI) so glossy finishes show a believable highlight and gradient, offline-safe. */}
-          <directionalLight position={[1.5, 3, 4]} intensity={0.5} color={dark ? '#a9b8c9' : '#fff6e8'} />
-          <pointLight position={[-1.5, 1.2, 2]} intensity={0.25} color={dark ? '#5b6b8c' : '#ffe3c2'} />
-          <pointLight position={[0, 0.3, -1.5]} intensity={0.15} color="#ffffff" />
-        </>
-      )}
+      <DevRendererHandle />
+      <StudioEnvironment on={realistic} dark={dark} />
+      <ToneMapping realistic={realistic} />
+      <hemisphereLight args={['#ffffff', dark ? '#6b6258' : '#d8cfc2', realistic ? (dark ? 0.18 : 0.22) : dark ? 0.75 : 0.9]} />
+      <directionalLight
+        position={[-2.5, 4, 3]}
+        intensity={realistic ? 1.35 : 1.6}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.02}
+        shadow-camera-left={-3}
+        shadow-camera-right={3}
+        shadow-camera-top={3}
+        shadow-camera-bottom={-3}
+      />
+      <directionalLight position={[3, 2, -2]} intensity={realistic ? 0.25 : 0.35} />
       <group>
         {result.model.components
           .filter((c) => preview || (focus ? c.id === focus.id : !hidden.includes(c.role)))
           .map((c) => (
-            <Board key={c.id} c={c} result={result} mode={mode} status={statuses.get(c.id)} selected={!preview && selectedId === c.id} onSelect={preview ? undefined : select} edgeColor={dark ? '#1a1612' : '#3b342c'} viewStyle={viewStyle} />
+            <Board key={c.id} c={c} result={result} mode={mode} status={statuses.get(c.id)} selected={!preview && selectedId === c.id} onSelect={preview ? undefined : select} edgeColor={dark ? '#1a1612' : '#3b342c'} softEdge={dark ? '#3b332b' : '#8d8478'} viewStyle={viewStyle} />
           ))}
         {mode === 'measure' && (selected ? <PartMeasurements result={result} c={selected} /> : <Measurements result={result} />)}
       </group>
-      <ContactShadows position={[0, -0.001, (D / 2) * MM]} scale={Math.max(W, D) * MM * 3} blur={2.2} opacity={viewStyle === 'realistic' ? (dark ? 0.7 : 0.5) : 0} far={H * MM} />
-      <gridHelper key={theme} args={[6, 60, dark ? '#3a342d' : '#d6cec2', dark ? '#2a2520' : '#e4ddd2']} position={[0, -0.002, 0]} />
+      {/* Contact shadow: the cue that tells the eye the piece is standing on a floor rather than floating. */}
+      <ContactShadows position={[0, 0.0006, (D / 2) * MM]} scale={Math.max(W, D) * MM * 1.5} blur={1.6} opacity={realistic ? (dark ? 0.85 : 0.7) : 0.3} far={Math.max(H * MM * 0.35, 0.35)} resolution={1024} />
+      {realistic ? (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.0015, (D / 2) * MM]} receiveShadow>
+          <planeGeometry args={[14, 14]} />
+          <meshStandardMaterial color={dark ? '#1f1c18' : '#ded7cb'} roughness={0.95} metalness={0} envMapIntensity={0.4} />
+        </mesh>
+      ) : (
+        <gridHelper key={theme} args={[6, 60, dark ? '#3a342d' : '#d6cec2', dark ? '#2a2520' : '#e4ddd2']} position={[0, -0.002, 0]} />
+      )}
       <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} target={[0, (H / 2) * MM, (D / 2) * MM]} maxPolarAngle={Math.PI * 0.95} minDistance={0.3} maxDistance={12} />
       <CameraRig preset={preset} result={result} controls={controls} focus={focus} />
     </Canvas>
