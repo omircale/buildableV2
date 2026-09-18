@@ -9,12 +9,13 @@ import { AppHeader } from '../ui/AppHeader';
 import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
 import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
-import { BuildPill, FixesButton } from '../ui/Issues';
+import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
 import { IconCheck, IconChevron, IconFolder, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
 import { PrintPackage } from '../ui/PrintPackage';
 import { ProjectsDialog } from '../ui/ProjectsDialog';
 import { AssemblyBooklet } from '../ui/AssemblyBooklet';
 import { formatCm } from '../ui/measure';
+import { artKindFor } from '../ui/furnitureCatalog';
 import { STATUS_COLOR, Viewport3D, type CameraPreset } from '../ui/Viewport3D';
 import { ReviewStep } from './design/ReviewStep';
 import { SetupStep } from './design/SetupStep';
@@ -110,6 +111,9 @@ function Viewport({ result }: { result: DesignResult }) {
   return (
     <div className="relative min-h-0 min-w-0 flex-1 bg-sunken">
       <Viewport3D result={result} preset={preset} />
+      <div className="pointer-events-none absolute inset-x-4 bottom-20 z-10 flex justify-center">
+        <AppliedFixToast result={result} />
+      </div>
       <div className="pointer-events-none absolute inset-x-4 top-4 flex flex-wrap items-start justify-between gap-2 [&>*]:pointer-events-auto">
         <BuildPill result={result} />
         <Button variant={advancedOpen ? 'primary' : 'secondary'} onClick={() => setAdvancedOpen(!advancedOpen)} title={t.viewport.advancedShortcut} className="shadow-sm">
@@ -358,6 +362,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
           }
         />
 
+        <h1 className="sr-only">{t.structure.pageTitle(t.furniture[artKindFor(s.params)].name, t.flow.steps[step])}</h1>
         <div className="flex min-h-0 flex-1">
           {step === 'setup' && <SetupStep result={result} />}
           {showSidePanel && (

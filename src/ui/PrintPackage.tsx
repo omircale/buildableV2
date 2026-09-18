@@ -11,7 +11,7 @@ export function PrintPackage({ result, projectName, snapshot }: { result: Design
   const p = model.params;
   const cell = 'border border-gray-300 px-2 py-1 text-start';
   return (
-    <div id="print-package" dir="rtl" lang="he" className="hidden bg-white p-2 text-[11px] leading-snug text-black print:block">
+    <div id="print-package" aria-hidden="true" dir="rtl" lang="he" className="hidden bg-white p-2 text-[11px] leading-snug text-black print:block">
       <header className="mb-3 flex items-start justify-between border-b-2 border-black pb-2">
         <div>
           <h1 className="text-xl font-bold">חבילת הזמנה וייצור — {projectName}</h1>

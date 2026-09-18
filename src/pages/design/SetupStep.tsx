@@ -16,8 +16,8 @@ export function SetupStep({ result }: { result: DesignResult }) {
     <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
       <section className="flex flex-col gap-8 overflow-y-auto px-10 py-10 xl:px-16">
         <div className="flex flex-col gap-2">
-          <h1 className="text-[32px] leading-tight font-bold">{t.setup.title}</h1>
-          <p className="text-[17px] text-muted">{t.setup.subtitle}</p>
+          <h1 className="text-[32px] leading-tight font-bold">{t.setup.titles[p.template].title}</h1>
+          <p className="text-[17px] text-muted">{t.setup.titles[p.template].subtitle}</p>
         </div>
         {p.template === 'open_shelf' ? (
           <>

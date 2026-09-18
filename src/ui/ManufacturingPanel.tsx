@@ -40,6 +40,9 @@ export function OrderTab({ result }: { result: DesignResult }) {
   const projectName = useDesign((s) => s.projectName);
   const [copied, setCopied] = useState(false);
   if (!q) return <p className="text-sm text-muted">{t.mfg.noQuote}</p>;
+  const text = orderText(q, projectName, t, locale, result.model.parts);
+  // Links carry the text in the URL; very long lists exceed what apps accept, so those fall back to copying.
+  const tooLong = encodeURIComponent(text).length > 6000;
   const ils = t.common.ilsExact;
   return (
     <div className="space-y-4 text-[13px]">
@@ -48,19 +51,29 @@ export function OrderTab({ result }: { result: DesignResult }) {
           <div className="text-[15px] font-semibold">{t.mfg.orderTitle}</div>
           <div className="text-muted">{t.mfg.orderSubtitle}</div>
         </div>
-        <button
-          type="button"
-          className={buttonClass('secondary', 'sm')}
-          onClick={() => {
-            void navigator.clipboard.writeText(orderText(q, projectName, t, locale, result.model.parts)).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            });
-          }}
-        >
-          {copied && <IconCheck size={16} />}
-          {copied ? t.mfg.copied : t.mfg.copy}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={buttonClass('secondary', 'sm')}
+            onClick={() => {
+              void navigator.clipboard.writeText(text).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+          >
+            {copied && <IconCheck size={16} />}
+            {copied ? t.mfg.copied : t.mfg.copy}
+          </button>
+          {/* The user picks the recipient and presses send in WhatsApp / their mail app; nothing is sent from here. */}
+          <a className={buttonClass('secondary', 'sm')} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" aria-disabled={tooLong} onClick={(e) => tooLong && e.preventDefault()}>
+            {t.mfg.shareWhatsapp}
+          </a>
+          <a className={buttonClass('secondary', 'sm')} href={`mailto:?subject=${encodeURIComponent(t.mfg.shareSubject(projectName))}&body=${encodeURIComponent(text)}`} aria-disabled={tooLong} onClick={(e) => tooLong && e.preventDefault()}>
+            {t.mfg.shareEmail}
+          </a>
+          {tooLong && <span className="text-[12px] text-muted">{t.mfg.shareTooLong}</span>}
+        </div>
       </div>
       {q.issues.length > 0 && (
         <div className="rounded-lg bg-bad-soft px-3 py-2 text-bad">

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Check, DesignResult } from '../engine';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { runDesign, type Check, type DesignResult, type EngineLocale } from '../engine';
 import { useT } from '../i18n';
 import { useDesign } from '../state/designStore';
 import { useUi } from '../state/uiStore';
@@ -66,7 +66,7 @@ export function IssueCard({ check, onApplied, muted }: { check: Check; onApplied
       {check.status === 'GREY' && <p className="mt-2 text-[13px] text-muted">{t.issues.notCheckedHint}</p>}
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         <button type="button" onClick={() => openAdvanced('checks', check.id)} className="text-[13px] font-medium text-accent-ink underline underline-offset-2">
-          {t.structure.howCalculated}
+          {check.calculation ? t.structure.howCalculated : t.structure.whyShown}
         </button>
         {check.componentIds[0] && (
           <button type="button" onClick={() => select(check.componentIds[0])} className="text-[13px] font-medium text-accent-ink underline underline-offset-2">
@@ -249,5 +249,52 @@ export function FixesButton({ result }: { result: DesignResult }) {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Confirms what a ready-made fix actually did — its name, the price before and after, and one-click undo.
+ * Without it a fix silently changes the design and the user has to hunt for the difference.
+ */
+export function AppliedFixToast({ result }: { result: DesignResult }) {
+  const t = useT();
+  const applied = useDesign((s) => s.lastApplied);
+  const clear = useDesign((s) => s.clearApplied);
+  const previous = useDesign((s) => s.previous);
+  const config = useDesign((s) => s.config);
+  const undo = useDesign((s) => s.undo);
+  const locale = useUi((s) => s.locale) as EngineLocale;
+
+  useEffect(() => {
+    if (!applied) return;
+    const timer = setTimeout(clear, 7000);
+    return () => clearTimeout(timer);
+  }, [applied, clear]);
+
+  const before = useMemo(() => (previous ? runDesign(previous, config, locale).quote?.totalIls : undefined), [previous, config, locale]);
+  if (!applied) return null;
+  const after = result.quote?.totalIls;
+  return (
+    <div role="status" className="pointer-events-auto flex max-w-[420px] items-start gap-3 rounded-xl bg-ink px-4 py-3 text-paper shadow-lg">
+      <span className="mt-0.5 shrink-0 text-ok">
+        <StatusIcon status="GREEN" size={18} />
+      </span>
+      <div className="min-w-0 flex-1 text-[14px]">
+        <div className="font-semibold">{t.issues.applied(applied.label)}</div>
+        {before != null && after != null && Math.round(before) !== Math.round(after) && (
+          <div className="num opacity-80">{t.issues.appliedPrice(t.common.ils(before), t.common.ils(after))}</div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          undo();
+          clear();
+        }}
+        className="shrink-0 rounded-lg px-2 py-1 text-[13px] font-semibold underline underline-offset-2 hover:bg-white/10"
+      >
+        {t.issues.undoApplied}
+      </button>
+    </div>
   );
 }

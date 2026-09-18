@@ -160,7 +160,7 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
                   </div>
                   {detailCheck && (
                     <button type="button" onClick={() => goToDetails(detailCheck.id)} className="shrink-0 py-1 text-[15px] font-medium text-accent-ink underline underline-offset-2">
-                      {t.structure.howCalculated}
+                      {detailCheck.calculation ? t.structure.howCalculated : t.structure.whyShown}
                     </button>
                   )}
                 </li>

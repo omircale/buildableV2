@@ -69,7 +69,7 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
   const hwName = (id: string) => bom.hardware.find((h) => h.id === id);
 
   return (
-    <div id="assembly-booklet" dir={t.dir} className="hidden">
+    <div id="assembly-booklet" aria-hidden="true" dir={t.dir} className="hidden">
       <section data-pdf-page className={page}>
         <h1 className="text-2xl font-bold">{t.booklet.title}</h1>
         <p className="mb-2 text-sm text-gray-600">{projectName}</p>

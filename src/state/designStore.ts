@@ -39,6 +39,9 @@ interface DesignState extends Persisted {
   projects: LocalProject[];
   /** Set when the browser refused to save (private mode, full storage) — the UI warns and offers a file backup. */
   saveError: boolean;
+  /** The last ready-made fix that was applied, so the editor can confirm what changed. */
+  lastApplied: { label: string; at: number } | null;
+  clearApplied: () => void;
   past: DesignParams[];
   future: DesignParams[];
   lastEdit: { key: string; at: number } | null;
@@ -150,6 +153,7 @@ export const useDesign = create<DesignState>((set, get) => {
     ...initialActive,
     projects: withActive(initialActive, loadProjects()),
     saveError: false,
+    lastApplied: null,
     past: [],
     future: [],
     lastEdit: null,
@@ -175,7 +179,11 @@ export const useDesign = create<DesignState>((set, get) => {
       });
       persist();
     },
-    applyChange: (change) => get().update(change.set),
+    applyChange: (change) => {
+      get().update(change.set);
+      set({ lastApplied: { label: change.label, at: Date.now() } });
+    },
+    clearApplied: () => set({ lastApplied: null }),
     replaceParams: (params, name, cloudProjectId) => {
       const s = get();
       set({
@@ -217,7 +225,12 @@ export const useDesign = create<DesignState>((set, get) => {
     },
     reset: () => get().startNew(DEFAULT_OPEN_SHELF),
     startNew: (params, name) => {
-      set({ ...fresh, projectId: newId(), params: params ?? DEFAULT_OPEN_SHELF, projectName: name ?? DEFAULT_NAME, cloudProjectId: null, updatedAt: Date.now() });
+      // Two bookcases should not both be called "Bookcase": number the repeats.
+      const base = name ?? DEFAULT_NAME;
+      const taken = new Set(get().projects.map((p) => p.name));
+      let unique = base;
+      for (let n = 2; taken.has(unique); n++) unique = `${base} ${n}`;
+      set({ ...fresh, projectId: newId(), params: params ?? DEFAULT_OPEN_SHELF, projectName: unique, cloudProjectId: null, updatedAt: Date.now() });
       persist();
     },
     importProject: (params, name) => get().startNew(params, name),
