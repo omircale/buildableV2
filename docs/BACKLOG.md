@@ -51,6 +51,10 @@ Status legend: ✅ done · 🔄 in progress · ⏳ next · 🅱️ phase B (late
 ## Stage 1.9 — Fix anywhere ✅ 2026-09-17
 - ✅ "N problems to fix" button in the bottom bar of every step opens a side sheet with every problem and all its re-checked fixes (apply in one click, Undo reverts). Review screen shows all fixes, not only the first.
 
+## Stage 1.10 — AR, step 1 ✅ 2026-09-20
+- ✅ 3D file export at true 1:1 scale from the review screen: USDZ (iPhone → AR Quick Look, floor anchoring, Quick Look compatible) and GLB (Android viewers, 3D software). Built from the model, not the canvas; part ids, names, cut sizes, weight embedded; exporters load on demand (10 KB + 9 KB).
+- ⏳ Step 2 (needs deployment): host the file, in-room button with bundled model-viewer, QR from desktop to phone, vertical anchoring for wall-mounted pieces. See docs/AR_MODULE.md.
+
 ## Stage 2 — Montessori floor bed + hardware ⏳
 - Template framework (schema-driven parameters) so new furniture does not need bespoke UI
 - Montessori floor bed: user picks mattress width × length × thickness freely (presets for common sizes); frame, slats/base, rails and house frame derived from it; house frame / rails / base type as options

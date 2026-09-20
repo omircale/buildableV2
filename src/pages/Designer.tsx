@@ -288,6 +288,17 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
       { id: 'advanced', group: 'actions', label: a.toggleAdvanced, detail: 'E', keywords: 'engineering checks cut list הנדסה בדיקות חיתוך', run: () => setAdvancedOpen(!useUi.getState().advancedOpen) },
       { id: 'csv', group: 'actions', label: a.exportCsv, keywords: 'export csv ייצוא', disabled: result.report.exportBlocked, run: exportCsv },
       { id: 'pdf', group: 'actions', label: a.printPdf, keywords: 'print pdf הדפסה', disabled: result.report.exportBlocked, run: printPackage },
+      {
+        id: 'ar-file',
+        group: 'actions',
+        label: a.arFile,
+        keywords: 'ar usdz glb 3d תלת ממד מציאות רבודה',
+        disabled: result.report.checks.some((c) => c.category === 'geometry' && c.status === 'RED'),
+        run: () => {
+          go('review');
+          setTimeout(() => document.querySelector<HTMLElement>('[data-ar-card]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+        },
+      },
       { id: 'projects', group: 'actions', label: a.projects, keywords: 'save versions שמירה גרסאות', run: () => setProjectsOpen(true) },
       { id: 'undo', group: 'actions', label: t.common.undo, detail: 'Ctrl Z', disabled: !s.past.length, run: s.undo },
       { id: 'redo', group: 'actions', label: t.common.redo, detail: 'Ctrl Shift Z', disabled: !s.future.length, run: s.redo },

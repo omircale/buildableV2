@@ -4,6 +4,7 @@ import { useDesign } from '../../state/designStore';
 import { useUi } from '../../state/uiStore';
 import { Button, StatusIcon } from '../../ui/common';
 import { worstStatus } from '../../ui/DesignControls';
+import { ArCard } from '../../ui/ar/ArCard';
 import { artKindFor } from '../../ui/furnitureCatalog';
 import { formatCm } from '../../ui/measure';
 import { IconChevron, IconDownload, FurnitureArt } from '../../ui/icons';
@@ -172,6 +173,8 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
               );
             })}
           </ul>
+
+          <ArCard result={result} />
 
           {notChecked.length > 0 && (
             <details className="group rounded-xl bg-panel ring-1 ring-line">
