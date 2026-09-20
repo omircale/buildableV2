@@ -8,6 +8,7 @@ import { finishFor, getMaterial, supplierProductFor, type Component, type Design
 import { useT } from '../i18n';
 import { useDesign, type ViewMode } from '../state/designStore';
 import { useResolvedTheme, useUi, type ViewStyle } from '../state/uiStore';
+import { useDecorTexture, usePartDecorTexture } from './decors/useDecorTexture';
 import { formatCm, partMeasureLabels } from './measure';
 
 const MM = 0.001;
@@ -78,7 +79,7 @@ function finishColor(c: Component, result: DesignResult): string {
   return decor?.color ?? material?.defaultColor ?? '#cccccc';
 }
 
-function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdge, viewStyle }: { c: Component; result: DesignResult; mode: ViewMode; status?: Status; selected: boolean; onSelect?: (id: string) => void; edgeColor: string; softEdge: string; viewStyle: ViewStyle }) {
+function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdge, viewStyle, decorMap }: { c: Component; result: DesignResult; mode: ViewMode; status?: Status; selected: boolean; onSelect?: (id: string) => void; edgeColor: string; softEdge: string; viewStyle: ViewStyle; decorMap?: THREE.Texture | null }) {
   const { x: W } = result.model.overall;
   const pos = new THREE.Vector3((c.origin.x + c.size.x / 2 - W / 2) * MM, (c.origin.y + c.size.y / 2) * MM, (c.origin.z + c.size.z / 2) * MM);
   if (mode === 'exploded') pos.add(explodeOffset(c, result).multiplyScalar(MM));
@@ -94,6 +95,9 @@ function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdg
   if (c.role === 'back' && mode !== 'warnings') opacity = Math.min(opacity, mode === 'design' ? 1 : 0.35);
 
   const isDecorMode = mode === 'design' || mode === 'exploded' || mode === 'measure';
+  // A previewed catalogue finish replaces the flat colour on the manufactured boards only.
+  const partMap = usePartDecorTexture(decorMap ?? null, c.size, c.grainAxis);
+  const map = partMap && isDecorMode && !c.reference ? partMap : null;
   const realistic = viewStyle === 'realistic' && isDecorMode;
   // Illustration mode reads as a diagram: flat color, no reflections, no per-fragment lighting variance.
   const roughness = !isDecorMode ? 1 : realistic ? (finish.sheen === 'gloss' ? 0.15 : finish.sheen === 'satin' ? 0.45 : 0.85) : 1;
@@ -113,7 +117,8 @@ function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdg
     >
       <boxGeometry args={[c.size.x * MM, c.size.y * MM, c.size.z * MM]} />
       <meshStandardMaterial
-        color={color}
+        map={map}
+        color={map ? '#ffffff' : color}
         roughness={roughness}
         metalness={metalness}
         envMapIntensity={realistic ? 0.9 : 0}
@@ -304,6 +309,7 @@ export function Viewport3D({ result, preset, preview = false }: { result: Design
   const controls = useRef<OrbitControlsImpl>(null);
   const { x: W, y: H, z: D } = result.model.overall;
   const realistic = viewStyle === 'realistic' && mode !== 'structural' && mode !== 'warnings';
+  const decorMap = useDecorTexture();
 
   return (
     <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} camera={{ fov: 35, near: 0.01, far: 100, position: [-1.6, 1.6, 3.2] }} onPointerMissed={() => !preview && select(null)}>
@@ -329,7 +335,19 @@ export function Viewport3D({ result, preset, preview = false }: { result: Design
         {result.model.components
           .filter((c) => preview || (focus ? c.id === focus.id : !hidden.includes(c.role)))
           .map((c) => (
-            <Board key={c.id} c={c} result={result} mode={mode} status={statuses.get(c.id)} selected={!preview && selectedId === c.id} onSelect={preview ? undefined : select} edgeColor={dark ? '#1a1612' : '#3b342c'} softEdge={dark ? '#3b332b' : '#8d8478'} viewStyle={viewStyle} />
+            <Board
+              key={c.id}
+              c={c}
+              result={result}
+              mode={mode}
+              status={statuses.get(c.id)}
+              selected={!preview && selectedId === c.id}
+              onSelect={preview ? undefined : select}
+              edgeColor={dark ? '#1a1612' : '#3b342c'}
+              softEdge={dark ? '#3b332b' : '#8d8478'}
+              viewStyle={viewStyle}
+              decorMap={decorMap}
+            />
           ))}
         {mode === 'measure' && (selected ? <PartMeasurements result={result} c={selected} /> : <Measurements result={result} />)}
       </group>

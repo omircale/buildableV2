@@ -9,6 +9,7 @@ import { STEPS, type Step } from './pages/steps';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
+import { DecorsPage } from './pages/Decors';
 import { useDesign } from './state/designStore';
 import { useResolvedTheme, useUi } from './state/uiStore';
 import { CommandPalette, useRegisterCommands, type Command } from './ui/CommandPalette';
@@ -86,6 +87,7 @@ function useGlobalCommands() {
           window.location.hash = '#/design/setup';
         },
       })),
+      { id: 'decors-page', group: 'materials', label: t.decors.openCatalog, keywords: 'decor finishes catalog גוונים קטלוג פורמייקה', run: () => (window.location.hash = '#/decors') },
       { id: 'projects-page', group: 'steps', label: t.header.projects, keywords: 'projects פרויקטים', run: () => (window.location.hash = '#/projects') },
     ],
     [t, locale, setTheme, setLocale, startNew],
@@ -118,6 +120,7 @@ export default function App() {
   if (route.startsWith('#/admin')) page = <AdminPage auth={auth} />;
   else if (route.startsWith('#/login')) page = <LoginPage auth={auth} />;
   else if (route.startsWith('#/projects')) page = <ProjectsPage auth={auth} />;
+  else if (route.startsWith('#/decors')) page = <DecorsPage auth={auth} />;
   else if (route.startsWith('#/design')) {
     const step = route.split('/')[2] as Step;
     page = <DesignerPage auth={auth} step={STEPS.includes(step) ? step : 'structure'} />;

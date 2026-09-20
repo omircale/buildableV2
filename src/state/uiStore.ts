@@ -17,8 +17,17 @@ interface Persisted {
   viewStyle: ViewStyle;
 }
 
+/** A decor from the distributor catalog shown on the model. Preview only: it never changes the design or the price. */
+export interface DecorPreview {
+  code: string;
+  nameHe: string;
+  image: string;
+}
+
 interface UiState extends Persisted {
   systemDark: boolean;
+  decorPreview: DecorPreview | null;
+  setDecorPreview: (d: DecorPreview | null) => void;
   advancedTab: AdvancedTab;
   focusCheckId: string | null;
   commandOpen: boolean;
@@ -65,6 +74,7 @@ const prefersDark = () => typeof window !== 'undefined' && window.matchMedia?.('
 export const useUi = create<UiState>((set, get) => ({
   ...load(),
   systemDark: prefersDark(),
+  decorPreview: null,
   advancedTab: 'checks',
   focusCheckId: null,
   commandOpen: false,
@@ -91,6 +101,7 @@ export const useUi = create<UiState>((set, get) => ({
     set((s) => ({ sections: { ...s.sections, [id]: open } }));
     save(get());
   },
+  setDecorPreview: (decorPreview) => set({ decorPreview }),
   setViewStyle: (viewStyle) => {
     set({ viewStyle });
     save(get());

@@ -63,7 +63,11 @@ Status legend: ✅ done · 🔄 in progress · ⏳ next · 🅱️ phase B (late
 - Hardware library with manufacturer data (screws, dowels, cam locks, bed bolts, wall anchors): specs, loads, sources, per-step placement
 - Hardware ordered together with boards: one order, one price
 
-## Stage 3 — Materials, finishes and realism ⏳
+## Stage 3 — Materials, finishes and realism 🔄
+- ✅ 2026-09-20 Distributor finishes catalog with their photographs (permission granted): 190 decors at `#/decors`, search + filters, preview on the model at real tile scale with grain direction, attribution and a documented removal path. Preview never changes design, price, order, PDF or AR export. See docs/DECOR_CATALOG.md.
+- ⏳ Prices/sheet sizes for those finishes → real ordering; photographs of the boards actually sold today.
+
+## Stage 3 — remaining ⏳
 - Catalog layer for decors/materials from multiple suppliers (supplier hidden from end users): HPL/Formica, polymer (RENOLIT-foiled MDF), acrylic, veneer, solid wood, core boards — starting from Bluran's published catalogs, with attribution
 - Filters: material type, color family, pattern (wood/stone/solid), finish (matte/gloss/texture), search by name or code
 - Knowledge card per material and finish: properties, what it suits (e.g. CNC grooves and patterns → MDF or solid wood), pros and cons — researched with sources, questions to the owner when unsure. No "not recommended" labels; neutral comparison.

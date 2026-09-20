@@ -10,6 +10,7 @@ import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
 import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
 import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
+import { DecorPreviewBadge } from '../ui/decors/DecorPreviewBadge';
 import { IconCheck, IconChevron, IconFolder, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
 import { PrintPackage } from '../ui/PrintPackage';
 import { ProjectsDialog } from '../ui/ProjectsDialog';
@@ -115,7 +116,10 @@ function Viewport({ result }: { result: DesignResult }) {
         <AppliedFixToast result={result} />
       </div>
       <div className="pointer-events-none absolute inset-x-4 top-4 flex flex-wrap items-start justify-between gap-2 [&>*]:pointer-events-auto">
-        <BuildPill result={result} />
+        <div className="flex flex-wrap items-center gap-2">
+          <BuildPill result={result} />
+          <DecorPreviewBadge />
+        </div>
         <Button variant={advancedOpen ? 'primary' : 'secondary'} onClick={() => setAdvancedOpen(!advancedOpen)} title={t.viewport.advancedShortcut} className="shadow-sm">
           <IconPanel size={18} />
           {t.viewport.advanced}
@@ -236,6 +240,12 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
   /** Generates a real, downloadable PDF (no print dialog) by rasterizing the print package — the browser
    * shapes the Hebrew/RTL text correctly this way, which jsPDF's own text API cannot do on its own. */
   const printPackage = async () => {
+    // The package documents the order: capture the model in its ordered decor, not in a catalogue preview.
+    const preview = useUi.getState().decorPreview;
+    if (preview) {
+      useUi.getState().setDecorPreview(null);
+      await new Promise((r) => setTimeout(r, 250));
+    }
     const canvas = document.querySelector('canvas');
     setSnapshot(canvas ? canvas.toDataURL('image/png') : null);
     void logUsage('export_print', 0);
@@ -257,6 +267,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
       }
     } finally {
       setPdfBusy(false);
+      if (preview) useUi.getState().setDecorPreview(preview);
     }
   };
 

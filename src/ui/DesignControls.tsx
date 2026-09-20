@@ -4,9 +4,10 @@ import { useT } from '../i18n';
 import { useDesign } from '../state/designStore';
 import { useUi } from '../state/uiStore';
 import type { Locale } from '../state/uiStore';
-import { Chip, Field, STATUS_SEVERITY, SearchField, Section, StatusIcon, Stepper, UnitInput, inputClass, matchesQuery } from './common';
+import { Chip, Field, STATUS_SEVERITY, SearchField, Section, StatusIcon, Stepper, UnitInput, buttonClass, inputClass, matchesQuery } from './common';
 import { IssuesList, openIssues } from './Issues';
 import { IconChevron } from './icons';
+import { DECOR_CATALOG } from './decors/catalog';
 import { componentDims, formatCm } from './measure';
 import { GROUP_TITLES, TemplateFields, fieldsFor, type FieldGroup } from './TemplateFields';
 
@@ -364,6 +365,8 @@ function RoleDecors() {
 
 export function LookControls() {
   const t = useT();
+  const decorPreview = useUi((s) => s.decorPreview);
+  const setDecorPreview = useUi((s) => s.setDecorPreview);
   const locale = useUi((s) => s.locale) as Locale;
   const p = useDesign((s) => s.params);
   const update = useDesign((s) => s.update);
@@ -447,6 +450,19 @@ export function LookControls() {
           )}
         </Section>
       )}
+
+      <Section id="decor-catalog" title={t.decors.openCatalog} defaultOpen={false} summary={decorPreview ? decorPreview.nameHe : undefined}>
+        <p className="text-[13px] leading-snug text-muted">{t.decors.intro}</p>
+        <a href="#/decors" className={`${buttonClass('secondary', 'sm')} self-start`}>
+          {t.decors.openCatalog}
+        </a>
+        <p className="text-[12px] leading-snug text-muted">{DECOR_CATALOG.attribution}</p>
+        {decorPreview && (
+          <button type="button" onClick={() => setDecorPreview(null)} className="self-start text-[13px] font-medium text-accent-ink underline underline-offset-2">
+            {t.decors.clearPreview}
+          </button>
+        )}
+      </Section>
 
       <Section id="after-delivery" title={t.look.afterDelivery} defaultOpen={false} summary={t.look.finishTypes[p.finish.type]}>
         <p className="text-[13px] leading-snug text-muted">{t.look.afterDeliveryHint}</p>
