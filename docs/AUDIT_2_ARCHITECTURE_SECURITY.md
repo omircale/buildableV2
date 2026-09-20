@@ -24,12 +24,29 @@ Supabase security advisor: one informational note (the admin e-mail table has no
 
 Admin was granted the moment an account was *created* with `orenmindcet@gmail.com`, without the mailbox being confirmed. The database currently has **no users at all**, so the address is unclaimed: whoever registers it first would receive the admin row. Whether they could then sign in depends on the Supabase "Confirm email" setting, which is outside the code.
 
-Prepared as `supabase/migrations/0003_bootstrap_on_confirmed_email.sql` (**not applied — waiting for the owner's approval**):
+**Applied on 2026-09-20** as `0003_bootstrap_on_confirmed_email.sql` and `0004_single_use_admin_bootstrap.sql`:
 1. Admin is granted only when the address is confirmed (at sign-up if already confirmed, otherwise on confirmation).
 2. `revoke` the leftover anonymous grants on `admin_storage_by_user` (the view was created after the blanket revoke, so it kept them; RLS still blocked the data, but the grants should not exist).
 3. Advisor warnings: split the overlapping "for all" policies on `app_settings` / `app_users`; add the missing index on `app_settings.updated_by`.
+4. The bootstrap address is **single-use**: granting admin deletes it from the list, so the same address cannot grant admin twice (for example after an account is deleted and re-registered).
 
-**Also for the owner to check in the Supabase dashboard:** Authentication → Providers → Email → "Confirm email" must be on, and Authentication → Users should contain no unexpected accounts (during testing I created two fake users inside a transaction; the check whether they were committed was blocked by the permission guard and is still pending).
+Verified afterwards on the live project, in a transaction that was rolled back:
+
+| Test | Result |
+|---|---|
+| Unconfirmed sign-up with the bootstrap address | **no admin row** (was: admin) |
+| The same account after confirming the address | admin — the owner still gets access normally |
+| Confirmed sign-up with any other address | no row |
+| Second sign-up with the bootstrap address after it was used | no row — the key is consumed |
+| Anonymous grants on the reporting view | none |
+| Non-member creating a project / promoting itself | denied |
+| Rows a non-member sees in the admin storage view | 0 |
+
+Both Supabase advisors are now clean (only the intentional "no policies on the admin e-mail list" note remains).
+
+**One setting is still outside the code:** if Supabase's "Confirm email" is switched off, sign-ups are confirmed automatically and anyone could still claim an unused bootstrap address. Check Authentication → Providers → Email → Confirm email is on.
+
+**Test data:** the impersonation tests created fake users inside transactions. Verified afterwards: `auth.users` holds **0 rows** — everything rolled back, nothing left behind.
 
 ### Application security
 

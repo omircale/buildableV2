@@ -42,6 +42,7 @@ Status legend: ✅ done · 🔄 in progress · ⏳ next · 🅱️ phase B (late
 - ✅ Chair: seat bending computed; joints, stability → GREY with EN 12520 / EN 1022 named. Table/bench/desk: top bending, back rail racking, middle panel option.
 - ✅ Pull-up station: always RED (structure.life_safety) — ordering blocked until a structural engineer signs off. RED safety now blocks export too.
 - ⏳ Only birch 18 mm has strength data — other boards show GREY for beds/tables/chairs. More board datasheets = more furniture can reach GREEN/YELLOW.
+- ✅ 2026-09-20 Security: admin bootstrap now requires a confirmed e-mail and is single-use (migrations 0003, 0004, applied and verified on the live project).
 - ⏳ Phase B: "approved by an engineer" override (admin) to unblock a specific pull-up design.
 - ⏳ Wall shelf and shelf-for-existing-cabinet still "soon" (need wall-anchor data from the hardware library).
 
