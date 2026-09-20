@@ -117,6 +117,8 @@ function Board({ c, result, mode, status, selected, onSelect, edgeColor, softEdg
     >
       <boxGeometry args={[c.size.x * MM, c.size.y * MM, c.size.z * MM]} />
       <meshStandardMaterial
+        // Swapping a texture in or out changes the shader, so the material is rebuilt when the finish changes.
+        key={map?.uuid ?? 'flat'}
         map={map}
         color={map ? '#ffffff' : color}
         roughness={roughness}
