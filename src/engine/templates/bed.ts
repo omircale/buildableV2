@@ -281,11 +281,14 @@ export function buildBed(p: BedParams): FurnitureModel {
       }
     }
     const ridgeLen = snap(L + 2 * T);
+    // The rafters' plumb cuts leave a slot between them at the peak; the ridge fills it flush with
+    // their top corners, so the roof reads as solid instead of notched.
+    const rafterTopY = apexY + (HOUSE_MEMBER_MM / 2) * Math.SQRT2;
     board({
       id: 'ridge',
       name: tr('קורת רכס', 'Ridge board'),
       role: 'ridge',
-      origin: { x: W / 2 - T / 2, y: apexY - HOUSE_MEMBER_MM / 2, z: (L + 2 * T - ridgeLen) / 2 },
+      origin: { x: W / 2 - T / 2, y: rafterTopY - HOUSE_MEMBER_MM, z: (L + 2 * T - ridgeLen) / 2 },
       size: { x: T, y: HOUSE_MEMBER_MM, z: ridgeLen },
       grainAxis: 'z',
     });
@@ -312,7 +315,8 @@ function bedHardware(p: BedParams, components: Component[]): HardwareLine[] {
     ...[...len('end'), ...len('headboard')].flatMap((c) => [{ lengthMm: Math.min(c.size.y, p.railHeightMm) }, { lengthMm: Math.min(c.size.y, p.railHeightMm) }]),
     ...len('support').filter((c) => c.id === 'support_l' || c.id === 'support_r').map((c) => ({ lengthMm: c.size.z })),
     ...len('post').map((c) => ({ lengthMm: Math.min(c.size.y, p.railHeightMm) })),
-    ...len('rafter').map(() => ({ lengthMm: HOUSE_MEMBER_MM })),
+    // Each rafter is fastened twice: its foot seats on a post, its head is screwed to the ridge.
+    ...len('rafter').flatMap(() => [{ lengthMm: HOUSE_MEMBER_MM }, { lengthMm: HOUSE_MEMBER_MM }]),
   ];
   const slats = len('slat');
   const lines: HardwareLine[] = [

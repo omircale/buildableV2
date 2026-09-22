@@ -106,6 +106,24 @@ describe('contact and support', () => {
     expect(supportReport([post, beam]).floating).toEqual([]);
   });
 
+  /**
+   * The hole a local contact measurement leaves: two boards screwed to each other and to nothing
+   * else hold each other up in the arithmetic while hanging in mid-air in the room.
+   */
+  it('a pair of boards touching only each other is still floating', () => {
+    const a = board('a', [0, 900, 0], [400, 18, 300]);
+    const b = board('b', [0, 918, 0], [400, 18, 300]);
+    expect(contactAreaMm2(a, b)).toBeGreaterThan(100);
+    expect(supportReport([a, b]).floating).toEqual(['a', 'b']);
+  });
+
+  it('a stack standing on the floor is supported all the way up', () => {
+    const base = board('base', [0, 0, 0], [400, 300, 300]);
+    const mid = board('mid', [0, 300, 0], [400, 18, 300]);
+    const top = board('top', [0, 318, 0], [400, 18, 300]);
+    expect(supportReport([base, mid, top]).floating).toEqual([]);
+  });
+
   it('reference components neither float nor hold anything up', () => {
     const mattress: Component = { ...board('mattress', [0, 900, 0], [700, 100, 1600]), reference: true };
     expect(supportReport([mattress]).floating).toEqual([]);

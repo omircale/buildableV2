@@ -212,36 +212,57 @@ export interface SupportOptions {
 }
 
 export interface SupportReport {
-  /** Components that touch neither the floor nor any other solid component. */
+  /** Components with no chain of contact back to the floor — a lone board or a whole sub-assembly. */
   floating: string[];
   /** Contact area each component has with the floor and with its neighbours, in mm². */
   contact: Map<string, number>;
 }
 
 /**
- * Which components are held up by something.
+ * Which components are held up by the ground, directly or through the parts they touch.
  *
- * A board that touches nothing is always a modelling error: it cannot be built, and no structural
- * check further down would ever notice, because every one of them starts from a member that is
- * already assumed to be in place.
+ * Support has to be traced from the floor rather than measured locally: two boards screwed to each
+ * other and to nothing else hold each other up in the arithmetic and hang in mid-air in the room.
+ * So contact builds a graph, the parts reaching the floor seed it, and whatever the flood does not
+ * reach is floating — a single board or a whole sub-assembly.
+ *
+ * Every piece of furniture in the catalog stands on the floor. A wall-mounted piece will need an
+ * anchor to seed this the way the floor does; until then it would correctly report as unsupported.
  */
 export function supportReport(components: Component[], options: SupportOptions = {}): SupportReport {
   const { floorYMm = 0, gapMm = 0.6, minContactMm2 = 100 } = options;
   const solid = components.filter((c) => !c.reference);
   const contact = new Map<string, number>();
-  for (const c of solid) contact.set(c.id, lowestY(c) <= floorYMm + gapMm ? Infinity : 0);
+  const touches = new Map<string, string[]>();
+  for (const c of solid) {
+    contact.set(c.id, 0);
+    touches.set(c.id, []);
+  }
 
   for (let i = 0; i < solid.length; i++) {
     for (let j = i + 1; j < solid.length; j++) {
       const area = contactAreaMm2(solid[i], solid[j], gapMm);
-      if (area <= 0) continue;
+      if (area < minContactMm2) continue;
       contact.set(solid[i].id, (contact.get(solid[i].id) ?? 0) + area);
       contact.set(solid[j].id, (contact.get(solid[j].id) ?? 0) + area);
+      touches.get(solid[i].id)!.push(solid[j].id);
+      touches.get(solid[j].id)!.push(solid[i].id);
+    }
+  }
+
+  const grounded = new Set<string>();
+  const queue = solid.filter((c) => lowestY(c) <= floorYMm + gapMm).map((c) => c.id);
+  for (const id of queue) grounded.add(id);
+  while (queue.length) {
+    for (const next of touches.get(queue.pop()!) ?? []) {
+      if (grounded.has(next)) continue;
+      grounded.add(next);
+      queue.push(next);
     }
   }
 
   return {
-    floating: solid.filter((c) => (contact.get(c.id) ?? 0) < minContactMm2).map((c) => c.id),
+    floating: solid.filter((c) => !grounded.has(c.id)).map((c) => c.id),
     contact,
   };
 }
