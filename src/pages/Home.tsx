@@ -5,7 +5,9 @@ import { useDesign } from '../state/designStore';
 import { ProjectCard } from './Projects';
 import { AppHeader } from '../ui/AppHeader';
 import { buttonClass } from '../ui/common';
-import { FURNITURE_TYPES, fitsSpace, presetFor, type FurnitureType, type SpaceCm } from '../ui/furnitureCatalog';
+import { FURNITURE_TYPES, fitsSpace, presetFor, type FurnitureKind, type FurnitureType, type SpaceCm } from '../ui/furnitureCatalog';
+import { DescribePanel } from '../ui/intake/DescribePanel';
+import { loadFor, type LoadPresetId } from '../ui/DesignControls';
 import { FurnitureArt, IconChevron, IconRuler } from '../ui/icons';
 
 function SpaceInput({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
@@ -67,13 +69,25 @@ export function HomePage({ auth }: { auth: AuthState }) {
   const hasSpace = space.w != null || space.h != null || space.d != null;
   const fits = useMemo(() => new Map(FURNITURE_TYPES.map((f) => [f.kind, fitsSpace(f, space)])), [space]);
 
-  const open = (type: FurnitureType) => {
+  const open = (type: FurnitureType, forSpace: SpaceCm = space) => {
     if (!type.available) return;
 
-    const preset = presetFor(type, space);
+    const preset = presetFor(type, forSpace);
     if (!preset) return;
     startNew(preset, t.furniture[type.kind].name);
-    window.location.hash = '#/design/setup';
+    window.location.hash = '#/design/edit';
+  };
+
+  /** Described in words: open that piece at the sizes the description actually gave. */
+  const openDescribed = (kind: FurnitureKind, described: SpaceCm, use: LoadPresetId | null) => {
+    const type = FURNITURE_TYPES.find((f) => f.kind === kind);
+    if (!type) return;
+    setSpace(described);
+    const preset = presetFor(type, described);
+    if (!preset) return;
+    const withUse = use && 'loadPerShelf' in preset ? { ...preset, loadPerShelf: loadFor(use) } : preset;
+    startNew(withUse, t.furniture[kind].name);
+    window.location.hash = '#/design/edit';
   };
 
 
@@ -87,6 +101,9 @@ export function HomePage({ auth }: { auth: AuthState }) {
             <p className="text-lg leading-relaxed text-muted">{t.home.subtitle}</p>
           </div>
         </div>
+
+        {/* Say what you want and go straight to the editor; the gallery below is for picking instead. */}
+        <DescribePanel onStart={openDescribed} />
 
         {projects.length > 0 && (
           <section className="flex flex-col gap-3" aria-label={t.projects.recent}>
