@@ -304,6 +304,7 @@ export function buildBed(p: BedParams): FurnitureModel {
     requested: overall,
     components,
     parts: derivePartsFromComponents(components, p),
+    openings: [],
     hardware: bedHardware(p, components),
     overall,
   };

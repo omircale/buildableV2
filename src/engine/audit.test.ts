@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { FURNITURE_TYPES, presetFor } from '../ui/furnitureCatalog';
+import { DEFAULT_DOUBLE_BED } from './index';
 import { applyChange, runDesign, templateFor, type Check, type DesignParams, type DesignResult } from './index';
 import { findOverlaps } from './validation/validate';
 import { boundsOf, supportReport } from './geometry';
@@ -16,6 +17,8 @@ const basePresets: [string, DesignParams][] = FURNITURE_TYPES.filter((f) => f.av
 const presets: [string, DesignParams][] = [
   ...basePresets,
   ...basePresets.flatMap(([k, p]): [string, DesignParams][] => (p.template === 'open_shelf' ? [[`${k} (adjustable shelves)`, { ...p, shelfMounting: 'pins' }]] : [])),
+  // The catalog offers one bed; its two-sleeper build is still its own construction and gets swept.
+  ...basePresets.flatMap(([k, p]): [string, DesignParams][] => (p.template === 'bed' && !p.childBed ? [[`${k} (two sleepers)`, DEFAULT_DOUBLE_BED]] : [])),
 ];
 
 /** Every preset plus each ranged parameter at min / mid / max. */

@@ -250,6 +250,15 @@ export function supportReport(components: Component[], options: SupportOptions =
     }
   }
 
+  // A part hung on hardware touches nothing, so its fastenings are edges in the graph too.
+  for (const c of solid) {
+    for (const id of c.fastenedTo ?? []) {
+      if (!touches.has(id)) continue;
+      touches.get(c.id)!.push(id);
+      touches.get(id)!.push(c.id);
+    }
+  }
+
   const grounded = new Set<string>();
   const queue = solid.filter((c) => lowestY(c) <= floorYMm + gapMm).map((c) => c.id);
   for (const id of queue) grounded.add(id);

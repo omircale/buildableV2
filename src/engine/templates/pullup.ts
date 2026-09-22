@@ -75,6 +75,7 @@ export function buildPullUp(p: PullUpParams): FurnitureModel {
     requested: { x: p.widthMm + 2 * off, y: p.heightMm, z: p.footLengthMm },
     components,
     parts: derivePartsFromComponents(components, p),
+    openings: [],
     hardware: [
       jointScrews([{ lengthMm: upW }, { lengthMm: upW }, { lengthMm: HEADER_MM }, { lengthMm: HEADER_MM }], T),
       {

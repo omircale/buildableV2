@@ -95,9 +95,35 @@ export interface CommonParams {
   roleFinishes?: Partial<Record<ComponentRole, string>>;
   /** Decor for one specific component id (tier 2), overriding its part type's decor. */
   partFinishes?: Record<string, string>;
+  /** Components added into the piece's openings, in the order they were added. */
+  addons?: Addon[];
 }
 
 export type TemplateId = 'open_shelf' | 'bed' | 'table' | 'chair' | 'pullup';
+
+/**
+ * A rectangular void inside a piece that a component can be added into — a bay between two shelves,
+ * the space under a bed deck, the gap under a table top. Templates declare their own openings, which
+ * is what lets the same drawer or door be offered on every piece of furniture instead of only on a
+ * cabinet.
+ */
+export interface Opening {
+  id: string;
+  name: string;
+  origin: Vec3;
+  size: Vec3;
+  /** The boards that form this void, which is what anything put inside it gets fastened to. */
+  boundedBy: string[];
+}
+
+export type AddonKind = 'shelf' | 'drawer' | 'bedding_box' | 'door';
+
+/** A component the person added, as opposed to one the template derived from its parameters. */
+export interface Addon {
+  id: string;
+  kind: AddonKind;
+  openingId: string;
+}
 
 /** Parameters of the open shelf / carcass family (bookcase, shoe cabinet, TV unit, cube organizer). */
 export interface OpenShelfParams extends CommonParams {
@@ -235,7 +261,11 @@ export type ComponentRole =
   | 'foot'
   | 'header'
   | 'mattress'
-  | 'bar';
+  | 'bar'
+  | 'drawer_front'
+  | 'box_side'
+  | 'box_back'
+  | 'box_bottom';
 
 export interface Vec3 {
   x: number;
@@ -270,6 +300,12 @@ export interface Component {
    * so the board ordered is longer than the body by the material the angles take.
    */
   endCutDeg?: { start?: number; end?: number };
+  /**
+   * Held by hardware rather than by resting on another board — a door on its hinges, a drawer on its
+   * runners — naming what it is fastened to. Without this a hinged leaf reads as hanging in mid-air,
+   * because in the geometry it touches nothing.
+   */
+  fastenedTo?: string[];
   /** Shown for context only (mattress, steel bar): never cut, ordered, priced or overlap-checked. */
   reference?: boolean;
 }
@@ -309,6 +345,8 @@ export interface FurnitureModel {
   parts: Part[];
   hardware: HardwareLine[];
   overall: Vec3;
+  /** Voids a component can be added into. Empty for a template that has not declared any yet. */
+  openings: Opening[];
 }
 
 export type CheckCategory = 'geometry' | 'materials' | 'structure' | 'connections' | 'stability' | 'manufacturing' | 'assembly' | 'safety';

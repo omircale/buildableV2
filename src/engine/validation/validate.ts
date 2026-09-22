@@ -15,7 +15,7 @@ import {
   rectInertia,
   rectSectionModulus,
 } from '../structural/beam';
-import { buildModel, rangeLabel, templateFor } from '../templates/registry';
+import { buildModel, rangeLabel, templateFor, addonChecks } from '../templates/registry';
 import { isOpenShelf, type Check, type CheckCategory, type Component, type DesignChange, type DesignParams, type FurnitureModel, type OpenShelfParams, type ProjectedFix, type Status, type ValidationReport } from '../types';
 
 const SEVERITY: Record<Status, number> = { GREEN: 0, YELLOW: 1, GREY: 2, RED: 3 };
@@ -46,7 +46,10 @@ export function validate(model: FurnitureModel, opts: ValidateOptions = {}): Val
   const checks: Check[] = [];
 
   const shelf = isOpenShelf(p);
-  const templateChecks = (shelf ? [] : (templateFor(p).checks?.(model) ?? [])).map((c) => ({ ...c, sources: c.sources.map((x) => localizeSource(x)) }));
+  const templateChecks = [...(shelf ? [] : (templateFor(p).checks?.(model) ?? [])), ...addonChecks(p, model)].map((c) => ({
+    ...c,
+    sources: c.sources.map((x) => localizeSource(x)),
+  }));
   checks.push(...geometryChecks(model, config));
   checks.push(...templateChecks.filter((c) => c.category === 'geometry'));
   checks.push(...materialChecks(p));

@@ -30,7 +30,7 @@ function round1(v: number): number {
 }
 
 const HORIZONTAL_ROLES: Component['role'][] = ['top', 'bottom', 'shelf'];
-const UNBANDED_ROLES: Component['role'][] = ['back', 'plinth', 'support', 'slat'];
+const UNBANDED_ROLES: Component['role'][] = ['back', 'plinth', 'support', 'slat', 'box_side', 'box_back', 'box_bottom'];
 
 /**
  * Parts are grouped from components with identical cut geometry, so cut list and 3D cannot diverge.
@@ -147,6 +147,14 @@ export function partName(role: Component['role']): string {
       return tr('מזרן', 'Mattress');
     case 'bar':
       return tr('מוט', 'Bar');
+    case 'drawer_front':
+      return tr('חזית מגירה', 'Drawer front');
+    case 'box_side':
+      return tr('דופן ארגז', 'Box side');
+    case 'box_back':
+      return tr('דופן קדמית/אחורית של ארגז', 'Box front/back');
+    case 'box_bottom':
+      return tr('תחתית ארגז', 'Box bottom');
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Component, FurnitureModel, HardwareLine, OpenShelfParams } from '../types';
+import type { Component, FurnitureModel, HardwareLine, OpenShelfParams, Opening } from '../types';
 import { tr } from '../i18n';
 import { getMaterial, supplierProductFor } from '../materials';
 import { derivePartsFromComponents, floorToStep } from './common';
@@ -179,10 +179,34 @@ export function buildOpenShelf(p: OpenShelfParams): FurnitureModel {
     }
   }
 
+  // Every void between two horizontal boards, in every bay, is somewhere a component can be added.
+  const levelYs = [bottomY, ...Array.from({ length: p.shelfCount }, (_, i) => bottomY + T + shelfGap * (i + 1) + T * i), topY];
+  const openings: Opening[] = [];
+  for (let b = 0; b < bays; b++) {
+    for (let l = 0; l < levelYs.length - 1; l++) {
+      const y = levelYs[l] + T;
+      const height = levelYs[l + 1] - y;
+      if (height <= 0) continue;
+      const suffix = bays > 1 ? `_b${b + 1}` : '';
+      const below = l === 0 ? `bottom${suffix}` : `shelf_${l}${suffix}`;
+      const above = l === levelYs.length - 2 ? `top${suffix}` : `shelf_${l + 1}${suffix}`;
+      const left = b === 0 ? 'side_l' : `divider_${b}`;
+      const right = b === bays - 1 ? 'side_r' : `divider_${b + 1}`;
+      openings.push({
+        id: `bay${b + 1}_level${l + 1}`,
+        name: bays > 1 ? tr(`תא ${b + 1}, מפלס ${l + 1}`, `Bay ${b + 1}, level ${l + 1}`) : tr(`מפלס ${l + 1}`, `Level ${l + 1}`),
+        origin: { x: T + b * (bayW + T), y, z: zFront },
+        size: { x: bayW, y: height, z: boardDepth },
+        boundedBy: [below, above, left, right].filter((id) => components.some((c) => c.id === id)),
+      });
+    }
+  }
+
   return {
     params: p,
     orderStepMm: step,
     requested: { x: p.widthMm, y: p.heightMm, z: p.depthMm },
+    openings,
     components,
     parts: derivePartsFromComponents(components, p, (c) => [...(doorMachining(c, p) ?? []), ...(pinMachining(c, p, bottomY + T, interiorH) ?? [])]),
     hardware: deriveHardware(p, components),

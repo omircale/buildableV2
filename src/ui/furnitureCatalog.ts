@@ -22,8 +22,7 @@ export type FurnitureKind =
   | 'cube_organizer'
   | 'cabinet_doors'
   | 'floor_bed'
-  | 'bed_single'
-  | 'bed_double'
+  | 'bed'
   | 'desk'
   | 'bench'
   | 'coffee_table'
@@ -61,13 +60,20 @@ const shelf = (over: Partial<OpenShelfParams>) => (space: SpaceCm): DesignParams
 
 const fixed = (p: DesignParams) => () => p;
 
+/**
+ * One bed, not two. Single and double were never different furniture — the same frame with a wider
+ * mattress and a centre support under the slats — so the catalog offers a bed and the mattress size
+ * decides the rest. A space wide enough for a double starts there; everything is editable after.
+ */
+const bed = (space: SpaceCm): DesignParams =>
+  space.w != null && space.w * 10 >= DEFAULT_DOUBLE_BED.mattressWidthMm + 2 * DEFAULT_DOUBLE_BED.thicknessMm ? DEFAULT_DOUBLE_BED : DEFAULT_SINGLE_BED;
+
 const light = { label: 'חפצי נוי', massKg: 8, distribution: 'uniform' as const };
 
 export const FURNITURE_TYPES: FurnitureType[] = [
   { kind: 'open_shelf', available: true, minCm: { w: 20, h: 20, d: 15 }, preset: shelf({}) },
   { kind: 'floor_bed', available: true, isNew: true, minCm: { w: 64, h: 20, d: 124 }, preset: fixed(DEFAULT_FLOOR_BED) },
-  { kind: 'bed_single', available: true, isNew: true, minCm: { w: 64, h: 20, d: 124 }, preset: fixed(DEFAULT_SINGLE_BED) },
-  { kind: 'bed_double', available: true, isNew: true, minCm: { w: 124, h: 20, d: 194 }, preset: fixed(DEFAULT_DOUBLE_BED) },
+  { kind: 'bed', available: true, isNew: true, minCm: { w: 64, h: 20, d: 124 }, preset: bed },
   { kind: 'shoe_cabinet', available: true, isNew: true, minCm: { w: 30, h: 40, d: 25 }, preset: shelf({ widthMm: 800, heightMm: 1000, depthMm: 350, shelfCount: 2, doors: 'hinged', loadPerShelf: light }) },
   { kind: 'shoe_rack', available: true, isNew: true, minCm: { w: 30, h: 25, d: 20 }, preset: shelf({ widthMm: 800, heightMm: 500, depthMm: 300, shelfCount: 1, hasBack: false, loadPerShelf: light }) },
   { kind: 'tv_unit', available: true, minCm: { w: 80, h: 30, d: 30 }, preset: shelf({ widthMm: 1600, heightMm: 450, depthMm: 400, shelfCount: 0, dividerCount: 2, loadPerShelf: light }) },
@@ -99,7 +105,7 @@ export function artKindFor(p: DesignParams): FurnitureKind {
     case 'open_shelf':
       return p.doors === 'hinged' ? 'cabinet_doors' : 'open_shelf';
     case 'bed':
-      return p.childBed ? 'floor_bed' : p.sleepers === 2 ? 'bed_double' : 'bed_single';
+      return p.childBed ? 'floor_bed' : 'bed';
     case 'table':
       return p.topLoadDistribution === 'point_center' ? 'bench' : 'desk';
     case 'chair':

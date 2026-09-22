@@ -219,15 +219,7 @@ export function FurnitureArt({ kind, className }: { kind: string; className?: st
           <path d="M14 20v44M146 20v44M14 44h132" />
         </svg>
       );
-    case 'bed_single':
-      return (
-        <svg viewBox="0 0 150 90" width={150} height={90} {...common} aria-hidden>
-          <path d="M10 84V20h22v64" />
-          <rect x="10" y="54" width="130" height="30" />
-          <rect x="32" y="44" width="104" height="10" />
-        </svg>
-      );
-    case 'bed_double':
+    case 'bed':
       return (
         <svg viewBox="0 0 160 90" width={160} height={90} {...common} aria-hidden>
           <path d="M8 84V14h26v70" />

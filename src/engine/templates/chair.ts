@@ -75,6 +75,7 @@ export function buildChair(p: ChairParams): FurnitureModel {
     requested: { x: p.seatWidthMm + 2 * T, y: p.backHeightMm, z: p.depthMm },
     components,
     parts: derivePartsFromComponents(components, p),
+    openings: [],
     hardware: [jointScrews([{ lengthMm: seatD }, { lengthMm: seatD }, { lengthMm: backH }, { lengthMm: backH }, { lengthMm: FRONT_RAIL_MM }, { lengthMm: FRONT_RAIL_MM }, { lengthMm: seatW }], T)],
     overall,
   };

@@ -103,6 +103,7 @@ export function buildTable(p: TableParams): FurnitureModel {
     requested: { x: p.widthMm, y: p.heightMm, z: p.depthMm },
     components,
     parts: derivePartsFromComponents(components, p),
+    openings: [],
     hardware: [jointScrews(joints, T)],
     overall,
   };
