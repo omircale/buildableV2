@@ -5,7 +5,7 @@ import { nestParts, type NestingGroupResult } from './manufacturing/nesting';
 import { getMaterial } from './materials';
 import { buildSupplierQuote, type SupplierQuote } from './suppliers/quote';
 import { buildModel, templateFor } from './templates/registry';
-import { isOpenShelf, type AssemblyStep, type Component, type DesignChange, type DesignParams, type FurnitureModel, type ValidationReport } from './types';
+import { isOpenShelf, type Addon, type AssemblyStep, type Component, type DesignChange, type DesignParams, type FurnitureModel, type ValidationReport } from './types';
 import { validate } from './validation/validate';
 
 export const ENGINE_VERSION = '0.1.0';
@@ -37,9 +37,34 @@ export function applyChange<P extends DesignParams>(params: P, change: DesignCha
   return { ...params, ...change.set, template: params.template } as P;
 }
 
+/**
+ * Components a person added are fitted last, each as its own step, so the booklet shows how the
+ * drawer or the box goes in instead of stopping at the carcass.
+ */
+function withAddonSteps(model: FurnitureModel, steps: AssemblyStep[]): AssemblyStep[] {
+  const addons = model.params.addons ?? [];
+  if (!addons.length) return steps;
+  const out = [...steps];
+  for (const a of addons) {
+    const ids = model.components.filter((c) => c.id === a.id || c.id.startsWith(`${a.id}_`)).map((c) => c.id);
+    if (!ids.length) continue;
+    const opening = model.openings.find((o) => o.id === a.openingId);
+    out.push({
+      n: out.length + 1,
+      title: tr(`הרכבת ${addonName(a.kind)} והצבתה ב${opening?.name ?? ''}`, `Assemble the ${addonNameEn(a.kind)} and fit it in ${opening?.name ?? 'place'}`),
+      componentIds: ids,
+      hardware: a.kind === 'drawer' ? ['joint_screw', `${a.id}_runner`] : a.kind === 'door' ? [`${a.id}_hinge`] : ['joint_screw'],
+    });
+  }
+  return out;
+}
+
+const addonName = (k: Addon['kind']) => ({ shelf: 'המדף הנוסף', drawer: 'המגירה', bedding_box: 'ארגז המצעים', door: 'הדלת' })[k];
+const addonNameEn = (k: Addon['kind']) => ({ shelf: 'added shelf', drawer: 'drawer', bedding_box: 'bedding box', door: 'door' })[k];
+
 export function assemblySequence(model: FurnitureModel): AssemblyStep[] {
   const p = model.params;
-  if (!isOpenShelf(p)) return templateFor(p).assembly?.(model) ?? [];
+  if (!isOpenShelf(p)) return withAddonSteps(model, templateFor(p).assembly?.(model) ?? []);
   const by = (role: Component['role']) => model.components.filter((c) => c.role === role).map((c) => c.id);
   const steps: Omit<AssemblyStep, 'n'>[] = [];
   if (p.plinthHeightMm > 0) steps.push({ title: tr('חיבור הסוקל לדופן אחת', 'Attach the plinth to one side panel'), componentIds: [...by('plinth'), 'side_l'], hardware: ['joint_screw'] });
@@ -65,7 +90,7 @@ export function assemblySequence(model: FurnitureModel): AssemblyStep[] {
     hardware: ['wall_anchor'],
     warning: tr('אין להעמיס את היחידה לפני עיגון', 'Do not load the unit before it is anchored'),
   });
-  return steps.map((s, i) => ({ ...s, n: i + 1 }));
+  return withAddonSteps(model, steps.map((st, i) => ({ ...st, n: i + 1 })));
 }
 
 export interface ChangeImpact {

@@ -8,6 +8,7 @@ import { AdvancedPanel } from '../ui/AdvancedPanel';
 import { AppHeader } from '../ui/AppHeader';
 import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
+import { AddComponentPanel } from '../ui/AddComponentPanel';
 import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
 import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
 import { DecorPreviewBadge } from '../ui/decors/DecorPreviewBadge';
@@ -390,7 +391,15 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
           {showSidePanel && (
             <>
               <aside className="w-[360px] shrink-0 overflow-y-auto border-e border-line bg-panel" aria-label={t.flow.steps[step]}>
-                {s.selectedId ? <SelectedPartPanel result={result} /> : step === 'structure' ? <StructureControls result={result} /> : <LookControls />}
+                {s.selectedId ? (
+                  <SelectedPartPanel result={result} />
+                ) : (
+                  <>
+                    {step === 'structure' ? <StructureControls result={result} /> : <LookControls />}
+                    {/* The component library belongs in every editing area, not on one step. */}
+                    <AddComponentPanel result={result} />
+                  </>
+                )}
               </aside>
               <Viewport result={result} />
               {advancedOpen && <AdvancedPanel result={result} />}

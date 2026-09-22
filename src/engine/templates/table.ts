@@ -189,6 +189,17 @@ export function tableAssembly(model: FurnitureModel): AssemblyStep[] {
   const p = model.params as TableParams;
   const steps: Omit<AssemblyStep, 'n'>[] = [];
   const ids = (pred: (c: Component) => boolean) => model.components.filter(pred).map((c) => c.id);
+  // The panels the whole piece is built between were never a step of their own: with no rail and no
+  // lower shelf the booklet never mentioned them at all.
+  const panels = ids((c) => c.role === 'side' || c.id === 'middle');
+  steps.push({
+    title:
+      panels.length > 2
+        ? tr('העמדת הדפנות והמחיצה האמצעית במרווחים שווים', 'Stand the side panels and the middle panel at equal spacing')
+        : tr('העמדת שתי הדפנות במרווח הנכון', 'Stand the two side panels the right distance apart'),
+    componentIds: panels,
+    hardware: [],
+  });
   if (p.hasApron)
     steps.push({ title: tr('חיבור קורות החיזוק בין הדפנות', 'Fit the back rails between the panels'), componentIds: [...ids((c) => c.role === 'apron'), ...ids((c) => c.role === 'side' || c.id === 'middle')], hardware: ['joint_screw'] });
   if (p.lowerShelfHeightMm > 0) steps.push({ title: tr('חיבור המדף התחתון בין הדפנות', 'Fit the lower shelf between the side panels'), componentIds: model.components.filter((c) => c.id.startsWith('shelf_low')).map((c) => c.id), hardware: ['joint_screw'] });

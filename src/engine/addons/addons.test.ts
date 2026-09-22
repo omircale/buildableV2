@@ -108,6 +108,17 @@ describe('added components are built like any other board', () => {
   });
 });
 
+describe('added components reach the booklet', () => {
+  it.each(['shelf', 'bedding_box', 'drawer', 'door'] as const)('%s gets its own assembly step', (kind) => {
+    const base = runDesign(HOST, DEFAULT_CONFIG);
+    const opening = openingsFor(kind, base.model.openings)[0];
+    const r = runDesign(withAddons({ id: 'a1', kind, openingId: opening.id }), DEFAULT_CONFIG);
+    const assembled = new Set(r.assembly.flatMap((s) => s.componentIds));
+    const missing = r.model.components.filter((c) => !c.reference && !assembled.has(c.id)).map((c) => c.id);
+    expect(missing, 'boards nobody is told how to fit').toEqual([]);
+  });
+});
+
 describe('what a drawer does not know', () => {
   it('says the runners are unchosen instead of implying they are verified', () => {
     const base = runDesign(HOST, DEFAULT_CONFIG);

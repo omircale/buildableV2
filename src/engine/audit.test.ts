@@ -80,6 +80,15 @@ describe('audit: every design is internally consistent', () => {
    * every check in the system, because each structural check starts from a member already assumed
    * to be in place.
    */
+  /** A board nobody is told how to fit is a board that does not get built. */
+  it.each(ALL)('%s — every board appears in the assembly sequence', (_, p) => {
+    const r = runDesign(p);
+    if (geometryBroken(r) || !r.assembly.length) return;
+    const assembled = new Set(r.assembly.flatMap((s) => s.componentIds));
+    const missing = r.model.components.filter((c) => !c.reference && !assembled.has(c.id)).map((c) => c.id);
+    expect(missing, `missing from the booklet: ${missing.join(', ')}`).toEqual([]);
+  });
+
   it.each(ALL)('%s — no part hangs in mid-air', (_, p) => {
     const r = runDesign(p);
     if (geometryBroken(r)) return;
