@@ -1,0 +1,10 @@
+{
+  // Cloudflare folded Pages into Workers; a static site is now a Worker that serves an assets directory.
+  // The app routes on the hash, so every request is served index.html and the client takes it from there.
+  "name": "buildable",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "deploy": "npm run test && npm run build && wrangler pages deploy dist --project-name buildable"
+    "deploy": "npm run test && npm run build && wrangler deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
