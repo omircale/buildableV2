@@ -261,8 +261,15 @@ export interface Component {
   /** Load-model assumption for this member, shown with its structural check (already localized). */
   loadAssumption?: string;
   grainAxis?: 'x' | 'y' | 'z';
-  /** Rotation about the z axis through the box centre (degrees); rotated members skip the overlap check. */
+  /** Rotation about the z axis through the box centre (degrees). */
   rotationZDeg?: number;
+  /**
+   * Ends cut at an angle instead of square, in degrees from square, measured in the xy plane.
+   * `start` is the low-x end and `end` the high-x end, before rotation; a positive angle leaves the
+   * +y side of the board long. `size` stays the length between the cuts at the board's centre line,
+   * so the board ordered is longer than the body by the material the angles take.
+   */
+  endCutDeg?: { start?: number; end?: number };
   /** Shown for context only (mattress, steel bar): never cut, ordered, priced or overlap-checked. */
   reference?: boolean;
 }

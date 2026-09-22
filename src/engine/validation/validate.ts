@@ -3,6 +3,9 @@ import { GAMMA_M, KDEF_SC1, KMOD_LONG_TERM_SC1, SOURCES, allMaterials, ec5ClassF
 import { finishName, localizeSource, localizedNote, materialName, noteText, productDescription, productTitle, tr } from '../i18n';
 import { buildSupplierQuote, type QuoteIssueCode } from '../suppliers/quote';
 import { nestParts } from '../manufacturing/nesting';
+import { findOverlaps, supportReport } from '../geometry';
+
+export { findOverlaps } from '../geometry';
 import {
   deflectionSimplePointCenter,
   deflectionSimpleUdl,
@@ -152,7 +155,7 @@ function geometryChecks(model: FurnitureModel, config: EngineeringConfig): Check
     });
   }
 
-  const overlapping = findOverlaps(model.components.filter((c) => !c.reference && !c.rotationZDeg));
+  const overlapping = findOverlaps(model.components.filter((c) => !c.reference));
   if (overlapping.length) {
     out.push({
       id: 'geometry.overlap',
@@ -167,6 +170,28 @@ function geometryChecks(model: FurnitureModel, config: EngineeringConfig): Check
       assumptions: [],
       sources: [],
       fixes: isOpenShelf(p) && p.shelfCount > 0 ? [{ change: { label: tr('הפחתת מדף אחד', 'Remove one shelf'), set: { shelfCount: p.shelfCount - 1 } }, projectedStatus: 'YELLOW', projectedDetail: tr('לבדוק שוב', 'Re-check') }] : [],
+    });
+  }
+
+  // A board that touches neither the floor nor another board cannot be built, and no structural
+  // check below would notice: every one of those starts from a member already assumed to be in place.
+  // Half an ordering step: a board screwed into an opening is ordered to the whole centimetre below it.
+  const floating = supportReport(model.components, { gapMm: model.orderStepMm / 2 + 0.6 }).floating;
+  if (floating.length) {
+    const names = floating.map((id) => model.components.find((c) => c.id === id)?.name ?? id);
+    out.push({
+      id: 'geometry.unsupported',
+      category: 'geometry',
+      status: 'RED',
+      componentIds: floating,
+      title: tr('רכיבים שלא נשענים על כלום', 'Components that rest on nothing'),
+      explanation: tr(
+        `${names.join(', ')} — לא נוגע ברצפה ולא בשום חלק אחר. חלק שמרחף באוויר אי אפשר להרכיב.`,
+        `${names.join(', ')} — touching neither the floor nor any other part. A board hanging in mid-air cannot be assembled.`,
+      ),
+      assumptions: [],
+      sources: [],
+      fixes: [],
     });
   }
 
@@ -268,18 +293,6 @@ function geometryChecks(model: FurnitureModel, config: EngineeringConfig): Check
   return out;
 }
 
-export function findOverlaps(components: Component[], epsMm = 0.01): [string, string][] {
-  const pairs: [string, string][] = [];
-  for (let i = 0; i < components.length; i++) {
-    for (let j = i + 1; j < components.length; j++) {
-      const a = components[i];
-      const b = components[j];
-      const axisOverlap = (k: 'x' | 'y' | 'z') => Math.min(a.origin[k] + a.size[k], b.origin[k] + b.size[k]) - Math.max(a.origin[k], b.origin[k]) > epsMm;
-      if (axisOverlap('x') && axisOverlap('y') && axisOverlap('z')) pairs.push([a.id, b.id]);
-    }
-  }
-  return pairs;
-}
 
 // ---------------------------------------------------------------- materials
 

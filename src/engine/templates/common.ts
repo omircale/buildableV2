@@ -1,3 +1,4 @@
+import { angledEndAllowanceMm } from '../geometry';
 import { tr } from '../i18n';
 import { getMaterial, supplierProductFor } from '../materials';
 import { isOpenShelf, type Component, type DesignParams, type HardwareLine, type Part } from '../types';
@@ -40,7 +41,11 @@ export function derivePartsFromComponents(components: Component[], p: DesignPara
   for (const c of components) {
     if (c.reference) continue;
     const material = getMaterial(c.materialId);
-    const extents = { x: c.size.x, y: c.size.y, z: c.size.z };
+    // An angled end eats into the rectangle the supplier delivers, so the board ordered is longer than
+    // the body between the cuts, and rounded up to a whole ordering step like every other part.
+    // Ordering the body length would arrive short.
+    const allowance = angledEndAllowanceMm(c);
+    const extents = { x: allowance > 0 ? ceilToStep(c.size.x + allowance, orderStepFor(c.materialId)) : c.size.x, y: c.size.y, z: c.size.z };
     const thicknessAxis = (['x', 'y', 'z'] as const).find((k) => Math.abs(extents[k] - c.thicknessMm) < 1e-6);
     const faceAxes = (['x', 'y', 'z'] as const).filter((k) => k !== thicknessAxis).slice(0, 2);
     const grain = c.grainAxis && faceAxes.includes(c.grainAxis) ? c.grainAxis : null;
@@ -63,7 +68,15 @@ export function derivePartsFromComponents(components: Component[], p: DesignPara
       short1: banded && allRound,
       short2: banded && allRound,
     };
-    const machining = machiningFor?.(c);
+    const angleNote = c.endCutDeg
+      ? [
+          tr(
+            `חיתוך בזווית ${[c.endCutDeg.start, c.endCutDeg.end].filter((d) => d).map((d) => `${Math.abs(d!)}°`).join(' ו-')} בקצוות — הספק חותך ישר בלבד, לבצע בבית. האורך המוזמן כולל את תוספת החומר לזווית.`,
+            `${[c.endCutDeg.start, c.endCutDeg.end].filter((d) => d).map((d) => `${Math.abs(d!)}°`).join(' and ')} angled end cuts — the supplier cuts straight only, do these at home. The ordered length already includes the material the angle takes.`,
+          ),
+        ]
+      : [];
+    const machining = [...angleNote, ...(machiningFor?.(c) ?? [])];
     const part: Omit<Part, 'id' | 'quantity' | 'componentIds' | 'name'> = {
       materialId: c.materialId,
       thicknessMm: c.thicknessMm,
@@ -72,7 +85,7 @@ export function derivePartsFromComponents(components: Component[], p: DesignPara
       grainLocked: material?.hasGrain ?? false,
       edges,
       finishId: finishFor(c, p),
-      ...(machining?.length ? { machining } : {}),
+      ...(machining.length ? { machining } : {}),
     };
     const key = JSON.stringify([HORIZONTAL_ROLES.includes(c.role) ? 'horizontal' : c.role, part]);
     const existing = groups.get(key);

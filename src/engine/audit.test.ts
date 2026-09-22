@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { FURNITURE_TYPES, presetFor } from '../ui/furnitureCatalog';
 import { applyChange, runDesign, templateFor, type Check, type DesignParams, type DesignResult } from './index';
 import { findOverlaps } from './validation/validate';
+import { boundsOf, supportReport } from './geometry';
 
 const SEVERITY = { GREEN: 0, YELLOW: 1, GREY: 2, RED: 3 } as const;
 const HEBREW = /[֐-׿]/;
@@ -54,7 +55,7 @@ describe('audit: every design is internally consistent', () => {
   it.each(ALL)('%s — broken geometry is reported, never silently built', (_, p) => {
     const r = runDesign(p);
     const bad = r.model.components.some((c) => c.size.x <= 0 || c.size.y <= 0 || c.size.z <= 0);
-    const overlaps = findOverlaps(r.model.components.filter((c) => !c.reference && !c.rotationZDeg));
+    const overlaps = findOverlaps(r.model.components.filter((c) => !c.reference));
     if (bad || overlaps.length) {
       expect(geometryBroken(r), `${bad ? 'non-positive part' : `overlap ${overlaps[0]}`} without a RED geometry check`).toBe(true);
       expect(r.report.exportBlocked).toBe(true);
@@ -64,9 +65,23 @@ describe('audit: every design is internally consistent', () => {
   it.each(ALL)('%s — the overall size is the real footprint', (_, p) => {
     const r = runDesign(p);
     if (geometryBroken(r)) return;
-    const solid = r.model.components.filter((c) => !c.reference && !c.rotationZDeg);
-    const span = (k: 'x' | 'y' | 'z') => Math.max(...solid.map((c) => c.origin[k] + c.size[k])) - Math.min(...solid.map((c) => c.origin[k]));
-    for (const k of ['x', 'z'] as const) expect(span(k), `${k} footprint`).toBeLessThanOrEqual(r.model.overall[k] + 0.5);
+    const solid = r.model.components.filter((c) => !c.reference);
+    // Bounds honour rotation and angled ends, so an angled member cannot poke outside the stated size.
+    const b = boundsOf(solid);
+    for (const k of ['x', 'z'] as const) expect(b.max[k] - b.min[k], `${k} footprint`).toBeLessThanOrEqual(r.model.overall[k] + 0.5);
+  });
+
+  /**
+   * Every board in every catalog item has to be held up by something. Before the geometry engine knew
+   * how to measure contact, a part could hang in mid-air — the Montessori ridge board did — and pass
+   * every check in the system, because each structural check starts from a member already assumed
+   * to be in place.
+   */
+  it.each(ALL)('%s — no part hangs in mid-air', (_, p) => {
+    const r = runDesign(p);
+    if (geometryBroken(r)) return;
+    const floating = supportReport(r.model.components, { gapMm: r.model.orderStepMm / 2 + 0.6 }).floating;
+    expect(floating, `floating: ${floating.join(', ')}`).toEqual([]);
   });
 
   it.each(ALL)('%s — export is blocked exactly when a blocking category is RED', (_, p) => {

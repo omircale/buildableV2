@@ -238,9 +238,17 @@ export function buildBed(p: BedParams): FurnitureModel {
   let overallZ = L;
   if (p.houseFrame) {
     const wallH = snap(p.houseWallHeightMm);
-    // Rafter centre lines run at 45° from the top centre of each post to the apex above the middle.
-    const run = W / 2 - HOUSE_MEMBER_MM / 2;
-    const rafterLen = ceilToStep(Math.SQRT2 * run, step);
+    // The ridge board stands on edge between the two gables and each rafter butts into its side face,
+    // the way a roof is actually framed. The rafter's foot is cut level and bears on top of the post.
+    const ridgeFaceX = W / 2 - T / 2;
+    // A level cut across a board held at 45° reaches half a width times √2 sideways from its centre
+    // line. Starting the rafter that far in from the post's outer face leaves the frame flush instead
+    // of letting a corner hang outside the bed.
+    const eave = (HOUSE_MEMBER_MM / 2) * Math.SQRT2;
+    const run = ridgeFaceX - eave;
+    // Length of the rafter body between the two cuts, along its centre line. This is geometry, not an
+    // order size: rounding it to a whole centimetre here would drive the rafter into the ridge.
+    const rafterBodyMm = Math.SQRT2 * run;
     const apexY = wallH + run;
     for (const [end, z] of [['head', 0], ['foot', L + T]] as const) {
       const endHe = end === 'head' ? 'ראש' : 'רגליים';
@@ -255,14 +263,19 @@ export function buildBed(p: BedParams): FurnitureModel {
         });
       }
       for (const side of ['l', 'r'] as const) {
-        const cx = side === 'l' ? HOUSE_MEMBER_MM / 2 + run / 2 : W - HOUSE_MEMBER_MM / 2 - run / 2;
+        // Centre line: from the centre of the post top up at 45° to the face of the ridge.
+        const footX = side === 'l' ? eave : W - eave;
+        const headX = side === 'l' ? ridgeFaceX : W - ridgeFaceX;
         board({
           id: `rafter_${end}_${side}`,
           name: tr(`קורת גג ${endHe} ${side === 'l' ? 'שמאל' : 'ימין'}`, `${end === 'head' ? 'Head' : 'Foot'} rafter ${side === 'l' ? 'left' : 'right'}`),
           role: 'rafter',
-          origin: { x: cx - rafterLen / 2, y: wallH + run / 2 - HOUSE_MEMBER_MM / 2, z },
-          size: { x: rafterLen, y: HOUSE_MEMBER_MM, z: T },
+          origin: { x: (footX + headX) / 2 - rafterBodyMm / 2, y: (wallH + apexY) / 2 - HOUSE_MEMBER_MM / 2, z },
+          size: { x: rafterBodyMm, y: HOUSE_MEMBER_MM, z: T },
           rotationZDeg: side === 'l' ? 45 : -45,
+          // The two cuts tilt opposite ways: level at the foot so it seats on the post, plumb at the
+          // head so it lands flat on the ridge face.
+          endCutDeg: { start: -45, end: 45 },
           grainAxis: 'x',
         });
       }
@@ -272,11 +285,12 @@ export function buildBed(p: BedParams): FurnitureModel {
       id: 'ridge',
       name: tr('קורת רכס', 'Ridge board'),
       role: 'ridge',
-      origin: { x: W / 2 - HOUSE_MEMBER_MM / 2, y: apexY + (HOUSE_MEMBER_MM / 2) * Math.SQRT2, z: (L + 2 * T - ridgeLen) / 2 },
-      size: { x: HOUSE_MEMBER_MM, y: T, z: ridgeLen },
+      origin: { x: W / 2 - T / 2, y: apexY - HOUSE_MEMBER_MM / 2, z: (L + 2 * T - ridgeLen) / 2 },
+      size: { x: T, y: HOUSE_MEMBER_MM, z: ridgeLen },
       grainAxis: 'z',
     });
-    overallY = Math.max(overallY, apexY + (HOUSE_MEMBER_MM / 2) * Math.SQRT2 + T);
+    // The rafters stand proud of the ridge: a 45° plumb cut leaves the top corner half a width above it.
+    overallY = Math.max(overallY, apexY + (HOUSE_MEMBER_MM / 2) * Math.SQRT2);
     overallZ = L + 2 * T;
   }
 
@@ -286,11 +300,7 @@ export function buildBed(p: BedParams): FurnitureModel {
     orderStepMm: step,
     requested: overall,
     components,
-    parts: derivePartsFromComponents(components, p, (c) =>
-      c.role === 'rafter'
-        ? [tr('חיתוך בזווית 45° בשני הקצוות — לא כלול בחיתוך הישר של הספק, לבצע בבית', '45° cut at both ends — not part of the supplier’s straight cut, do it at home')]
-        : undefined,
-    ),
+    parts: derivePartsFromComponents(components, p),
     hardware: bedHardware(p, components),
     overall,
   };

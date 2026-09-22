@@ -35,6 +35,8 @@ export interface PartLabelWords {
   thickness: string;
   part: string;
   cm: string;
+  /** Prefixes the length the board actually occupies, when an angled end makes it shorter than the board ordered. */
+  inFrame: string;
 }
 
 /** The exact texts drawn on an isolated part in the dimensions view (one per axis, plus the cut size). */
@@ -45,6 +47,11 @@ export function partMeasureLabels(model: FurnitureModel, c: Component, w: PartLa
     x: axis(w.width, d.x),
     y: axis(w.height, d.y),
     z: axis(w.depth, d.z),
-    cut: d.cut && `${d.cut.partId} · ${w.part}: ${formatCm(d.cut.lengthMm)} × ${formatCm(d.cut.widthMm)} × ${formatCm(d.cut.thicknessMm)} ${w.cm}`,
+    // For a board with angled ends the two numbers genuinely differ: the frame holds the body, the
+    // order has to carry the material the angle cuts away. Showing only one of them would mislead.
+    cut:
+      d.cut &&
+      `${d.cut.partId} · ${w.part}: ${formatCm(d.cut.lengthMm)} × ${formatCm(d.cut.widthMm)} × ${formatCm(d.cut.thicknessMm)} ${w.cm}` +
+        (c.endCutDeg ? ` (${w.inFrame} ${formatCm(Math.max(d.x, d.y, d.z))} ${w.cm})` : ''),
   };
 }
