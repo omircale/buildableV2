@@ -9,6 +9,7 @@ import { AppHeader } from '../ui/AppHeader';
 import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
 import { AddComponentPanel } from '../ui/AddComponentPanel';
+import { BuildStatusPanel } from '../ui/BuildStatusPanel';
 import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
 import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
 import { DecorPreviewBadge } from '../ui/decors/DecorPreviewBadge';
@@ -20,7 +21,6 @@ import { formatCm } from '../ui/measure';
 import { artKindFor } from '../ui/furnitureCatalog';
 import { STATUS_COLOR, Viewport3D, type CameraPreset } from '../ui/Viewport3D';
 import { ReviewStep } from './design/ReviewStep';
-import { SetupStep } from './design/SetupStep';
 
 export { STEPS, type Step } from './steps';
 import { STEPS, type Step } from './steps';
@@ -323,7 +323,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
         keywords: `${c.id} ${t.viewport.roles[c.role]}`,
         run: () => {
           s.select(c.id);
-          if (step !== 'structure' && step !== 'look') go('structure');
+          if (step !== 'edit') go('edit');
         },
       })),
     ];
@@ -340,7 +340,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
           keywords: `${sp.product.thicknessMm}`,
           run: () => {
             s.update({ materialId: m.id, thicknessMm: sp.product.thicknessMm, finishId: f.id, edgeOption: sp.product.edgeBanding ? p.edgeOption : 'none', finish: { ...p.finish, type: 'supplier' } });
-            if (step === 'setup' || step === 'review') go('look');
+            if (step !== 'edit') go('edit');
           },
         });
       }
@@ -353,7 +353,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
 
 
   const q = result.quote;
-  const showSidePanel = step === 'structure' || step === 'look';
+  const editing = step === 'edit';
 
   return (
     <>
@@ -387,21 +387,25 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
 
         <h1 className="sr-only">{t.structure.pageTitle(t.furniture[artKindFor(s.params)].name, t.flow.steps[step])}</h1>
         <div className="flex min-h-0 flex-1">
-          {step === 'setup' && <SetupStep result={result} />}
-          {showSidePanel && (
+          {editing && (
             <>
-              <aside className="w-[360px] shrink-0 overflow-y-auto border-e border-line bg-panel" aria-label={t.flow.steps[step]}>
+              {/* Everything that shapes the piece, in one column: size and use, structure, look, components. */}
+              <aside className="w-[380px] shrink-0 overflow-y-auto border-e border-line bg-panel" aria-label={t.flow.controls}>
                 {s.selectedId ? (
                   <SelectedPartPanel result={result} />
                 ) : (
                   <>
-                    {step === 'structure' ? <StructureControls result={result} /> : <LookControls />}
-                    {/* The component library belongs in every editing area, not on one step. */}
+                    <StructureControls result={result} />
+                    <LookControls />
                     <AddComponentPanel result={result} />
                   </>
                 )}
               </aside>
               <Viewport result={result} />
+              {/* What is built and how it holds up, beside the piece rather than behind a button. */}
+              <aside className="hidden w-[340px] shrink-0 overflow-y-auto border-s border-line bg-panel xl:block" aria-label={t.flow.health}>
+                <BuildStatusPanel result={result} />
+              </aside>
               {advancedOpen && <AdvancedPanel result={result} />}
             </>
           )}

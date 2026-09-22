@@ -190,6 +190,9 @@ function IssuesSection({ result }: { result: DesignResult }) {
   const hasRed = issues.some((c) => c.status === 'RED');
   if (!issues.length) return null;
   return (
+    // On a wide screen the same checks stand beside the piece in the build panel; this is the
+    // narrow-screen home for them, so they are never only one scroll away from nowhere.
+    <div className="xl:hidden">
     <Section
       id={hasRed ? 'issues-red' : 'issues'}
       title={t.issues.sectionTitle}
@@ -199,6 +202,7 @@ function IssuesSection({ result }: { result: DesignResult }) {
     >
       <IssuesList checks={issues} muted={!hasRed} />
     </Section>
+    </div>
   );
 }
 

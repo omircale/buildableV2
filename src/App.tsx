@@ -5,7 +5,7 @@ import { useT } from './i18n';
 // The editor (three.js) and the admin screen load only when they are opened.
 const DesignerPage = lazy(() => import('./pages/Designer').then((m) => ({ default: m.DesignerPage })));
 const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.AdminPage })));
-import { STEPS, type Step } from './pages/steps';
+import { stepFromRoute, type Step } from './pages/steps';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
@@ -123,7 +123,7 @@ export default function App() {
   else if (route.startsWith('#/decors')) page = <DecorsPage auth={auth} />;
   else if (route.startsWith('#/design')) {
     const step = route.split('/')[2] as Step;
-    page = <DesignerPage auth={auth} step={STEPS.includes(step) ? step : 'structure'} />;
+    page = <DesignerPage auth={auth} step={stepFromRoute(step)} />;
   } else page = <HomePage auth={auth} />;
 
   return (
