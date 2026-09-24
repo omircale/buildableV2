@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { DesignResult } from '../../engine';
 import { useT } from '../../i18n';
 import { useDesign } from '../../state/designStore';
 import { Button } from '../common';
 import { IconDownload } from '../icons';
 import { exportArFile, preferredFormat, type ArFormat } from './arExport';
+import { HostError, hostModel } from './hostModel';
+
+/** The viewer pulls in a large package; nobody pays for it until they ask to see the piece in the room. */
+const RoomViewer = lazy(() => import('./RoomViewer'));
 
 /**
  * Downloads the design as a 3D file at real scale. On iPhone/iPad the USDZ opens straight into AR Quick Look;
@@ -17,6 +21,31 @@ export function ArCard({ result }: { result: DesignResult }) {
   const [busy, setBusy] = useState<ArFormat | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const projectId = useDesign((s) => s.projectId);
+  const [hosting, setHosting] = useState(false);
+  const [room, setRoom] = useState<{ glb: string; usdz: string } | null>(null);
+  const [arUnavailable, setArUnavailable] = useState(false);
+
+  /**
+   * Quick Look and Scene Viewer fetch a URL; they cannot open a file held in the browser. So seeing
+   * the piece in the room means uploading it, behind a link that expires — which is why this asks for
+   * a sign-in and says so rather than failing quietly.
+   */
+  const viewInRoom = async () => {
+    setHosting(true);
+    setError(null);
+    setArUnavailable(false);
+    try {
+      const [glbFile, usdzFile] = await Promise.all([exportArFile(result, 'glb', { projectName }), exportArFile(result, 'usdz', { projectName })]);
+      const id = projectId ?? 'design';
+      const [glb, usdz] = await Promise.all([hostModel(glbFile.blob, 'glb', id), hostModel(usdzFile.blob, 'usdz', id)]);
+      setRoom({ glb, usdz });
+    } catch (e) {
+      setError(e instanceof HostError && e.reason === 'not-signed-in' ? t.ar.needsSignIn : (e as Error).message);
+    } finally {
+      setHosting(false);
+    }
+  };
   const ios = preferredFormat() === 'usdz';
   // A design with broken geometry would export overlapping or negative parts; everything else may be viewed.
   const geometryBroken = result.report.checks.some((c) => c.category === 'geometry' && c.status === 'RED');
@@ -57,6 +86,20 @@ export function ArCard({ result }: { result: DesignResult }) {
               </Button>
             ))}
           </div>
+          <div className="flex flex-col gap-2">
+            <Button variant="secondary" disabled={hosting || busy != null} onClick={() => void viewInRoom()}>
+              {hosting ? t.ar.hosting : t.ar.viewInRoom}
+            </Button>
+            <p className="text-[13px] leading-relaxed text-muted">{t.ar.uploadNote}</p>
+          </div>
+          {room && (
+            <div className="relative">
+              <Suspense fallback={<p className="text-[13px] text-muted">{t.ar.hosting}</p>}>
+                <RoomViewer glbUrl={room.glb} usdzUrl={room.usdz} alt={projectName} arButtonLabel={t.ar.placeInRoom} onArUnavailable={() => setArUnavailable(true)} />
+              </Suspense>
+              {arUnavailable && <p className="mt-2 text-[13px] text-muted">{t.ar.noArHere}</p>}
+            </div>
+          )}
           {done && <p className="num text-[13px] text-ok">{done}</p>}
           {error && <p className="text-[13px] text-bad">{error}</p>}
           <p className="text-[13px] leading-relaxed text-muted">{ios ? t.ar.iosHint : t.ar.androidHint}</p>
