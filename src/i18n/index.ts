@@ -259,6 +259,7 @@ const he = {
     examples: ['ספרייה לספרים ברוחב 2 מטר', 'מיטת רצפה מונטסורית לילד', 'מזנון לטלוויזיה 160x45x40', 'שולחן כתיבה ברוחב 140 ס"מ'],
     orPick: 'או שתבחרו מהגלריה',
   },
+  editor: { tabs: { structure: 'מבנה', look: 'מראה', addons: 'רכיבים' } },
   advanced: {
     tabs: { checks: 'בדיקות', order: 'הזמנה', cut: 'רשימת חיתוך', sheets: 'גיליונות', bom: 'כמויות', assembly: 'הרכבה', impact: 'השפעת שינוי' },
     close: 'סגירת הפאנל',
@@ -272,6 +273,8 @@ const he = {
     physical: 'אימות פיזי',
     required: 'נדרש',
     details: 'פירוט',
+    clearFilter: 'ניקוי סינון',
+    stepHint: 'F8 — מעבר לממצא הבא (Shift+F8 לקודם)',
     showPassing: 'הצג גם בדיקות שעברו',
     assumptions: (n: number) => `הנחות (${n})`,
     sources: (n: number) => `מקורות (${n})`,
@@ -772,6 +775,7 @@ const en: Dict = {
     examples: ['a bookcase for books 2 m wide', 'a Montessori floor bed for a child', 'a TV unit 160x45x40', 'a desk 140 cm wide'],
     orPick: 'Or pick from the gallery',
   },
+  editor: { tabs: { structure: 'Structure', look: 'Look', addons: 'Components' } },
   advanced: {
     tabs: { checks: 'Checks', order: 'Order', cut: 'Cut list', sheets: 'Sheets', bom: 'Quantities', assembly: 'Assembly', impact: 'Change impact' },
     close: 'Close panel',
@@ -785,6 +789,8 @@ const en: Dict = {
     physical: 'Physical verification',
     required: 'Required',
     details: 'Details',
+    clearFilter: 'Clear filter',
+    stepHint: 'F8 — go to the next finding (Shift+F8 for the previous)',
     showPassing: 'Show passing checks',
     assumptions: (n: number) => `Assumptions (${n})`,
     sources: (n: number) => `Sources (${n})`,

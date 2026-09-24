@@ -24,12 +24,23 @@ export interface DecorPreview {
   image: string;
 }
 
+/** The three things a person can change about a piece, as one row of tabs rather than a pile of accordions. */
+export type EditorTab = 'structure' | 'look' | 'addons';
+
 interface UiState extends Persisted {
   systemDark: boolean;
   decorPreview: DecorPreview | null;
   setDecorPreview: (d: DecorPreview | null) => void;
   advancedTab: AdvancedTab;
   focusCheckId: string | null;
+  /** Which editor tab is showing when nothing is selected. */
+  editorTab: EditorTab;
+  /** A section the editor should scroll to and ring, so a finding leads to the control that fixes it. */
+  focusSectionId: string | null;
+  setEditorTab: (tab: EditorTab) => void;
+  /** Open the control that governs a finding: its tab, its section, and the finding itself. */
+  revealControl: (tab: EditorTab, sectionId: string | null, checkId: string) => void;
+  clearFocus: () => void;
   commandOpen: boolean;
   setTheme: (t: ThemePreference) => void;
   setLocale: (l: Locale) => void;
@@ -77,6 +88,11 @@ export const useUi = create<UiState>((set, get) => ({
   decorPreview: null,
   advancedTab: 'checks',
   focusCheckId: null,
+  editorTab: 'structure',
+  focusSectionId: null,
+  setEditorTab: (editorTab) => set({ editorTab, focusSectionId: null }),
+  revealControl: (editorTab, focusSectionId, focusCheckId) => set({ editorTab, focusSectionId, focusCheckId }),
+  clearFocus: () => set({ focusSectionId: null, focusCheckId: null }),
   commandOpen: false,
   setTheme: (theme) => {
     set({ theme });

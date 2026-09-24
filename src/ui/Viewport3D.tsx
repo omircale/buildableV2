@@ -216,7 +216,13 @@ function PartMeasurements({ result, c }: { result: DesignResult; c: Component })
       <DimensionLine from={new THREE.Vector3(hx, -hy, -hz)} to={new THREE.Vector3(hx, -hy, hz)} offset={new THREE.Vector3(o, -o, 0)} label={labels.z} />
       {labels.cut && (
         <Html position={new THREE.Vector3(0, hy + 0.12, 0)} center zIndexRange={[10, 0]}>
-          <div className="num whitespace-nowrap rounded-md bg-ink/90 px-2 py-0.5 text-[13px] font-semibold text-paper shadow">{labels.cut}</div>
+          {/* Words follow the interface direction; the part code and the measurements stay LTR beside them. */}
+          <div className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-ink/90 px-2 py-0.5 text-[13px] font-semibold text-paper shadow">
+            <span className="num">{labels.cutParts?.id}</span>
+            <span>·</span>
+            <span>{labels.cutParts?.label}:</span>
+            <span className="num">{labels.cutParts?.dims}</span>
+          </div>
         </Html>
       )}
     </group>

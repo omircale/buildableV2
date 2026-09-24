@@ -40,13 +40,30 @@ export interface PartLabelWords {
 }
 
 /** The exact texts drawn on an isolated part in the dimensions view (one per axis, plus the cut size). */
-export function partMeasureLabels(model: FurnitureModel, c: Component, w: PartLabelWords): { x: string; y: string; z: string; cut?: string } {
+export function partMeasureLabels(
+  model: FurnitureModel,
+  c: Component,
+  w: PartLabelWords,
+): { x: string; y: string; z: string; cut?: string; cutParts?: { id: string; label: string; dims: string } } {
   const d = componentDims(model, c);
   const axis = (word: string, mm: number) => `${mm === c.thicknessMm ? w.thickness : word} ${formatCm(mm)} ${w.cm}`;
+  // The label is also returned in pieces so the view can keep the words in the reading direction of
+  // the interface while the measurements stay left-to-right, which is what bidi text needs.
+  const cutParts = d.cut
+    ? {
+        id: d.cut.partId,
+        label: w.part,
+        dims: `${formatCm(d.cut.lengthMm)} × ${formatCm(d.cut.widthMm)} × ${formatCm(d.cut.thicknessMm)} ${w.cm}${
+          c.endCutDeg ? ` (${w.inFrame} ${formatCm(Math.max(d.x, d.y, d.z))} ${w.cm})` : ''
+        }`,
+      }
+    : undefined;
+
   return {
     x: axis(w.width, d.x),
     y: axis(w.height, d.y),
     z: axis(w.depth, d.z),
+    ...(cutParts ? { cutParts } : {}),
     // For a board with angled ends the two numbers genuinely differ: the frame holds the body, the
     // order has to carry the material the angle cuts away. Showing only one of them would mislead.
     cut:

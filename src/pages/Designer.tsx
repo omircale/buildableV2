@@ -8,9 +8,9 @@ import { AdvancedPanel } from '../ui/AdvancedPanel';
 import { AppHeader } from '../ui/AppHeader';
 import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
-import { AddComponentPanel } from '../ui/AddComponentPanel';
 import { BuildStatusPanel } from '../ui/BuildStatusPanel';
-import { LookControls, SelectedPartPanel, StructureControls } from '../ui/DesignControls';
+import { EditorPanel } from '../ui/EditorPanel';
+import { firstChangedKey, targetForParam } from '../ui/checkTarget';
 import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
 import { DecorPreviewBadge } from '../ui/decors/DecorPreviewBadge';
 import { IconCheck, IconChevron, IconFolder, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
@@ -205,6 +205,24 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const stepIndex = STEPS.indexOf(step);
 
+  /**
+   * Undo and redo point at what they changed. Without this a person undoes a value that is scrolled
+   * out of the panel or sitting on another tab, sees nothing move, and undoes again.
+   */
+  const stepHistory = (back: boolean) => {
+    const before = useDesign.getState().params;
+    if (back) useDesign.getState().undo();
+    else useDesign.getState().redo();
+    const after = useDesign.getState().params;
+    const key = firstChangedKey(before, after);
+    if (!key) return;
+    const target = targetForParam(key, after);
+    useUi.getState().revealControl(target.tab, target.sectionId, '');
+  };
+  const undo = () => stepHistory(true);
+  const redo = () => stepHistory(false);
+
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // Typing in a field keeps the browser's own undo; the target may also be the window or document itself.
@@ -213,10 +231,10 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
       if (e.ctrlKey || e.metaKey) {
         if (k === 'z' && !e.shiftKey) {
           e.preventDefault();
-          useDesign.getState().undo();
+          undo();
         } else if (k === 'y' || (k === 'z' && e.shiftKey)) {
           e.preventDefault();
-          useDesign.getState().redo();
+          redo();
         }
         return;
       }
@@ -312,8 +330,8 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
         },
       },
       { id: 'projects', group: 'actions', label: a.projects, keywords: 'save versions שמירה גרסאות', run: () => setProjectsOpen(true) },
-      { id: 'undo', group: 'actions', label: t.common.undo, detail: 'Ctrl Z', disabled: !s.past.length, run: s.undo },
-      { id: 'redo', group: 'actions', label: t.common.redo, detail: 'Ctrl Shift Z', disabled: !s.future.length, run: s.redo },
+      { id: 'undo', group: 'actions', label: t.common.undo, detail: 'Ctrl Z', disabled: !s.past.length, run: undo },
+      { id: 'redo', group: 'actions', label: t.common.redo, detail: 'Ctrl Shift Z', disabled: !s.future.length, run: redo },
       ...STEPS.map((st, i) => ({ id: `step-${st}`, group: 'steps' as const, label: t.flow.steps[st], detail: t.flow.stepOf(i + 1, STEPS.length), run: () => go(st) })),
       ...result.model.components.map((c) => ({
         id: `part-${c.id}`,
@@ -371,10 +389,10 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
           center={<Stepper step={step} result={result} />}
           end={
             <>
-              <IconButton label={`${t.common.undo} (Ctrl/⌘ Z)`} onClick={s.undo} disabled={!s.past.length}>
+              <IconButton label={`${t.common.undo} (Ctrl/⌘ Z)`} onClick={undo} disabled={!s.past.length}>
                 <IconUndo size={18} />
               </IconButton>
-              <IconButton label={`${t.common.redo} (Ctrl/⌘ Shift Z)`} onClick={s.redo} disabled={!s.future.length}>
+              <IconButton label={`${t.common.redo} (Ctrl/⌘ Shift Z)`} onClick={redo} disabled={!s.future.length}>
                 <IconRedo size={18} />
               </IconButton>
               <IconButton label={t.command.actions.projects} onClick={() => setProjectsOpen(true)}>
@@ -390,16 +408,8 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
           {editing && (
             <>
               {/* Everything that shapes the piece, in one column: size and use, structure, look, components. */}
-              <aside className="w-[380px] shrink-0 overflow-y-auto border-e border-line bg-panel" aria-label={t.flow.controls}>
-                {s.selectedId ? (
-                  <SelectedPartPanel result={result} />
-                ) : (
-                  <>
-                    <StructureControls result={result} />
-                    <LookControls />
-                    <AddComponentPanel result={result} />
-                  </>
-                )}
+              <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden border-e border-line bg-panel" aria-label={t.flow.controls}>
+                <EditorPanel result={result} />
               </aside>
               <Viewport result={result} />
               {/* What is built and how it holds up, beside the piece rather than behind a button. */}

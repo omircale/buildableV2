@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import type { Status } from '../engine';
 import { useT } from '../i18n';
 import { useUi } from '../state/uiStore';
@@ -78,6 +78,16 @@ export function matchesQuery(query: string, ...texts: (string | undefined | null
  * Collapsible category. Collapsed, it shows its title plus a one-line summary of the current choice,
  * so long panels read like a stack of dropdowns instead of an endless scroll.
  */
+/**
+ * Inside a tab, a group is a heading rather than another thing to unfold. Sections that were authored
+ * to start closed stay foldable — the author already judged them secondary.
+ */
+const FlatSectionsContext = createContext(false);
+
+export function FlatSections({ children }: { children: ReactNode }) {
+  return <FlatSectionsContext.Provider value={true}>{children}</FlatSectionsContext.Provider>;
+}
+
 export function Section({
   id,
   title,
@@ -97,17 +107,32 @@ export function Section({
 }) {
   const stored = useUi((s) => (id ? s.sections[id] : undefined));
   const setSectionOpen = useUi((s) => s.setSectionOpen);
-  const open = id ? (stored ?? defaultOpen) : true;
+  const flat = useContext(FlatSectionsContext) && defaultOpen;
+  const foldable = Boolean(id) && !flat;
+  const open = foldable ? (stored ?? defaultOpen) : true;
   const bodyId = id ? `section-${id}` : undefined;
+
+  // A finding can point at the control that governs it; the section says so briefly, then lets go.
+  const focusSectionId = useUi((s) => s.focusSectionId);
+  const clearFocus = useUi((s) => s.clearFocus);
+  const focused = Boolean(id) && focusSectionId === id;
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!focused) return;
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const timer = setTimeout(clearFocus, 2200);
+    return () => clearTimeout(timer);
+  }, [focused, clearFocus]);
+
   return (
-    <section className="border-b border-line">
+    <section ref={ref} className={`border-b border-line transition ${focused ? 'bg-accent-soft ring-2 ring-accent ring-inset' : ''}`}>
       <div className="flex items-center gap-2 px-5">
-        {id ? (
+        {foldable ? (
           <button
             type="button"
             aria-expanded={open}
             aria-controls={bodyId}
-            onClick={() => setSectionOpen(id, !open)}
+            onClick={() => id && setSectionOpen(id, !open)}
             className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-2 text-start"
           >
             <IconChevronDown size={16} className={`shrink-0 text-muted transition ${open ? '' : 'rtl:rotate-90 ltr:-rotate-90'}`} />
