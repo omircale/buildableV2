@@ -157,6 +157,13 @@ export const IconSquares = (p: IconProps) => (
     <rect x="11" y="11" width="6.5" height="6.5" />
   </Icon>
 );
+/** A box seen in perspective — the piece standing in a real space. */
+export const IconCube = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M10 2.2l6.6 3.6v8.4L10 17.8 3.4 14.2V5.8z" />
+    <path d="M3.4 5.8L10 9.4l6.6-3.6M10 9.4v8.4" />
+  </Icon>
+);
 export const IconRuler = (p: IconProps) => (
   <Icon {...p} viewBox="0 0 28 28" strokeWidth={2}>
     <path d="M3 24h22M3 24V6M25 24V6" />

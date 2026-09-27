@@ -9,11 +9,12 @@ import { AppHeader } from '../ui/AppHeader';
 import { useRegisterCommands, type Command } from '../ui/CommandPalette';
 import { Button, IconButton, Kbd, downloadText } from '../ui/common';
 import { BuildStatusPanel } from '../ui/BuildStatusPanel';
+import { ArOverlay } from '../ui/ar/ArOverlay';
 import { EditorPanel } from '../ui/EditorPanel';
 import { firstChangedKey, targetForParam } from '../ui/checkTarget';
 import { AppliedFixToast, BuildPill, FixesButton } from '../ui/Issues';
 import { DecorPreviewBadge } from '../ui/decors/DecorPreviewBadge';
-import { IconCheck, IconChevron, IconFolder, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
+import { IconCheck, IconChevron, IconFolder, IconCube, IconFrame, IconLayers, IconPanel, IconRedo, IconSparkle, IconSquares, IconUndo } from '../ui/icons';
 import { PrintPackage } from '../ui/PrintPackage';
 import { ProjectsDialog } from '../ui/ProjectsDialog';
 import { AssemblyBooklet } from '../ui/AssemblyBooklet';
@@ -100,6 +101,7 @@ function LayersMenu({ roles }: { roles: ComponentRole[] }) {
 }
 
 function Viewport({ result }: { result: DesignResult }) {
+  const [arOpen, setArOpen] = useState(false);
   const t = useT();
   const viewMode = useDesign((s) => s.viewMode);
   const setViewMode = useDesign((s) => s.setViewMode);
@@ -187,9 +189,19 @@ function Viewport({ result }: { result: DesignResult }) {
               <IconSquares size={15} />
               {t.view.illustration}
             </button>
+            <button
+              type="button"
+              title={t.view.arHint}
+              onClick={() => setArOpen(true)}
+              className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm text-muted hover:text-ink"
+            >
+              <IconCube size={15} />
+              {t.view.ar}
+            </button>
           </div>
         </div>
       </div>
+      {arOpen && <ArOverlay result={result} onClose={() => setArOpen(false)} />}
     </div>
   );
 }
