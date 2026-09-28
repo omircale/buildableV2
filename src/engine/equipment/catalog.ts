@@ -17,9 +17,21 @@ import type { Source } from '../types';
 /** A service an item needs brought to it. Quantities only — never a route, a size or a compliance claim. */
 export type ServiceKind = 'water_cold' | 'water_hot' | 'drain' | 'electrical' | 'gas' | 'ventilation';
 
+/**
+ * Whether the requirement is something brought to the item or space left around it.
+ *
+ * The distinction is not cosmetic. A water point is run, connected and billed as a point; a fridge's
+ * condenser clearance is a gap in the joinery that nobody installs and nobody prices as a point.
+ * Counting the two together overstates the hvac chapter and, worse, puts "bring a ventilation supply
+ * to the room" into a document a hotel reads when what was meant is "leave 50 mm behind the fridge".
+ */
+export type RequirementForm = 'point' | 'clearance';
+
 export interface ServiceRequirement {
   kind: ServiceKind;
   quantity: number;
+  /** Defaults to 'point' when absent. */
+  form?: RequirementForm;
   /** What the licensed trade needs to know, in their words. Never a calculated value. */
   noteHe: string;
   noteEn: string;
@@ -102,7 +114,7 @@ export const EQUIPMENT: EquipmentItem[] = [
     serviceClearanceMm: null,
     services: [
       { kind: 'electrical', quantity: 1, noteHe: 'מעגל ייעודי — לפי חשמלאי מורשה', noteEn: 'Dedicated circuit — per a licensed electrician' },
-      { kind: 'ventilation', quantity: 1, noteHe: 'פינוי חום מהמעבה — מרווח לפי היצרן', noteEn: 'Condenser heat clearance — per the maker' },
+      { kind: 'ventilation', quantity: 1, form: 'clearance', noteHe: 'פינוי חום מהמעבה — מרווח לפי היצרן', noteEn: 'Condenser heat clearance — per the maker' },
     ],
     massKg: null,
     priceIls: null,
@@ -156,18 +168,13 @@ export function equipmentById(id: string): EquipmentItem | undefined {
   return EQUIPMENT.find((e) => e.id === id);
 }
 
-/**
- * Every service point a set of equipment needs, added up by kind.
- *
- * This is the bridge from equipment to the plumbing, electrical and gas chapters of the bill: those
- * quantities are not drawn by anyone, they fall out of what the room has to contain.
- */
-export function servicesFor(ids: string[]): { kind: ServiceKind; quantity: number; from: string[] }[] {
+function rollUp(ids: string[], form: RequirementForm): { kind: ServiceKind; quantity: number; from: string[] }[] {
   const totals = new Map<ServiceKind, { quantity: number; from: string[] }>();
   for (const id of ids) {
     const item = equipmentById(id);
     if (!item) continue;
     for (const s of item.services) {
+      if ((s.form ?? 'point') !== form) continue;
       const at = totals.get(s.kind) ?? { quantity: 0, from: [] };
       at.quantity += s.quantity;
       at.from.push(item.id);
@@ -175,6 +182,27 @@ export function servicesFor(ids: string[]): { kind: ServiceKind; quantity: numbe
     }
   }
   return [...totals.entries()].map(([kind, v]) => ({ kind, ...v }));
+}
+
+/**
+ * Every service **point** a set of equipment needs, added up by kind.
+ *
+ * This is the bridge from equipment to the plumbing, electrical and gas chapters of the bill: those
+ * quantities are not drawn by anyone, they fall out of what the room has to contain. Clearances are
+ * deliberately not here — see `clearancesFor`, which keeps them out of the point counts.
+ */
+export function servicesFor(ids: string[]): { kind: ServiceKind; quantity: number; from: string[] }[] {
+  return rollUp(ids, 'point');
+}
+
+/**
+ * The space a set of equipment needs left around it.
+ *
+ * Separate from `servicesFor` so a clearance can never be counted, quantified or priced as a point. It
+ * still belongs in the bill, as an instruction to whoever builds the joinery around the item.
+ */
+export function clearancesFor(ids: string[]): { kind: ServiceKind; quantity: number; from: string[] }[] {
+  return rollUp(ids, 'clearance');
 }
 
 /** Which trades a set of equipment pulls in — the chapters its lines will land in. */

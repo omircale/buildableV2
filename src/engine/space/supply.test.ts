@@ -162,7 +162,7 @@ describe('a survey that contradicts itself', () => {
 });
 
 describe('the pool bar, with its supply traced', () => {
-  it('turns the five new points into five supply questions, each with a named state', () => {
+  it('turns the new points into one supply question each, with a named state', () => {
     const bar = room();
     bar.connections = [
       { id: 'wc1', kind: 'water_cold', atMm: { x: 6800, y: 600, z: 3400 }, existing: true, fedBy: 'main_w' },
@@ -186,7 +186,9 @@ describe('the pool bar, with its supply traced', () => {
     // The panel's three spare ways cover the one new circuit, on the electrician's word.
     expect(by('electrical').status).toBe('within_stated_capacity');
 
-    // Four of the five are blocked on something a person has to go and establish.
-    expect(lines.filter((l) => BLOCKING_SUPPLY_STATUSES.has(l.status))).toHaveLength(4);
+    // Three of the four are blocked on something a person has to go and establish; the fourth is
+    // within a figure the electrician stated. Ventilation is absent because a clearance is not a point.
+    expect(lines).toHaveLength(4);
+    expect(lines.filter((l) => BLOCKING_SUPPLY_STATUSES.has(l.status))).toHaveLength(3);
   });
 });

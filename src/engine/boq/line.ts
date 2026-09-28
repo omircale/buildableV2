@@ -92,6 +92,13 @@ export interface BoqLine {
   /** Required whenever `quantity` is null: what has to happen before it can be filled in. */
   unknownReasonHe?: string;
   unknownReasonEn?: string;
+  /**
+   * A quantity that is real but rests on a stated assumption — a sheet count worked out from a sheet
+   * size nobody confirmed, for instance. The honest middle state between a known figure and a null:
+   * the number is the best available and a reader must be able to see what it stands on.
+   */
+  assumptionHe?: string;
+  assumptionEn?: string;
   /** Not optional, by design. See the note on this module. */
   location: LineLocation;
   origin: LineOrigin;

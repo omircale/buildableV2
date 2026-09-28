@@ -186,3 +186,7 @@ export { billProblems, serviceTradesCovered, unknownTrades } from './boq/validat
 export type { BillProblem, Project } from './boq/validate';
 export { mepLines, mepOpenQuestions, requiresLicensedDesign } from './boq/mep';
 export type { MepLinesInput } from './boq/mep';
+export { linesFromDesign } from './boq/fromDesign';
+export type { DesignForBill, DesignLinesInput, DesignLinesResult } from './boq/fromDesign';
+export { billCsv, billSummary } from './boq/export';
+export type { BillAxis, BillSummary } from './boq/export';

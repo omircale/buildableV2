@@ -53,7 +53,7 @@ describe('points are counted', () => {
 
   it('the point counts across the bill match what the room is short of', () => {
     const points = lines().filter((l) => l.section.endsWith('_points'));
-    expect(points.reduce((a, l) => a + (l.quantity ?? 0), 0)).toBe(5);
+    expect(points.reduce((a, l) => a + (l.quantity ?? 0), 0)).toBe(4);
   });
 });
 
@@ -72,6 +72,35 @@ describe('what the counting is too coarse to see', () => {
     expect(power.quantity).toBe(1);
     // The description still sends the reader to the electrician, which is the mitigation that exists today.
     expect(power.descriptionHe).toContain('בעל מקצוע מוסמך');
+  });
+});
+
+describe('a clearance reaches the joiner without becoming a point', () => {
+  it('lands in the joinery chapter, not in hvac', () => {
+    // It is the joinery that has to leave the gap, so it is the joinery that has to be told.
+    const clearance = lines().find((l) => l.id === 'clearance_ventilation')!;
+    expect(clearance.trade).toBe('joinery');
+    expect(clearance.section).toBe('clearances');
+  });
+
+  it('names the item it is for and says it is not something installed', () => {
+    const clearance = lines().find((l) => l.id === 'clearance_ventilation')!;
+    expect(clearance.descriptionHe).toContain('מקרר תת-דלפקי');
+    expect(clearance.descriptionHe).toContain('לא נקודה שמותקנת');
+    expect(clearance.descriptionEn).toContain('not a point that gets installed');
+    expect(clearance.origin).toEqual({ kind: 'equipment', ref: 'undercounter_fridge' });
+  });
+
+  it('has no dimension, because the dimension is the maker’s', () => {
+    const clearance = lines().find((l) => l.id === 'clearance_ventilation')!;
+    expect(clearance.quantity).toBeNull();
+    expect(clearance.unknownReasonHe).toContain('היצרן');
+    expect(clearance.unknownReasonEn).toContain("maker's figure");
+  });
+
+  it('is absent when nothing in the room asks for one', () => {
+    const generated = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: ['bar_sink_single'], location: AT });
+    expect(generated.some((l) => l.section === 'clearances')).toBe(false);
   });
 });
 
@@ -134,8 +163,10 @@ describe('a service the room does not have at all', () => {
 });
 
 describe('every MEP line flags the licensed trade', () => {
-  it('the trade of every line generated here is a licensed one', () => {
-    for (const l of lines()) expect(LICENSED_TRADES.has(l.trade), l.id).toBe(true);
+  it('every line that counts a service point sits in a licensed trade', () => {
+    for (const l of lines().filter((x) => x.section !== 'clearances')) expect(LICENSED_TRADES.has(l.trade), l.id).toBe(true);
+    // And the one line that is not a service point is deliberately not in a licensed trade.
+    expect(LICENSED_TRADES.has(lines().find((l) => l.section === 'clearances')!.trade)).toBe(false);
   });
 
   it('the flag is derived from the trade so it cannot drift from the line', () => {
@@ -145,7 +176,7 @@ describe('every MEP line flags the licensed trade', () => {
   });
 
   it('every description says out loud that it is a quantity and not a design', () => {
-    for (const l of lines().filter((x) => !x.section.endsWith('_runs'))) {
+    for (const l of lines().filter((x) => !x.section.endsWith('_runs') && x.section !== 'clearances')) {
       expect(l.descriptionHe, l.id).toContain('בעל מקצוע מוסמך');
       expect(l.descriptionEn, l.id).toContain('licensed professional');
     }
@@ -167,8 +198,10 @@ describe('the bill this produces holds together', () => {
     expect(t.missingQuantity).toBeGreaterThan(0);
   });
 
-  it('reads as three trade chapters', () => {
-    expect(byTrade(lines()).map((g) => g.key)).toEqual(['plumbing', 'electrical', 'hvac']);
+  it('reads as the chapters the work actually falls in, with no hvac chapter for a gap', () => {
+    // An hvac chapter whose only line was a clearance was a chapter that should not have existed. The
+    // clearance is joinery, because the joiner is who leaves the gap.
+    expect(byTrade(lines()).map((g) => g.key)).toEqual(['joinery', 'plumbing', 'electrical']);
   });
 
   it('every line lands in the room it was generated for', () => {
@@ -196,6 +229,6 @@ describe('the questions the bill is waiting on', () => {
     const blank = emptySpace('pool_bar', 'בר', 'Bar');
     const generated = mepLines({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT, location: AT });
     expect(generated.filter((l) => l.section.endsWith('_points')).every((l) => l.quantity! > 0)).toBe(true);
-    expect(mepOpenQuestions({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT }).length).toBe(5);
+    expect(mepOpenQuestions({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT }).length).toBe(4);
   });
 });

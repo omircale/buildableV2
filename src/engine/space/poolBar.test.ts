@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { equipmentById, servicesFor } from '../equipment/catalog';
+import { clearancesFor, equipmentById, servicesFor } from '../equipment/catalog';
 import { builtPerimeterM, emptySpace, floorAreaM2, matchServices, obstaclesHitBy, spaceProblems, wallAreaM2, whatIsMissing, type Space } from './space';
 
 /**
@@ -81,19 +81,22 @@ describe('a pool bar, end to end', () => {
     // Fridge and ice maker each want a dedicated circuit; the sub-panel counts as one point.
     expect(by('electrical')).toMatchObject({ required: 2, existing: 1, toCreate: 1 });
 
-    // Five new points in total — and every one of them is a bill line somebody has to price.
-    expect(matches.reduce((a, m) => a + m.toCreate, 0)).toBe(5);
+    // Four new points in total — and every one of them is a bill line somebody has to price.
+    expect(matches.reduce((a, m) => a + m.toCreate, 0)).toBe(4);
   });
 
-  it('counts the fridge’s heat as a point, which overstates what it actually needs', () => {
-    // A known coarseness, recorded rather than hidden. The fridge's ventilation requirement is a
-    // *clearance* — leave a gap so the condenser can breathe — not a duct somebody runs and bills.
-    // matchServices counts it alongside water and power because the catalogue declares it a service,
-    // so the hvac tally reads one point too many. The requirement's own note says what it really is.
+  it('does not count the fridge’s heat clearance as a point to run and bill', () => {
+    // A gap behind a fridge is not a duct. Counting the two together overstated the hvac chapter and,
+    // worse, produced "bring a ventilation supply to the room" in a document — when what was meant was
+    // "leave the maker's gap behind the fridge".
     const bar = poolBar();
-    const vent = matchServices(bar, servicesFor(BAR_EQUIPMENT)).find((m) => m.kind === 'ventilation')!;
-    expect(vent).toMatchObject({ required: 1, existing: 0, toCreate: 1 });
+    expect(matchServices(bar, servicesFor(BAR_EQUIPMENT)).some((m) => m.kind === 'ventilation')).toBe(false);
+    // It is still a requirement, and it still has to reach whoever builds the joinery around the item.
+    const clearance = clearancesFor(BAR_EQUIPMENT).find((c) => c.kind === 'ventilation')!;
+    expect(clearance.quantity).toBe(1);
+    expect(clearance.from).toEqual(['undercounter_fridge']);
     const note = equipmentById('undercounter_fridge')!.services.find((s) => s.kind === 'ventilation')!;
+    expect(note.form).toBe('clearance');
     expect(note.noteHe).toContain('מרווח');
     expect(note.noteEn).toContain('clearance');
   });

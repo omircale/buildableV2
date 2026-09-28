@@ -1,4 +1,4 @@
-import { LICENSED_TRADES, SERVICE_TRADE, servicesFor, type ServiceKind } from '../equipment/catalog';
+import { LICENSED_TRADES, SERVICE_TRADE, clearancesFor, equipmentById, servicesFor, type ServiceKind } from '../equipment/catalog';
 import { matchServices, type Space } from '../space/space';
 import { BLOCKING_SUPPLY_STATUSES, supplyReport, type ServiceSource } from '../space/supply';
 import type { Vec3 } from '../types';
@@ -108,6 +108,30 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
       unknownReasonEn: `The length of the run is the output of licensed ${trade} design, not something derived from the room. A straight-line distance is not a length of pipe.`,
       location,
       origin: { kind: 'service_point', ref: need.kind },
+      unitPriceIls: null,
+      sources: [],
+    });
+  }
+
+  // Space left around an item is not a point and is not priced as one, but it has to reach the joiner.
+  // Left out of the bill, the box gets built tight and the condenser cooks.
+  for (const clearance of clearancesFor(equipmentIds)) {
+    const label = KIND_LABEL[clearance.kind];
+    const items = clearance.from.map((id) => equipmentById(id)).filter((i) => i != null);
+    const namesHe = items.map((i) => i!.nameHe).join(', ');
+    const namesEn = items.map((i) => i!.nameEn).join(', ');
+    lines.push({
+      id: `clearance_${clearance.kind}`,
+      trade: 'joinery',
+      section: 'clearances',
+      descriptionHe: `מרווח ${label.he} סביב ${namesHe} — להשאיר בנגרות, לא נקודה שמותקנת.`,
+      descriptionEn: `${label.en} clearance around ${namesEn} — to be left in the joinery, not a point that gets installed.`,
+      unit: 'lump',
+      quantity: null,
+      unknownReasonHe: `המרווח הנדרש הוא נתון של היצרן ותלוי בדגם שייבחר. עד אז אי אפשר לנקוב במידה.`,
+      unknownReasonEn: `The required gap is the maker's figure and depends on the model chosen. Until then no dimension can be stated.`,
+      location,
+      origin: { kind: 'equipment', ref: clearance.from[0] },
       unitPriceIls: null,
       sources: [],
     });
