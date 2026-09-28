@@ -162,3 +162,19 @@ export { HAYOZRIM_EXCLUDED, FINISH_NAMES_EN, finishDisplayName } from './supplie
 export { cutListCsv } from './manufacturing/bom';
 export type { Bom } from './manufacturing/bom';
 export type { NestingGroupResult } from './manufacturing/nesting';
+export {
+  builtPerimeterM,
+  emptySpace,
+  floorAreaM2,
+  insideFootprint,
+  matchServices,
+  obstaclesHitBy,
+  onFloor,
+  spaceProblems,
+  wallAreaM2,
+  wallsOf,
+  whatIsMissing,
+} from './space/space';
+export type { Space, WallSegment, Aperture, Obstacle, ConnectionPoint, Zone, ConnectionMatch, SpaceProblem } from './space/space';
+export { EQUIPMENT, LICENSED_TRADES, SERVICE_TRADE, equipmentById, servicesFor } from './equipment/catalog';
+export type { EquipmentItem, EquipmentCategory, ServiceKind, ServiceRequirement } from './equipment/catalog';
