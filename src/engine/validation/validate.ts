@@ -330,7 +330,26 @@ function materialChecks(p: DesignParams): Check[] {
       fixes: m.thicknessesMm.map((t) => ({ change: { label: tr(`עובי ${t} מ"מ`, `Thickness ${t} mm`), set: { thicknessMm: t } }, projectedStatus: 'GREEN' as Status, projectedDetail: tr('עובי קיים', 'Available thickness') })),
     });
   }
-  if (!m.structuralUse) {
+  // A material outside the engine's codes is not a forbidden material — it is an uncalculated one.
+  // Saying "not allowed" would block a stone worktop that is perfectly normal; saying nothing would
+  // imply a check that never ran.
+  if (m.outsideEngineScope) {
+    out.push({
+      id: 'structure.outside_engine_scope',
+      category: 'structure',
+      status: 'GREY',
+      componentIds: [],
+      title: tr('חוזק החומר אינו מחושב במנוע', 'The material’s strength is not calculated here'),
+      explanation: tr(m.outsideEngineScope.reasonHe, m.outsideEngineScope.reasonEn),
+      assumptions: [],
+      sources: m.outsideEngineScope.sources.map((x) => localizeSource(x)),
+      fixes: [],
+      requiredVerification: tr(
+        'לקבל מהיצרן או מהספק אישור שהמשטח מתאים למפתח ולעומס המתוכננים.',
+        'Get confirmation from the maker or supplier that the surface suits the intended span and load.',
+      ),
+    });
+  } else if (!m.structuralUse) {
     out.push({
       id: 'materials.not_structural',
       category: 'materials',

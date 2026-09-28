@@ -28,7 +28,17 @@ export interface SourcedValue {
   noteEn?: string;
 }
 
-export type MaterialCategory = 'mdf' | 'particleboard' | 'plywood' | 'osb' | 'solid_softwood' | 'solid_hardwood' | 'custom';
+export type MaterialCategory =
+  | 'mdf'
+  | 'particleboard'
+  | 'plywood'
+  | 'osb'
+  | 'solid_softwood'
+  | 'solid_hardwood'
+  | 'stone'
+  | 'stainless_steel'
+  | 'solid_surface'
+  | 'custom';
 
 /** Eurocode 5 behaviour class used to look up kmod / kdef / gammaM. */
 export type Ec5Class = 'solid_timber' | 'plywood' | 'osb3' | 'particleboard_p4' | 'particleboard_p6' | 'mdf_la' | 'not_covered';
@@ -65,6 +75,16 @@ export interface Material {
   densityKgM3: SourcedValue;
   properties: ThicknessProperties[];
   structuralUse: boolean; // false → back panels etc., never used as a loaded member
+  /**
+   * A material that is genuinely used in a loaded position but that this engine cannot calculate.
+   *
+   * Eurocode 5 covers timber and wood-based panels. Stone and metal are real worktop materials with
+   * their own codes (EC3 for steel, EC9 for aluminium) that we do not implement — so a worktop can be
+   * drawn, cut, weighed, priced and ordered, and every structural claim about it stays GREY with the
+   * reason named. This is the difference between "not allowed" and "not calculated", and collapsing
+   * the two would either block a legitimate material or imply a check nobody ran.
+   */
+  outsideEngineScope?: { reasonHe: string; reasonEn: string; sources: Source[] };
   hasGrain: boolean;
   stock: StockSize[];
   defaultColor: string;
