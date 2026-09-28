@@ -22,6 +22,12 @@ export interface Source {
 
 export interface SourcedValue {
   value: number | null; // null = UNKNOWN, never guessed
+  /**
+   * Upper end, when the source publishes a range rather than a figure. Natural stone is the reason:
+   * Eurocode gives granite as a band, and collapsing it to a midpoint would state a precision the
+   * standard itself refuses to state.
+   */
+  valueMax?: number;
   kind: ValueKind;
   sources: Source[];
   note?: string;
@@ -85,6 +91,13 @@ export interface Material {
    * the two would either block a legitimate material or imply a check nobody ran.
    */
   outsideEngineScope?: { reasonHe: string; reasonEn: string; sources: Source[] };
+  /**
+   * A surface that is not a solid board but a skin bonded to a carrier — a stainless worktop is
+   * normally 1.2 mm of steel on an MR-MDF or plywood core. It is therefore **two lines in a bill of
+   * quantities**, not one, and quantifying it as solid metal would overstate both weight and cost by
+   * roughly the ratio of the two thicknesses.
+   */
+  requiresSubstrate?: { reasonHe: string; reasonEn: string; sources: Source[] };
   hasGrain: boolean;
   stock: StockSize[];
   defaultColor: string;

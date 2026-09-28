@@ -25,6 +25,41 @@ export const SOURCES = {
     reference: 'Tables 3-1 and 3-2 — birch plywood 18 mm, 13 plies (values per EN 789 testing)',
     url: 'https://koskisen.fi/wp-content/uploads/materials/HandBook-of-Koskisen-Plywood.pdf',
   },
+  en1991_1_1: {
+    title: 'EN 1991-1-1:2002 (Eurocode 1), Annex A',
+    reference: 'Table A.2 — construction materials, masonry: granite/syenite/porphyry 27.0–30.0 kN/m³',
+    url: 'https://www.phd.eng.br/wp-content/uploads/2015/12/en.1991.1.1.2002.pdf',
+  },
+  caesarstone: {
+    title: 'Caesarstone Technical Data Manual',
+    reference: 'Physical properties — bulk density ≥ 2.1 g/cm³ per ASTM C97 / EN 14617-1; slab 3050 × 1440 mm',
+    url: 'https://www.caesarstoneus.com/wp-content/uploads/2021/10/Ceasarstone_CS_TechnicalDataManual-5.pdf',
+  },
+  thyssenkrupp304: {
+    title: 'thyssenkrupp material data sheet 1.4301 / 304',
+    reference: 'Density 8,000 kg/m³',
+    url: 'https://ucpcdn.thyssenkrupp.com/_legacy/UCPthyssenkruppBAMXUK/assets.files/material-data-sheets/stainless-steel/stainless-steel-1.4301-304.pdf',
+  },
+  aalco304: {
+    title: 'Aalco — Stainless Steel 1.4301 (304) Sheet and Plate',
+    reference: 'Properties stated per EN 10088-2:2005; density 8.00 g/cm³',
+    url: 'https://www.aalco.co.uk/datasheets/Stainless-Steel-14301-Sheet-and-Plate-Quarto-Plate--CPP-Plate_343.ashx',
+  },
+  corian: {
+    title: 'Corian Solid Surface — performance properties (K-26829)',
+    reference: 'Density 1.75 g/cm³ per ISO 1183',
+    url: 'https://www.corian.uk/IMG/pdf/k-26829_performance_properties_en.pdf',
+  },
+  steelWorktops: {
+    title: 'Metalsheets Ltd — stainless steel worktops',
+    reference: 'Worktops bonded to plywood / MR-MDF / aluminium substrates; 4 mm solid 304 for bars and professional kitchens; seamless runs to 3 m',
+    url: 'https://metalsheets.co.uk/our_product/stainless-steel-worktops/',
+  },
+  stainlessSheetStock: {
+    title: 'Metal Supplies — stainless steel sheet stock list',
+    reference: 'Stock sheets 2000×1000, 2500×1250, 3000×1500 mm; 0.4–2.5 mm',
+    url: 'https://www.metalsupplies.com/products/stainless-steel-sheet/',
+  },
   en338_2003: {
     title: 'EN 338:2003 Structural timber — Strength classes',
     reference: 'Table 1 (C16, C24, D30)',
@@ -226,6 +261,172 @@ export const MATERIAL_LIBRARY: Material[] = [
     stock: [assumedSheet(2440, 1220), assumedSheet(2800, 2070)],
     defaultColor: '#8a735a',
     verified: false,
+  },
+  {
+    id: 'granite_worktop',
+    nameHe: 'משטח גרניט',
+    nameEn: 'Granite worktop',
+    descriptionHe: 'אבן טבעית. הצפיפות היא טווח לפי Eurocode 1 — אבן טבעית משתנה בין מחצבות, והתקן עצמו אינו נוקב בערך יחיד.',
+    descriptionEn: 'Natural stone. The density is a range from Eurocode 1 — natural stone varies between quarries, and the standard itself does not give a single figure.',
+    category: 'stone',
+    ec5Class: 'not_covered',
+    thicknessesMm: [20, 30],
+    densityKgM3: {
+      value: 2752,
+      valueMax: 3058,
+      kind: 'characteristic',
+      sources: [SOURCES.en1991_1_1],
+      note: 'הומר מ-27.0–30.0 קילו-ניוטון למ״ק (משקל סגולי) לפי g = 9.81. "גרניט שחור" מסחרי הוא לרוב גברו, 27.0–31.0.',
+      noteEn: 'Converted from 27.0–30.0 kN/m³ (weight density) at g = 9.81. Commercial "black granite" is usually gabbro, 27.0–31.0.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [
+      {
+        lengthMm: 3200,
+        widthMm: 1900,
+        kind: 'supplier',
+        note: 'מלאי של סיטונאי אחד, לא תקן. לוח אבן טבעית מוגבל בגודל הגוש במחצבה ומשתנה.',
+        noteEn: 'One wholesaler’s inventory, not a standard. A natural stone slab is limited by the quarry block and varies.',
+      },
+    ],
+    defaultColor: '#8d8b86',
+    verified: true,
+  },
+  {
+    id: 'quartz_worktop',
+    nameHe: 'משטח קוורץ מהונדס',
+    nameEn: 'Engineered quartz worktop',
+    descriptionHe: 'אבן קוורץ מהונדסת. היצרן מפרסם מינימום; הקצה העליון נגזר ממשקלי הלוחות באותו מסמך.',
+    descriptionEn: 'Engineered quartz. The maker publishes a minimum; the upper end is derived from slab weights in the same document.',
+    category: 'stone',
+    ec5Class: 'not_covered',
+    thicknessesMm: [13, 20, 30],
+    densityKgM3: {
+      value: 2100,
+      valueMax: 2390,
+      kind: 'manufacturer',
+      sources: [SOURCES.caesarstone],
+      note: '2100 הוא מינימום שפורסם (ASTM C97 / EN 14617-1). 2390 נגזר ממשקלי הלוחות באותו מדריך — נגזר, לא פורסם.',
+      noteEn: '2100 is the published minimum (ASTM C97 / EN 14617-1). 2390 is derived from slab weights in the same manual — derived, not published.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [
+      { lengthMm: 3050, widthMm: 1440, kind: 'manufacturer', note: 'לוח תקני. סובלנות ±5 מ״מ רוחב, ±10 מ״מ אורך.', noteEn: 'Standard slab. Tolerance ±5 mm width, ±10 mm length.' },
+      { lengthMm: 3340, widthMm: 1640, kind: 'manufacturer', note: 'לוח ג׳מבו.', noteEn: 'Jumbo slab.' },
+    ],
+    defaultColor: '#d8d4cc',
+    verified: true,
+  },
+  {
+    id: 'stainless_304_skin',
+    nameHe: 'ציפוי נירוסטה 304 על מצע',
+    nameEn: 'Stainless 304 skin on a substrate',
+    descriptionHe:
+      'הבנייה המקובלת למשטח נירוסטה מסחרי: יריעת פלדה דקה מודבקת על ליבת MDF עמיד-לחות או דיקט. זהו שני פריטים בכתב הכמויות — הציפוי והמצע.',
+    descriptionEn:
+      'The usual build for a commercial stainless worktop: a thin steel sheet bonded to a moisture-resistant MDF or plywood core. That is two items in a bill of quantities — the skin and the substrate.',
+    category: 'stainless_steel',
+    ec5Class: 'not_covered',
+    thicknessesMm: [1, 1.2, 1.5, 2, 2.5],
+    densityKgM3: {
+      value: 8000,
+      kind: 'manufacturer',
+      sources: [SOURCES.thyssenkrupp304, SOURCES.aalco304],
+      note: 'שני דפי יצרן עצמאיים, לפי EN 10088-2. הערך 7900 המצוטט לעיתים לא אומת.',
+      noteEn: 'Two independent maker datasheets, per EN 10088-2. The sometimes-quoted 7900 could not be verified.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    requiresSubstrate: {
+      reasonHe: 'הציפוי אינו נושא בעצמו — נדרש לוח מצע מתחתיו, והוא פריט נפרד. עובי המצע לא אומת ולכן אינו נקוב.',
+      reasonEn: 'The skin carries nothing on its own — a substrate board is required beneath it, as a separate item. The substrate thickness could not be verified and is therefore not stated.',
+      sources: [SOURCES.steelWorktops],
+    },
+    hasGrain: false,
+    stock: [
+      { lengthMm: 3000, widthMm: 1500, kind: 'supplier', note: 'יריעת מלאי. רצף ללא תפר מוגבל ל-3 מטר בגלל גודל היריעה.', noteEn: 'Stock sheet. A seamless run is limited to 3 m by the sheet size.' },
+      { lengthMm: 2500, widthMm: 1250, kind: 'supplier' },
+      { lengthMm: 2000, widthMm: 1000, kind: 'supplier' },
+    ],
+    defaultColor: '#b6b9bd',
+    verified: true,
+  },
+  {
+    id: 'stainless_304_solid',
+    nameHe: 'נירוסטה 304 מלאה 4 מ״מ',
+    nameEn: 'Solid 304 stainless, 4 mm',
+    descriptionHe: 'לוח מלא לשימוש כבד בברים ובמטבחים מקצועיים. כבד משמעותית מציפוי על מצע.',
+    descriptionEn: 'Solid plate for heavy use in bars and professional kitchens. Considerably heavier than a skin on a substrate.',
+    category: 'stainless_steel',
+    ec5Class: 'not_covered',
+    thicknessesMm: [4],
+    densityKgM3: {
+      value: 8000,
+      kind: 'manufacturer',
+      sources: [SOURCES.thyssenkrupp304, SOURCES.aalco304],
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [{ lengthMm: 3000, widthMm: 1500, kind: 'supplier', note: 'רצף ללא תפר מוגבל ל-3 מטר.', noteEn: 'A seamless run is limited to 3 m.' }],
+    defaultColor: '#a9adb2',
+    verified: true,
+  },
+  {
+    id: 'solid_surface_corian',
+    nameHe: 'משטח אקרילי (Corian)',
+    nameEn: 'Solid surface (Corian)',
+    descriptionHe: 'קומפוזיט אקרילי. קל משמעותית מאבן.',
+    descriptionEn: 'Acrylic composite. Considerably lighter than stone.',
+    category: 'solid_surface',
+    ec5Class: 'not_covered',
+    thicknessesMm: [12],
+    densityKgM3: { value: 1750, kind: 'manufacturer', sources: [SOURCES.corian], note: 'לפי ISO 1183.', noteEn: 'Per ISO 1183.' },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [],
+    defaultColor: '#e6e2db',
+    verified: true,
   },
 ];
 
