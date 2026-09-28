@@ -184,3 +184,5 @@ export { TRADE_LABEL, UNIT_LABEL, byLevel, byLocation, byTrade, locationKey, tot
 export type { BoqLine, BoqUnit, LineLocation, LineOrigin, Trade, Totals, Group } from './boq/line';
 export { billProblems, serviceTradesCovered, unknownTrades } from './boq/validate';
 export type { BillProblem, Project } from './boq/validate';
+export { mepLines, mepOpenQuestions, requiresLicensedDesign } from './boq/mep';
+export type { MepLinesInput } from './boq/mep';
