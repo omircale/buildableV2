@@ -57,6 +57,24 @@ describe('points are counted', () => {
   });
 });
 
+describe('what the counting is too coarse to see', () => {
+  it('counts any existing point of a kind against a need, and a socket is not a dedicated circuit', () => {
+    // Recorded rather than hidden, like the fridge's ventilation clearance. matchServices counts
+    // points by kind, so a general-purpose socket in the corner offsets a fridge's need for a
+    // dedicated circuit — which it does not actually satisfy. The count therefore understates the
+    // electrical work by up to one point per existing socket. Making this right needs the point to
+    // carry what it is (dedicated, general, switched), which waits on a real bill's vocabulary.
+    const bar = poolBar();
+    const socketOnly: Space = { ...bar, connections: bar.connections.filter((c) => c.kind === 'electrical') };
+    const generated = mepLines({ space: socketOnly, sources: SOURCES, equipmentIds: BAR_EQUIPMENT, location: AT });
+    const power = generated.find((l) => l.id === 'mep_electrical_points')!;
+    // Two dedicated circuits are wanted; one existing point offsets one of them.
+    expect(power.quantity).toBe(1);
+    // The description still sends the reader to the electrician, which is the mitigation that exists today.
+    expect(power.descriptionHe).toContain('בעל מקצוע מוסמך');
+  });
+});
+
 describe('a length is never counted, because a length is a design', () => {
   it('every run line has no quantity and says why', () => {
     const runs = lines().filter((l) => l.section.endsWith('_runs'));
