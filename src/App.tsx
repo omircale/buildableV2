@@ -9,6 +9,7 @@ import { stepFromRoute, type Step } from './pages/steps';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
+import { SpacePage } from './pages/Space';
 import { DecorsPage } from './pages/Decors';
 import { useDesign } from './state/designStore';
 import { useResolvedTheme, useUi } from './state/uiStore';
@@ -89,6 +90,7 @@ function useGlobalCommands() {
       })),
       { id: 'decors-page', group: 'materials', label: t.decors.openCatalog, keywords: 'decor finishes catalog גוונים קטלוג פורמייקה', run: () => (window.location.hash = '#/decors') },
       { id: 'projects-page', group: 'steps', label: t.header.projects, keywords: 'projects פרויקטים', run: () => (window.location.hash = '#/projects') },
+      { id: 'space-page', group: 'steps', label: t.survey.title, keywords: 'space boq quantities חלל כתב כמויות מלון', run: () => (window.location.hash = '#/space') },
     ],
     [t, locale, setTheme, setLocale, startNew],
   );
@@ -121,6 +123,7 @@ export default function App() {
   else if (route.startsWith('#/login')) page = <LoginPage auth={auth} />;
   else if (route.startsWith('#/projects')) page = <ProjectsPage auth={auth} />;
   else if (route.startsWith('#/decors')) page = <DecorsPage auth={auth} />;
+  else if (route.startsWith('#/space')) page = <SpacePage auth={auth} />;
   else if (route.startsWith('#/design')) {
     const step = route.split('/')[2] as Step;
     page = <DesignerPage auth={auth} step={stepFromRoute(step)} />;

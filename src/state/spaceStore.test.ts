@@ -1,0 +1,180 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { floorAreaM2, matchServices, servicesFor, wallsOf, whatIsMissing } from '../engine';
+import { rectangleSize, type SurveyState } from './spaceStore';
+
+function memoryStorage() {
+  const data = new Map<string, string>();
+  return {
+    getItem: (k: string) => data.get(k) ?? null,
+    setItem: (k: string, v: string) => void data.set(k, v),
+    removeItem: (k: string) => void data.delete(k),
+    clear: () => data.clear(),
+  };
+}
+
+/** The store reads storage when its module first loads, so each test gets a fresh module. */
+let useSurvey: { getState: () => SurveyState };
+
+beforeEach(async () => {
+  vi.stubGlobal('localStorage', memoryStorage());
+  vi.resetModules();
+  useSurvey = (await import('./spaceStore')).useSurvey;
+});
+
+describe('a room measured with a tape', () => {
+  it('two dimensions make a rectangle with four walls', () => {
+    useSurvey.getState().setRectangle(7200, 3600);
+    const { space } = useSurvey.getState();
+    expect(wallsOf(space)).toHaveLength(4);
+    expect(floorAreaM2(space)).toBeCloseTo(25.92, 6);
+    expect(rectangleSize(space)).toEqual({ widthMm: 7200, depthMm: 3600 });
+  });
+
+  it('a missing or zero dimension leaves the room unmeasured rather than half-measured', () => {
+    // Half a rectangle is not a smaller room, it is no room. The engine then reports null areas.
+    for (const [w, d] of [[7200, null], [null, 3600], [7200, 0], [-1, 3600]] as [number | null, number | null][]) {
+      useSurvey.getState().setRectangle(w, d);
+      expect(useSurvey.getState().space.footprintMm, `${w}×${d}`).toEqual([]);
+      expect(floorAreaM2(useSurvey.getState().space)).toBeNull();
+    }
+  });
+
+  it('the first dimension typed survives long enough for the second to complete it', () => {
+    // The bug this replaced: each field read the other back out of a footprint that did not exist
+    // yet, so the first number was discarded on the spot and a rectangle could never be entered.
+    const s = useSurvey.getState();
+    s.setRectangle(7200, null);
+    expect(useSurvey.getState().widthMm).toBe(7200);
+    expect(useSurvey.getState().space.footprintMm).toEqual([]);
+
+    s.setRectangle(useSurvey.getState().widthMm, 3600);
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(25.92, 6);
+  });
+
+  it('clearing one dimension keeps the other on screen and takes the room back to unmeasured', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(7200, 3600);
+    s.setRectangle(7200, null);
+    expect(useSurvey.getState().widthMm).toBe(7200);
+    expect(useSurvey.getState().depthMm).toBeNull();
+    expect(floorAreaM2(useSurvey.getState().space)).toBeNull();
+  });
+
+  it('the typed dimensions survive a refresh too', () => {
+    useSurvey.getState().setRectangle(7200, null);
+    const raw = JSON.parse(localStorage.getItem('buildable.survey.v1')!);
+    expect(raw.widthMm).toBe(7200);
+    expect(raw.depthMm).toBeNull();
+  });
+
+  it('height is null until somebody types one, so wall areas stay unknown', () => {
+    expect(useSurvey.getState().space.heightMm).toBeNull();
+    useSurvey.getState().setHeight(2700);
+    expect(useSurvey.getState().space.heightMm).toBe(2700);
+    useSurvey.getState().setHeight(0);
+    expect(useSurvey.getState().space.heightMm).toBeNull();
+  });
+
+  it('an open side can be marked and unmarked', () => {
+    useSurvey.getState().setRectangle(7200, 3600);
+    useSurvey.getState().toggleOpenEdge(0);
+    expect(wallsOf(useSurvey.getState().space)[0].built).toBe(false);
+    useSurvey.getState().toggleOpenEdge(0);
+    expect(wallsOf(useSurvey.getState().space)[0].built).toBe(true);
+  });
+});
+
+describe('what is going in the room', () => {
+  it('equipment toggles, and the shortfall follows from it', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(7200, 3600);
+    s.toggleEquipment('bar_sink_single');
+    expect(useSurvey.getState().equipmentIds).toEqual(['bar_sink_single']);
+
+    const needs = matchServices(useSurvey.getState().space, servicesFor(useSurvey.getState().equipmentIds));
+    // Nothing exists in the room yet, so every point the sink needs is a new one.
+    expect(needs.every((n) => n.toCreate === n.required)).toBe(true);
+
+    s.toggleEquipment('bar_sink_single');
+    expect(useSurvey.getState().equipmentIds).toEqual([]);
+  });
+});
+
+describe('connection points and what feeds them', () => {
+  it('a new point starts unlocated and untraced, which is what a survey actually knows first', () => {
+    useSurvey.getState().addConnection('drain');
+    const [point] = useSurvey.getState().space.connections;
+    expect(point).toMatchObject({ kind: 'drain', existing: true, atMm: null });
+    expect(point.fedBy).toBeUndefined();
+    // And the engine immediately says what is still to be established about it.
+    expect(whatIsMissing(useSurvey.getState().space).map((g) => g.field)).toContain(`feed:${point.id}`);
+  });
+
+  it('a point can be traced to a source', () => {
+    const s = useSurvey.getState();
+    s.addSource('drain');
+    const source = useSurvey.getState().sources[0];
+    s.addConnection('drain');
+    const point = useSurvey.getState().space.connections[0];
+    s.updateConnection(point.id, { fedBy: source.id });
+    expect(useSurvey.getState().space.connections[0].fedBy).toBe(source.id);
+  });
+
+  it('deleting a source clears the feed instead of leaving a dead id behind', () => {
+    // A point pointing at a source that no longer exists reads as traced when it is not.
+    const s = useSurvey.getState();
+    s.addSource('drain');
+    const source = useSurvey.getState().sources[0];
+    s.addConnection('drain');
+    const point = useSurvey.getState().space.connections[0];
+    s.updateConnection(point.id, { fedBy: source.id });
+
+    s.removeSource(source.id);
+    expect(useSurvey.getState().sources).toEqual([]);
+    expect(useSurvey.getState().space.connections[0].fedBy).toBeUndefined();
+  });
+
+  it('points and sources get distinct ids even when added in the same millisecond', () => {
+    const s = useSurvey.getState();
+    s.addConnection('drain');
+    s.addConnection('drain');
+    s.addConnection('water_cold');
+    const ids = useSurvey.getState().space.connections.map((c) => c.id);
+    expect(new Set(ids).size).toBe(3);
+  });
+
+  it('a point can be removed', () => {
+    useSurvey.getState().addConnection('gas');
+    const [point] = useSurvey.getState().space.connections;
+    useSurvey.getState().removeConnection(point.id);
+    expect(useSurvey.getState().space.connections).toEqual([]);
+  });
+});
+
+describe('the survey survives a refresh', () => {
+  it('is written to storage and read back', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(7200, 3600);
+    s.setHeight(2700);
+    s.toggleEquipment('ice_maker');
+    s.setPlace('annexe', '-1');
+
+    const raw = JSON.parse(localStorage.getItem('buildable.survey.v1')!);
+    expect(raw.space.heightMm).toBe(2700);
+    expect(raw.equipmentIds).toEqual(['ice_maker']);
+    expect(raw.levelId).toBe('-1');
+    expect(raw.updatedAt).toBeGreaterThan(0);
+  });
+
+  it('a floor is kept as the hotel spells it', () => {
+    useSurvey.getState().setPlace('main', 'קרקע');
+    expect(useSurvey.getState().levelId).toBe('קרקע');
+  });
+
+  it('reset clears both the screen and the storage', () => {
+    useSurvey.getState().setRectangle(7200, 3600);
+    useSurvey.getState().reset();
+    expect(useSurvey.getState().space.footprintMm).toEqual([]);
+    expect(localStorage.getItem('buildable.survey.v1')).toBeNull();
+  });
+});
