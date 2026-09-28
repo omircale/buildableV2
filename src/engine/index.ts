@@ -178,3 +178,5 @@ export {
 export type { Space, WallSegment, Aperture, Obstacle, ConnectionPoint, Zone, ConnectionMatch, SpaceProblem } from './space/space';
 export { EQUIPMENT, LICENSED_TRADES, SERVICE_TRADE, equipmentById, servicesFor } from './equipment/catalog';
 export type { EquipmentItem, EquipmentCategory, ServiceKind, ServiceRequirement } from './equipment/catalog';
+export { BLOCKING_SUPPLY_STATUSES, danglingFeeds, mismatchedFeeds, supplyReport } from './space/supply';
+export type { ServiceSource, SupplyLine, SupplyStatus } from './space/supply';

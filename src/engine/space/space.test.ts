@@ -60,7 +60,7 @@ describe('an unmeasured room says so instead of guessing', () => {
   });
 
   it('a recorded point with no position is a gap of its own', () => {
-    const room = { ...rectangularRoom(), connections: [{ id: 'c1', kind: 'drain' as const, atMm: null, existing: true }] };
+    const room = { ...rectangularRoom(), connections: [{ id: 'c1', kind: 'drain' as const, atMm: null, existing: true, fedBy: 'stack_a' }] };
     expect(whatIsMissing(room).map((g) => g.field)).toEqual(['connection:c1']);
   });
 
@@ -70,7 +70,7 @@ describe('an unmeasured room says so instead of guessing', () => {
   });
 
   it('a fully surveyed room has nothing missing', () => {
-    const room = { ...rectangularRoom(), connections: [{ id: 'c1', kind: 'drain' as const, atMm: { x: 500, y: 0, z: 200 }, existing: true }] };
+    const room = { ...rectangularRoom(), connections: [{ id: 'c1', kind: 'drain' as const, atMm: { x: 500, y: 0, z: 200 }, existing: true, fedBy: 'stack_a' }] };
     expect(whatIsMissing(room)).toEqual([]);
   });
 });

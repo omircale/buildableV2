@@ -39,9 +39,9 @@ function poolBar(): Space {
       },
     ],
     connections: [
-      { id: 'wc_existing', kind: 'water_cold', atMm: { x: 6800, y: 600, z: 3400 }, existing: true, noteHe: 'קו מים קיים בפינה', noteEn: 'Existing cold line in the corner' },
-      { id: 'dr_existing', kind: 'drain', atMm: { x: 6900, y: 0, z: 3500 }, existing: true, noteHe: 'ניקוז רצפה', noteEn: 'Floor drain' },
-      { id: 'el_existing', kind: 'electrical', atMm: { x: 200, y: 1200, z: 3500 }, existing: true, noteHe: 'לוח משנה', noteEn: 'Sub-panel' },
+      { id: 'wc_existing', kind: 'water_cold', atMm: { x: 6800, y: 600, z: 3400 }, existing: true, fedBy: 'main_w', noteHe: 'קו מים קיים בפינה', noteEn: 'Existing cold line in the corner' },
+      { id: 'dr_existing', kind: 'drain', atMm: { x: 6900, y: 0, z: 3500 }, existing: true, fedBy: 'stack_a', noteHe: 'ניקוז רצפה', noteEn: 'Floor drain' },
+      { id: 'el_existing', kind: 'electrical', atMm: { x: 200, y: 1200, z: 3500 }, existing: true, fedBy: 'panel_bar', noteHe: 'לוח משנה', noteEn: 'Sub-panel' },
     ],
     zones: [
       { id: 'front', nameHe: 'חזית הגשה', nameEn: 'Service front' },
@@ -119,6 +119,14 @@ describe('a pool bar, end to end', () => {
 
   it('nothing is left unmeasured in this survey', () => {
     expect(whatIsMissing(poolBar())).toEqual([]);
+  });
+
+  it('a survey that located the points but never traced them is still incomplete', () => {
+    // The commonest half-done survey: somebody measured where the drain is and nobody asked what it
+    // runs into. It reads as complete on a plan and cannot be priced.
+    const bar = poolBar();
+    bar.connections = bar.connections.map(({ fedBy: _fedBy, ...rest }) => rest);
+    expect(whatIsMissing(bar).map((g) => g.field)).toEqual(['feed:wc_existing', 'feed:dr_existing', 'feed:el_existing']);
   });
 
   it('a bar counted before anyone surveyed the room is honest about it', () => {

@@ -68,6 +68,11 @@ export interface ConnectionPoint {
   atMm: Vec3 | null;
   /** True when it is already there; false when the project has to create it. */
   existing: boolean;
+  /**
+   * The `ServiceSource` that feeds this point. Undefined is meaningful and common: it says nobody
+   * traced it back, which is precisely what stops a new point being quantified. See `supply.ts`.
+   */
+  fedBy?: string;
   /** What the trade said about it, verbatim. Never a calculated value. */
   noteHe?: string;
   noteEn?: string;
@@ -220,6 +225,10 @@ export function whatIsMissing(space: Space): { field: string; he: string; en: st
   for (const c of space.connections) {
     if (c.existing && c.atMm == null) {
       gaps.push({ field: `connection:${c.id}`, he: `מיקום נקודת החיבור ${c.id} לא נמדד`, en: `The position of connection point ${c.id} was not measured` });
+    }
+    if (c.existing && c.fedBy == null) {
+      // Not knowing what feeds a point is what stops a new one being quantified — see supply.ts.
+      gaps.push({ field: `feed:${c.id}`, he: `לא נרשם ממה מוזנת נקודת החיבור ${c.id}`, en: `Nothing records what feeds connection point ${c.id}` });
     }
   }
   return gaps;
