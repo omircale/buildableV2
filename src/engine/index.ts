@@ -180,3 +180,7 @@ export { EQUIPMENT, LICENSED_TRADES, SERVICE_TRADE, equipmentById, servicesFor }
 export type { EquipmentItem, EquipmentCategory, ServiceKind, ServiceRequirement } from './equipment/catalog';
 export { BLOCKING_SUPPLY_STATUSES, danglingFeeds, mismatchedFeeds, supplyReport } from './space/supply';
 export type { ServiceSource, SupplyLine, SupplyStatus } from './space/supply';
+export { TRADE_LABEL, UNIT_LABEL, byLevel, byLocation, byTrade, locationKey, totals } from './boq/line';
+export type { BoqLine, BoqUnit, LineLocation, LineOrigin, Trade, Totals, Group } from './boq/line';
+export { billProblems, serviceTradesCovered, unknownTrades } from './boq/validate';
+export type { BillProblem, Project } from './boq/validate';
