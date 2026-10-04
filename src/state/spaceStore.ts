@@ -27,25 +27,48 @@ export interface Survey {
    */
   widthMm: number | null;
   depthMm: number | null;
+  /**
+   * True while the room's outline is the built-in example rather than a measurement.
+   *
+   * The walkthrough can start from an example room so a client sees the whole journey before anyone
+   * has measured anything. Every quantity that follows is then computed from invented dimensions, and
+   * this flag is what lets every screen say so. It clears the moment someone types a real width or
+   * depth — a ceiling height alone does not make an invented floor real.
+   */
+  sample: boolean;
   /** Where the room sits in the hotel. The space model does not carry a building or a floor. */
   buildingId: string;
   levelId: string;
-  /** What is going in, by equipment id. */
+  /** What is going in, by equipment id. An id appears once per unit — two fridges are two entries. */
   equipmentIds: string[];
   /** The risers, mains and panels the points hang off. */
   sources: ServiceSource[];
+  /**
+   * What the person answered to the refinement questions, by question id, as they would read it back.
+   * Only the answers that change nothing in the model live here — "I don't know, ask on site" — so the
+   * question is not asked again. Answers that do change the model are written to the model itself.
+   */
+  answers: Record<string, string>;
+  /** Whether the piece in the design editor is part of this room's bill. Off until someone says so. */
+  includeDesign: boolean;
   updatedAt: number | null;
 }
+
+/** The example room: a pool bar, open to the deck along its long side. Dimensions are invented. */
+export const SAMPLE_ROOM = { widthMm: 7200, depthMm: 3600, heightMm: 2700, openEdges: [0], nameHe: 'בר בריכה (חדר לדוגמה)', nameEn: 'Pool bar (example room)' } as const;
 
 function blank(): Survey {
   return {
     space: { ...emptySpace('room_1', 'חלל חדש', 'New space'), heightMm: null },
     widthMm: null,
     depthMm: null,
+    sample: false,
     buildingId: 'main',
     levelId: '0',
     equipmentIds: [],
     sources: [],
+    answers: {},
+    includeDesign: false,
     updatedAt: null,
   };
 }
@@ -61,10 +84,13 @@ function load(): Survey {
       space: { ...base.space, ...parsed.space },
       widthMm: parsed.widthMm ?? null,
       depthMm: parsed.depthMm ?? null,
+      sample: parsed.sample ?? false,
       buildingId: parsed.buildingId ?? base.buildingId,
       levelId: parsed.levelId ?? base.levelId,
       equipmentIds: parsed.equipmentIds ?? [],
       sources: parsed.sources ?? [],
+      answers: parsed.answers ?? {},
+      includeDesign: parsed.includeDesign ?? false,
       updatedAt: parsed.updatedAt ?? null,
     };
   } catch {
@@ -92,19 +118,35 @@ export function rectangleSize(space: Space): { widthMm: number | null; depthMm: 
   return { widthMm: Math.max(...xs) - Math.min(...xs), depthMm: Math.max(...ys) - Math.min(...ys) };
 }
 
+/** How many of one item are in the room. */
+export function countOf(equipmentIds: string[], id: string): number {
+  return equipmentIds.filter((x) => x === id).length;
+}
+
 export interface SurveyState extends Survey {
   setName: (nameHe: string) => void;
   setRectangle: (widthMm: number | null, depthMm: number | null) => void;
   setHeight: (heightMm: number | null) => void;
   toggleOpenEdge: (index: number) => void;
   setPlace: (buildingId: string, levelId: string) => void;
+  /** Adds one of an item, or takes every one of it out if it is already there. */
   toggleEquipment: (id: string) => void;
-  addConnection: (kind: ServiceKind) => void;
+  setEquipmentCount: (id: string, count: number) => void;
+  /** Returns the new point's id. */
+  addConnection: (kind: ServiceKind, patch?: Partial<ConnectionPoint>) => string;
   updateConnection: (id: string, patch: Partial<ConnectionPoint>) => void;
   removeConnection: (id: string) => void;
-  addSource: (kind: ServiceKind) => void;
+  /** Returns the new source's id. */
+  addSource: (kind: ServiceKind, patch?: Partial<ServiceSource>) => string;
   updateSource: (id: string, patch: Partial<ServiceSource>) => void;
   removeSource: (id: string) => void;
+  answer: (questionId: string, label: string) => void;
+  clearAnswer: (questionId: string) => void;
+  setIncludeDesign: (include: boolean) => void;
+  /** Replaces the outline with the example room and marks it as an example. */
+  loadSample: () => void;
+  /** Takes the example room out entirely, so a real measurement never sits on an invented one. */
+  clearSample: () => void;
   reset: () => void;
 }
 
@@ -113,8 +155,8 @@ const nextId = (prefix: string) => `${prefix}_${Date.now().toString(36)}${(seq++
 
 export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
-    const { space, widthMm, depthMm, buildingId, levelId, equipmentIds, sources } = get();
-    const next: Survey = { space, widthMm, depthMm, buildingId, levelId, equipmentIds, sources, updatedAt: Date.now() };
+    const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign } = get();
+    const next: Survey = { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt: Date.now() };
     set({ updatedAt: next.updatedAt });
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -138,7 +180,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
       // Half a rectangle is not a smaller room, so the engine gets nothing until the pair is complete.
       const w = widthMm != null && widthMm > 0 ? widthMm : null;
       const d = depthMm != null && depthMm > 0 ? depthMm : null;
-      set({ widthMm: w, depthMm: d });
+      // Typing a floor dimension is a measurement, so the room stops being the example.
+      set({ widthMm: w, depthMm: d, sample: false });
       patchSpace({ footprintMm: w != null && d != null ? rectangleFootprint(w, d) : [] });
     },
 
@@ -162,19 +205,27 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
-    addConnection: (kind) => {
-      const point: ConnectionPoint = { id: nextId('pt'), kind, atMm: null, existing: true };
+    setEquipmentCount: (id, count) => {
+      const n = Math.max(0, Math.min(20, Math.round(count)));
+      set({ equipmentIds: [...get().equipmentIds.filter((x) => x !== id), ...Array<string>(n).fill(id)] });
+      persist();
+    },
+
+    addConnection: (kind, patch) => {
+      const point: ConnectionPoint = { id: nextId('pt'), kind, atMm: null, existing: true, ...patch };
       patchSpace({ connections: [...get().space.connections, point] });
+      return point.id;
     },
 
     updateConnection: (id, patch) => patchSpace({ connections: get().space.connections.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
 
     removeConnection: (id) => patchSpace({ connections: get().space.connections.filter((c) => c.id !== id) }),
 
-    addSource: (kind) => {
-      const source: ServiceSource = { id: nextId('src'), kind, nameHe: '', nameEn: '', atMm: null, spareWays: null };
+    addSource: (kind, patch) => {
+      const source: ServiceSource = { id: nextId('src'), kind, nameHe: '', nameEn: '', atMm: null, spareWays: null, ...patch };
       set({ sources: [...get().sources, source] });
       persist();
+      return source.id;
     },
 
     updateSource: (id, patch) => {
@@ -189,6 +240,40 @@ export const useSurvey = create<SurveyState>((set, get) => {
         space: { ...get().space, connections: get().space.connections.map((c) => (c.fedBy === id ? { ...c, fedBy: undefined } : c)) },
       });
       persist();
+    },
+
+    answer: (questionId, label) => {
+      set({ answers: { ...get().answers, [questionId]: label } });
+      persist();
+    },
+
+    clearAnswer: (questionId) => {
+      const { [questionId]: _dropped, ...rest } = get().answers;
+      set({ answers: rest });
+      persist();
+    },
+
+    setIncludeDesign: (includeDesign) => {
+      set({ includeDesign });
+      persist();
+    },
+
+    loadSample: () => {
+      set({ widthMm: SAMPLE_ROOM.widthMm, depthMm: SAMPLE_ROOM.depthMm, sample: true });
+      patchSpace({
+        nameHe: SAMPLE_ROOM.nameHe,
+        nameEn: SAMPLE_ROOM.nameEn,
+        footprintMm: rectangleFootprint(SAMPLE_ROOM.widthMm, SAMPLE_ROOM.depthMm),
+        heightMm: SAMPLE_ROOM.heightMm,
+        openEdges: [...SAMPLE_ROOM.openEdges],
+      });
+    },
+
+    clearSample: () => {
+      if (!get().sample) return;
+      const empty = blank().space;
+      set({ widthMm: null, depthMm: null, sample: false });
+      patchSpace({ nameHe: empty.nameHe, nameEn: empty.nameEn, footprintMm: [], heightMm: null, openEdges: [] });
     },
 
     reset: () => {

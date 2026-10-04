@@ -102,6 +102,22 @@ export function HomePage({ auth }: { auth: AuthState }) {
           </div>
         </div>
 
+        {/* The hotel flow is a different job from designing one piece, so it gets its own way in. */}
+        <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-accent-soft px-5 py-4" aria-label={t.home.hotelTitle}>
+          <div className="min-w-0 flex-1 basis-72">
+            <h2 className="text-base font-semibold">{t.home.hotelTitle}</h2>
+            <p className="mt-0.5 text-[14px] leading-relaxed text-muted">{t.home.hotelBody}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <a href="#/journey" className={buttonClass('primary')}>
+              {t.home.hotelStart}
+            </a>
+            <a href="#/space" className="text-[14px] font-medium text-accent underline underline-offset-2">
+              {t.home.hotelDirect}
+            </a>
+          </div>
+        </section>
+
         {/* Say what you want and go straight to the editor; the gallery below is for picking instead. */}
         <DescribePanel onStart={openDescribed} />
 

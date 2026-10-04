@@ -33,6 +33,9 @@ export interface DesignLinesInput {
   /** Names the piece in the bill — "יחידת בר אחורית". Falls back to the template's own name. */
   titleHe?: string;
   titleEn?: string;
+  /** What the room is called by the people who use it. Falls back to the space id, which is internal. */
+  placeHe?: string;
+  placeEn?: string;
 }
 
 export interface DesignLinesResult {
@@ -50,7 +53,7 @@ function tradeFor(material: Material | undefined): Trade {
   return material.category === 'stone' || material.category === 'stainless_steel' || material.category === 'solid_surface' ? 'worktops' : 'joinery';
 }
 
-export function linesFromDesign({ design, location, titleHe, titleEn }: DesignLinesInput): DesignLinesResult {
+export function linesFromDesign({ design, location, titleHe, titleEn, placeHe, placeEn }: DesignLinesInput): DesignLinesResult {
   const { model, bom, report } = design;
   const lines: BoqLine[] = [];
   const nameHe = titleHe ?? model.params.template;
@@ -152,8 +155,8 @@ export function linesFromDesign({ design, location, titleHe, titleEn }: DesignLi
     id: 'haulage_mass',
     trade: 'logistics',
     section: 'haulage',
-    descriptionHe: `הובלה והעלאה של ${nameHe} אל ${location.spaceId}, קומה ${location.levelId}.`,
-    descriptionEn: `Haulage and lifting of ${nameEn} to ${location.spaceId}, level ${location.levelId}.`,
+    descriptionHe: `הובלה והעלאה של ${nameHe} אל ${placeHe || location.spaceId}, קומה ${location.levelId}.`,
+    descriptionEn: `Haulage and lifting of ${nameEn} to ${placeEn || location.spaceId}, level ${location.levelId}.`,
     unit: 'kg',
     quantity: bom.totalMassKg,
     unknownReasonHe: bom.totalMassKg == null ? 'לא לכל החומרים ביחידה יש צפיפות מהימנה, ולכן המשקל אינו מחושב.' : undefined,

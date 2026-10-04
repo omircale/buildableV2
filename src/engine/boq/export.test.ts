@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_OPEN_SHELF, runDesign } from '../index';
 import { emptySpace, type Space } from '../space/space';
 import type { ServiceSource } from '../space/supply';
-import { billCsv, billSummary } from './export';
+import { billCsv, billSummary, tenderPackages } from './export';
 import { linesFromDesign } from './fromDesign';
 import { mepLines } from './mep';
 import type { BoqLine, LineLocation } from './line';
@@ -127,5 +127,27 @@ describe('what the bill is waiting on', () => {
     const rows = csv.split('\r\n').filter(Boolean);
     expect(rows).toHaveLength(2);
     expect(billSummary([]).pending).toEqual([]);
+  });
+});
+
+describe('what goes out to tender', () => {
+  it('cuts the bill into one package per trade, losing and duplicating nothing', () => {
+    const lines = wholeRoom();
+    const packages = tenderPackages(lines);
+    expect(packages.map((p) => p.trade)).toEqual(['joinery', 'plumbing', 'electrical', 'logistics']);
+    const ids = packages.flatMap((p) => p.lines.map((l) => l.id)).sort();
+    expect(ids).toEqual(lines.map((l) => l.id).sort());
+  });
+
+  it('flags every package whose trade needs a licensed professional, and only those', () => {
+    const byTrade = Object.fromEntries(tenderPackages(wholeRoom()).map((p) => [p.trade, p.licensed]));
+    expect(byTrade).toEqual({ joinery: false, plumbing: true, electrical: true, logistics: false });
+  });
+
+  it('each package carries its own honest totals', () => {
+    for (const p of tenderPackages(wholeRoom())) {
+      expect(p.totals.lines, p.trade).toBe(p.lines.length);
+      expect(p.totals.complete, p.trade).toBe(false);
+    }
   });
 });

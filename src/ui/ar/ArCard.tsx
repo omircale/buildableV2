@@ -80,7 +80,7 @@ export function ArCard({ result }: { result: DesignResult }) {
         <>
           <div className="flex flex-wrap gap-2">
             {order.map((format, i) => (
-              <Button key={format} variant={i === 0 ? 'primary' : 'secondary'} disabled={busy != null} onClick={() => void download(format)}>
+              <Button key={format} variant={i === 0 ? 'primary' : 'secondary'} disabled={busy != null} onClick={() => void download(format)} className="h-auto! min-h-10 max-w-full py-2 text-start whitespace-normal!">
                 <IconDownload size={18} />
                 {busy === format ? t.ar.preparing : format === 'usdz' ? t.ar.downloadIos : t.ar.downloadGlb}
               </Button>

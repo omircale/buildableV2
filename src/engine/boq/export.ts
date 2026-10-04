@@ -1,4 +1,5 @@
-import { TRADE_LABEL, UNIT_LABEL, byLocation, byTrade, totals, type BoqLine, type Totals } from './line';
+import { LICENSED_TRADES } from '../equipment/catalog';
+import { TRADE_LABEL, UNIT_LABEL, byLocation, byTrade, totals, type BoqLine, type Totals, type Trade } from './line';
 
 /**
  * The bill as a file somebody can open.
@@ -116,4 +117,32 @@ export function billSummary(lines: BoqLine[]): BillSummary {
     locations: byLocation(lines).map((g) => ({ key: g.key, he: g.he, en: g.en, totals: g.totals })),
     pending,
   };
+}
+
+export interface TenderPackage {
+  trade: Trade;
+  he: string;
+  en: string;
+  lines: BoqLine[];
+  totals: Totals;
+  /** The trade's design and sign-off need a licensed professional before anyone can price it properly. */
+  licensed: boolean;
+}
+
+/**
+ * The bill cut into what goes out to tender: one package per trade.
+ *
+ * A tender goes to one trade at a time, so this is the unit a procurement manager actually sends. The
+ * licensed flag travels with the package, because a plumbing package priced before a licensed plumber
+ * has designed the runs is a price for a quantity nobody established.
+ */
+export function tenderPackages(lines: BoqLine[]): TenderPackage[] {
+  return byTrade(lines).map((g) => ({
+    trade: g.extra.trade,
+    he: g.he,
+    en: g.en,
+    lines: g.lines,
+    totals: g.totals,
+    licensed: LICENSED_TRADES.has(g.extra.trade),
+  }));
 }

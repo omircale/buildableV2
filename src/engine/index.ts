@@ -176,7 +176,7 @@ export {
   whatIsMissing,
 } from './space/space';
 export type { Space, WallSegment, Aperture, Obstacle, ConnectionPoint, Zone, ConnectionMatch, SpaceProblem } from './space/space';
-export { EQUIPMENT, LICENSED_TRADES, SERVICE_TRADE, equipmentById, servicesFor } from './equipment/catalog';
+export { EQUIPMENT, LICENSED_TRADES, SERVICE_LABEL, SERVICE_TRADE, clearancesFor, equipmentById, servicesFor } from './equipment/catalog';
 export type { EquipmentItem, EquipmentCategory, ServiceKind, ServiceRequirement } from './equipment/catalog';
 export { BLOCKING_SUPPLY_STATUSES, danglingFeeds, mismatchedFeeds, supplyReport } from './space/supply';
 export type { ServiceSource, SupplyLine, SupplyStatus } from './space/supply';
@@ -188,7 +188,7 @@ export { mepLines, mepOpenQuestions, requiresLicensedDesign } from './boq/mep';
 export type { MepLinesInput } from './boq/mep';
 export { linesFromDesign } from './boq/fromDesign';
 export type { DesignForBill, DesignLinesInput, DesignLinesResult } from './boq/fromDesign';
-export { billCsv, billSummary } from './boq/export';
-export type { BillAxis, BillSummary } from './boq/export';
+export { billCsv, billSummary, tenderPackages } from './boq/export';
+export type { BillAxis, BillSummary, TenderPackage } from './boq/export';
 export { FINISH_CODE_PREFIX, codePrefixProblems, finishLines, measuredAreaM2, orphanVariants } from './boq/finishes';
 export type { FinishScheduleSpec, FinishCategory, FinishSurface, FinishScope, FinishProduct, FinishLinesInput } from './boq/finishes';

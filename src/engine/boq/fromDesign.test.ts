@@ -77,6 +77,14 @@ describe('weight is a logistics line, not a footnote', () => {
     expect(haulage.descriptionHe).toContain('קומה 0');
   });
 
+  it('names the room the way the people who use it do, not by its internal id', () => {
+    const named = linesFromDesign({ design: runDesign(DEFAULT_OPEN_SHELF), location: AT, placeHe: 'בר בריכה', placeEn: 'Pool bar' });
+    const haulage = named.lines.find((l) => l.id === 'haulage_mass')!;
+    expect(haulage.descriptionHe).toContain('אל בר בריכה');
+    expect(haulage.descriptionHe).not.toContain('pool_bar');
+    expect(haulage.descriptionEn).toContain('to Pool bar');
+  });
+
   it('states that it is material weight only', () => {
     const haulage = bill().lines.find((l) => l.id === 'haulage_mass')!;
     if (haulage.quantity != null) {

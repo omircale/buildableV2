@@ -98,6 +98,13 @@ describe('a clearance reaches the joiner without becoming a point', () => {
     expect(clearance.unknownReasonEn).toContain("maker's figure");
   });
 
+  it('two of the same item are named once, with a count', () => {
+    const two = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: ['undercounter_fridge', 'undercounter_fridge'], location: AT });
+    const clearance = two.find((l) => l.id === 'clearance_ventilation')!;
+    expect(clearance.descriptionHe).toContain('מקרר תת-דלפקי ×2');
+    expect(clearance.descriptionHe.match(/מקרר תת-דלפקי/g)).toHaveLength(1);
+  });
+
   it('is absent when nothing in the room asks for one', () => {
     const generated = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: ['bar_sink_single'], location: AT });
     expect(generated.some((l) => l.section === 'clearances')).toBe(false);
@@ -154,6 +161,12 @@ describe('a service the room does not have at all', () => {
     expect(bring.quantity).toBeNull();
     expect(bring.unknownReasonHe).toContain('אין מקור');
     expect(bring.unknownReasonEn).toContain('cannot establish');
+  });
+
+  it('is never raised for a service the room demonstrably has, even untraced', () => {
+    const withDrain: Space = { ...poolBar(), connections: [{ id: 'dr_x', kind: 'drain', atMm: null, existing: true }] };
+    const generated = mepLines({ space: withDrain, sources: [], equipmentIds: BAR_EQUIPMENT, location: AT });
+    expect(generated.some((l) => l.id === 'mep_drain_bring_supply')).toBe(false);
   });
 
   it('and the point line for it still exists, because the point is still a point', () => {

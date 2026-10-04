@@ -48,6 +48,17 @@ describe('a new point cannot be quantified without knowing what feeds it', () =>
     expect(line.statedSpareWays).toBeNull();
   });
 
+  it('an existing point with no source registered is an unknown source, not a missing supply', () => {
+    // Found by the refinement step: a drain recorded in the room, with nothing written behind it, was
+    // reported as "no drain reaches this room" and billed as bringing a supply in. A point that exists
+    // is fed by something; what is unknown is what.
+    const bar = room();
+    bar.connections = [{ id: 'dr1', kind: 'drain', atMm: null, existing: true }];
+    const [line] = supplyReport(bar, [], [{ kind: 'drain', toCreate: 1 }]);
+    expect(line.status).toBe('source_unknown');
+    expect(line.untracedPointIds).toEqual(['dr1']);
+  });
+
   it('no source of that kind at all is a different and larger job', () => {
     const bar = room();
     const [line] = supplyReport(bar, [PANEL], [{ kind: 'gas', toCreate: 1 }]);

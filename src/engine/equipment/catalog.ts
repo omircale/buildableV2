@@ -217,3 +217,13 @@ export const SERVICE_TRADE: Record<ServiceKind, 'plumbing' | 'electrical' | 'gas
 
 /** The trades whose design and sign-off require a licensed professional. Rule 02 of the north star. */
 export const LICENSED_TRADES: ReadonlySet<string> = new Set(['plumbing', 'electrical', 'gas', 'hvac']);
+
+/** What each service is called, for anything that shows one to a person. */
+export const SERVICE_LABEL: Record<ServiceKind, { he: string; en: string }> = {
+  water_cold: { he: 'מים קרים', en: 'cold water' },
+  water_hot: { he: 'מים חמים', en: 'hot water' },
+  drain: { he: 'ניקוז', en: 'drain' },
+  electrical: { he: 'חשמל', en: 'electrical' },
+  gas: { he: 'גז', en: 'gas' },
+  ventilation: { he: 'אוורור', en: 'ventilation' },
+};

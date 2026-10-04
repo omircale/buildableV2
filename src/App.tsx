@@ -5,7 +5,9 @@ import { useT } from './i18n';
 // The editor (three.js) and the admin screen load only when they are opened.
 const DesignerPage = lazy(() => import('./pages/Designer').then((m) => ({ default: m.DesignerPage })));
 const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.AdminPage })));
+const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 import { stepFromRoute, type Step } from './pages/steps';
+import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
@@ -91,6 +93,7 @@ function useGlobalCommands() {
       { id: 'decors-page', group: 'materials', label: t.decors.openCatalog, keywords: 'decor finishes catalog גוונים קטלוג פורמייקה', run: () => (window.location.hash = '#/decors') },
       { id: 'projects-page', group: 'steps', label: t.header.projects, keywords: 'projects פרויקטים', run: () => (window.location.hash = '#/projects') },
       { id: 'space-page', group: 'steps', label: t.survey.title, keywords: 'space boq quantities חלל כתב כמויות מלון', run: () => (window.location.hash = '#/space') },
+      { id: 'journey-page', group: 'steps', label: t.journey.title, keywords: 'journey demo client vr ar scan מסע לקוח הדגמה סריקה', run: () => (window.location.hash = '#/journey') },
     ],
     [t, locale, setTheme, setLocale, startNew],
   );
@@ -124,6 +127,7 @@ export default function App() {
   else if (route.startsWith('#/projects')) page = <ProjectsPage auth={auth} />;
   else if (route.startsWith('#/decors')) page = <DecorsPage auth={auth} />;
   else if (route.startsWith('#/space')) page = <SpacePage auth={auth} />;
+  else if (route.startsWith('#/journey')) page = <JourneyPage auth={auth} stage={journeyStage(route)} />;
   else if (route.startsWith('#/design')) {
     const step = route.split('/')[2] as Step;
     page = <DesignerPage auth={auth} step={stepFromRoute(step)} />;

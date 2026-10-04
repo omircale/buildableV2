@@ -126,7 +126,10 @@ export function supplyReport(
           : null;
 
       let status: SupplyStatus;
-      if (!ofKind.length) status = 'no_source';
+      // A point that exists is fed by something, whether or not anyone wrote down what. Reporting "no
+      // source reaches this room" there would send a bill line for bringing in a supply the room plainly
+      // already has — so an existing point with nothing registered behind it is an unknown source.
+      if (!ofKind.length) status = points.length ? 'source_unknown' : 'no_source';
       else if (points.length > 0 && untraced.length === points.length) status = 'source_unknown';
       else if (statedSpareWays == null) status = 'capacity_unstated';
       else if (statedSpareWays < toCreate) status = 'over_stated_capacity';

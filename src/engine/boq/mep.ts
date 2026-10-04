@@ -117,9 +117,19 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
   // Left out of the bill, the box gets built tight and the condenser cooks.
   for (const clearance of clearancesFor(equipmentIds)) {
     const label = KIND_LABEL[clearance.kind];
-    const items = clearance.from.map((id) => equipmentById(id)).filter((i) => i != null);
-    const namesHe = items.map((i) => i!.nameHe).join(', ');
-    const namesEn = items.map((i) => i!.nameEn).join(', ');
+    // Two of the same item are one name with a count, not the name written twice.
+    const perItem = new Map<string, number>();
+    for (const id of clearance.from) perItem.set(id, (perItem.get(id) ?? 0) + 1);
+    const named = (locale: 'he' | 'en') =>
+      [...perItem]
+        .map(([id, n]) => {
+          const item = equipmentById(id);
+          const name = item ? (locale === 'he' ? item.nameHe : item.nameEn) : id;
+          return n > 1 ? `${name} ×${n}` : name;
+        })
+        .join(', ');
+    const namesHe = named('he');
+    const namesEn = named('en');
     lines.push({
       id: `clearance_${clearance.kind}`,
       trade: 'joinery',

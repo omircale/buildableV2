@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { floorAreaM2, matchServices, servicesFor, wallsOf, whatIsMissing } from '../engine';
-import { rectangleSize, type SurveyState } from './spaceStore';
+import { countOf, rectangleSize, type SurveyState } from './spaceStore';
 
 function memoryStorage() {
   const data = new Map<string, string>();
@@ -176,5 +176,97 @@ describe('the survey survives a refresh', () => {
     useSurvey.getState().reset();
     expect(useSurvey.getState().space.footprintMm).toEqual([]);
     expect(localStorage.getItem('buildable.survey.v1')).toBeNull();
+  });
+});
+
+describe('the example room', () => {
+  it('loads a full room and says it is an example', () => {
+    useSurvey.getState().loadSample();
+    const s = useSurvey.getState();
+    expect(s.sample).toBe(true);
+    expect(floorAreaM2(s.space)).toBeCloseTo(25.92, 6);
+    expect(s.space.heightMm).toBe(2700);
+    expect(wallsOf(s.space)[0].built).toBe(false);
+    expect(s.space.nameHe).toContain('לדוגמה');
+  });
+
+  it('stops being an example the moment someone types a floor dimension', () => {
+    useSurvey.getState().loadSample();
+    useSurvey.getState().setRectangle(5000, useSurvey.getState().depthMm);
+    expect(useSurvey.getState().sample).toBe(false);
+  });
+
+  it('a ceiling height alone does not make an invented floor real', () => {
+    useSurvey.getState().loadSample();
+    useSurvey.getState().setHeight(3000);
+    expect(useSurvey.getState().sample).toBe(true);
+  });
+
+  it('clearing the example takes out every invented measurement, not just the flag', () => {
+    useSurvey.getState().loadSample();
+    useSurvey.getState().clearSample();
+    const s = useSurvey.getState();
+    expect(s.sample).toBe(false);
+    expect(s.space.footprintMm).toEqual([]);
+    expect(s.space.heightMm).toBeNull();
+    expect(s.widthMm).toBeNull();
+    expect(s.space.openEdges).toEqual([]);
+  });
+
+  it('clearing when there is no example touches nothing', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().clearSample();
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(20, 6);
+  });
+
+  it('survives a refresh as an example', () => {
+    useSurvey.getState().loadSample();
+    expect(JSON.parse(localStorage.getItem('buildable.survey.v1')!).sample).toBe(true);
+  });
+});
+
+describe('two of the same item', () => {
+  it('counts each unit, and the service points follow the count', () => {
+    const s = useSurvey.getState();
+    s.setEquipmentCount('undercounter_fridge', 2);
+    expect(countOf(useSurvey.getState().equipmentIds, 'undercounter_fridge')).toBe(2);
+    // Two fridges need two dedicated circuits, not one.
+    const power = servicesFor(useSurvey.getState().equipmentIds).find((x) => x.kind === 'electrical')!;
+    expect(power.quantity).toBe(2);
+  });
+
+  it('a count of zero takes the item out', () => {
+    useSurvey.getState().setEquipmentCount('ice_maker', 3);
+    useSurvey.getState().setEquipmentCount('ice_maker', 0);
+    expect(useSurvey.getState().equipmentIds).toEqual([]);
+  });
+
+  it('toggling an item that is there twice takes both out', () => {
+    useSurvey.getState().setEquipmentCount('undercounter_fridge', 2);
+    useSurvey.getState().toggleEquipment('undercounter_fridge');
+    expect(useSurvey.getState().equipmentIds).toEqual([]);
+  });
+});
+
+describe('answers and new ids', () => {
+  it('adding a source and a point hands back their ids so they can be linked', () => {
+    const s = useSurvey.getState();
+    const src = s.addSource('drain', { nameHe: 'קולטן A' });
+    const pt = s.addConnection('drain', { fedBy: src });
+    expect(useSurvey.getState().sources[0]).toMatchObject({ id: src, nameHe: 'קולטן A' });
+    expect(useSurvey.getState().space.connections[0]).toMatchObject({ id: pt, fedBy: src, existing: true });
+  });
+
+  it('an answer is kept and can be withdrawn', () => {
+    useSurvey.getState().answer('supply:gas', 'לא יודע — לשאול בשטח');
+    expect(useSurvey.getState().answers['supply:gas']).toBe('לא יודע — לשאול בשטח');
+    useSurvey.getState().clearAnswer('supply:gas');
+    expect(useSurvey.getState().answers).toEqual({});
+  });
+
+  it('the designed piece is left out of the bill until someone includes it', () => {
+    expect(useSurvey.getState().includeDesign).toBe(false);
+    useSurvey.getState().setIncludeDesign(true);
+    expect(useSurvey.getState().includeDesign).toBe(true);
   });
 });
