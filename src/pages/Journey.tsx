@@ -12,6 +12,8 @@ import { RefineStage } from '../ui/journey/RefineStage';
 import { ScanStage } from '../ui/journey/ScanStage';
 import { TenderStage } from '../ui/journey/TenderStage';
 import { BillView } from '../ui/survey/BillView';
+import { FinishSchedule } from '../ui/survey/FinishSchedule';
+import { RoomSwitcher } from '../ui/survey/RoomSwitcher';
 import { SampleBanner, SurveyEditor } from '../ui/survey/SurveyEditor';
 import { useRoomBill } from '../ui/survey/useRoomBill';
 import { STAGES, type Stage } from './journeyStages';
@@ -118,7 +120,15 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
             {stage === 'scan' && <ScanStage onDone={() => go('describe')} />}
             {stage === 'describe' && <DescribeStage onDone={() => go('refine')} />}
             {stage === 'refine' && <RefineStage />}
-            {stage === 'edit' && <SurveyEditor bill={bill} />}
+            {stage === 'edit' && (
+              <div className="space-y-5 p-5">
+                <RoomSwitcher bill={bill} />
+                <div className="rounded-2xl border border-line">
+                  <SurveyEditor bill={bill} />
+                </div>
+                <FinishSchedule bill={bill} />
+              </div>
+            )}
             {stage === 'walk' &&
               (survey.space.footprintMm.length < 3 ? (
                 <div className="space-y-3 py-6 text-center">
@@ -160,9 +170,9 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                   </aside>
                 </div>
               ))}
-            {stage === 'bill' && <BillView lines={bill.lines} maxHeight="none" />}
+            {stage === 'bill' && <BillView bill={bill} maxHeight="none" />}
             {stage === 'price' && <PriceStage lines={bill.lines} />}
-            {stage === 'tender' && <TenderStage lines={bill.lines} />}
+            {stage === 'tender' && <TenderStage bill={bill} />}
             {stage === 'ar' && <ArStage design={bill.design} modeLabels={j.modes} />}
           </div>
 

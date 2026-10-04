@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { floorAreaM2, matchServices, servicesFor, wallsOf, whatIsMissing } from '../engine';
-import { countOf, rectangleSize, type SurveyState } from './spaceStore';
+import { countOf, projectRooms, rectangleSize, type SurveyState } from './spaceStore';
 
 function memoryStorage() {
   const data = new Map<string, string>();
@@ -268,5 +268,122 @@ describe('answers and new ids', () => {
     expect(useSurvey.getState().includeDesign).toBe(false);
     useSurvey.getState().setIncludeDesign(true);
     expect(useSurvey.getState().includeDesign).toBe(true);
+  });
+});
+
+describe('a project is several rooms', () => {
+  const rooms = () => projectRooms(useSurvey.getState() as never).map((r) => r.space.id);
+
+  it('starts as one room', () => {
+    expect(rooms()).toEqual(['room_1']);
+  });
+
+  it('adding a room opens it, empty, on the same floor', () => {
+    useSurvey.getState().setPlace('main', '-1');
+    useSurvey.getState().setRectangle(7200, 3600);
+    useSurvey.getState().addRoom();
+    const s = useSurvey.getState();
+    expect(s.space.id).toBe('room_2');
+    expect(s.space.footprintMm).toEqual([]);
+    expect(s.levelId).toBe('-1');
+    expect(rooms()).toEqual(['room_1', 'room_2']);
+  });
+
+  it('opening another room brings its own measurements back', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(7200, 3600);
+    s.toggleEquipment('bar_sink_single');
+    s.addRoom();
+    useSurvey.getState().setRectangle(4000, 3000);
+    useSurvey.getState().openRoom('room_1');
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(25.92, 6);
+    expect(useSurvey.getState().equipmentIds).toEqual(['bar_sink_single']);
+    useSurvey.getState().openRoom('room_2');
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(12, 6);
+    expect(useSurvey.getState().equipmentIds).toEqual([]);
+  });
+
+  it('the order of rooms does not shuffle when a different one is opened', () => {
+    // A room's place in the order is its structure number in the bill.
+    useSurvey.getState().addRoom();
+    useSurvey.getState().addRoom();
+    useSurvey.getState().openRoom('room_1');
+    expect(rooms()).toEqual(['room_1', 'room_2', 'room_3']);
+    useSurvey.getState().openRoom('room_3');
+    expect(rooms()).toEqual(['room_1', 'room_2', 'room_3']);
+  });
+
+  it('forty identical rooms are one room, measured once', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(5000, 4000);
+    s.setHeight(2700);
+    s.toggleEquipment('bar_sink_single');
+    s.duplicateRoom(39);
+    const all = projectRooms(useSurvey.getState() as never);
+    expect(all).toHaveLength(40);
+    expect(new Set(all.map((r) => r.space.id)).size).toBe(40);
+    for (const r of all) {
+      expect(floorAreaM2(r.space)).toBeCloseTo(20, 6);
+      expect(r.equipmentIds).toEqual(['bar_sink_single']);
+    }
+    expect(all[1].space.nameHe).toContain('(2)');
+  });
+
+  it('a copy carries the finishes of the room it was copied from', () => {
+    const s = useSurvey.getState();
+    s.upsertFinish({ code: 'WD-2', category: 'wood', itemNameEn: 'Timber floor', surface: 'floor', product: { type: null, color: null, finish: null, sizeMm: null, thicknessMm: null, wearLayerMm: null }, areas: ['room_1'], scope: 'unknown', sources: [] });
+    s.duplicateRoom(2);
+    expect(useSurvey.getState().finishes[0].areas).toEqual(['room_1', 'room_2', 'room_3']);
+  });
+
+  it('removing a room takes it out of every finish that named it', () => {
+    const s = useSurvey.getState();
+    s.addRoom();
+    useSurvey.getState().upsertFinish({ code: 'WD-2', category: 'wood', itemNameEn: 'x', surface: 'floor', product: { type: null, color: null, finish: null, sizeMm: null, thicknessMm: null, wearLayerMm: null }, areas: ['room_1', 'room_2'], scope: 'unknown', sources: [] });
+    useSurvey.getState().removeRoom('room_2');
+    expect(rooms()).toEqual(['room_1']);
+    expect(useSurvey.getState().space.id).toBe('room_1');
+    expect(useSurvey.getState().finishes[0].areas).toEqual(['room_1']);
+  });
+
+  it('removing the last room empties it rather than leaving a project with none', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().removeRoom('room_1');
+    expect(rooms()).toHaveLength(1);
+    expect(useSurvey.getState().space.footprintMm).toEqual([]);
+  });
+
+  it('the whole project survives a refresh, not just the open room', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().addRoom();
+    const raw = JSON.parse(localStorage.getItem('buildable.survey.v1')!);
+    expect(raw.others).toHaveLength(1);
+    expect(raw.order).toEqual(['room_1', 'room_2']);
+  });
+});
+
+describe('the finish schedule', () => {
+  const spec = (code: string) => ({ code, category: 'wood' as const, itemNameEn: code, surface: 'floor' as const, product: { type: null, color: null, finish: null, sizeMm: null, thicknessMm: null, wearLayerMm: null }, areas: [], scope: 'unknown' as const, sources: [] });
+
+  it('keeps finishes in code order, numerically', () => {
+    for (const c of ['WD-10', 'WD-2', 'ST-1']) useSurvey.getState().upsertFinish(spec(c));
+    expect(useSurvey.getState().finishes.map((f) => f.code)).toEqual(['ST-1', 'WD-2', 'WD-10']);
+  });
+
+  it('an imported schedule replaces the codes it carries and leaves the rest', () => {
+    useSurvey.getState().upsertFinish({ ...spec('WD-2'), pattern: 'old' });
+    useSurvey.getState().upsertFinish(spec('ST-1'));
+    useSurvey.getState().importFinishes([{ ...spec('WD-2'), pattern: 'new' }, spec('WD-3')]);
+    const f = useSurvey.getState().finishes;
+    expect(f.map((x) => x.code)).toEqual(['ST-1', 'WD-2', 'WD-3']);
+    expect(f.find((x) => x.code === 'WD-2')!.pattern).toBe('new');
+  });
+
+  it('a finish is put in a room and taken out again', () => {
+    useSurvey.getState().upsertFinish(spec('WD-2'));
+    useSurvey.getState().toggleFinishRoom('WD-2', 'room_1');
+    expect(useSurvey.getState().finishes[0].areas).toEqual(['room_1']);
+    useSurvey.getState().toggleFinishRoom('WD-2', 'room_1');
+    expect(useSurvey.getState().finishes[0].areas).toEqual([]);
   });
 });

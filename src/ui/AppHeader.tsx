@@ -57,7 +57,7 @@ export function AppHeader({ auth, start, center, end }: { auth: AuthState; start
         {start}
       </div>
       {center && <div className="flex shrink-0 items-center">{center}</div>}
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
+      <div className="flex shrink-0 items-center justify-end gap-1 sm:min-w-0 sm:flex-1">
         {end}
         {/* In the editor the header also carries the stepper, so the link only shows where there is room. */}
         <a href="#/projects" className={`${center ? 'hidden 2xl:inline-flex' : 'hidden sm:inline-flex'} h-10 items-center rounded-lg px-3 text-[15px] whitespace-nowrap hover:bg-sunken`}>

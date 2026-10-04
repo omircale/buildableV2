@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
 import type { ServiceKind } from '../engine';
-import type { ServiceSource } from '../engine';
+import type { FinishScheduleSpec, ServiceSource } from '../engine';
 
 /**
  * A room a maintenance manager is surveying, and what is going into it.
@@ -54,6 +54,21 @@ export interface Survey {
   updatedAt: number | null;
 }
 
+/**
+ * A project is several rooms and one finish schedule.
+ *
+ * The flat `Survey` fields above are always the room that is open; the rest of the project's rooms wait
+ * in `others`. Keeping the open room flat means every screen written for one room keeps working, and a
+ * project of forty rooms costs those screens nothing. `order` is the rooms' order in the bill — which
+ * is their structure number in it, so it must not shuffle when a different room is opened.
+ */
+export interface ProjectExtras {
+  others: Survey[];
+  order: string[];
+  /** The project's finish schedule. A finish names the rooms it is used in by their space ids. */
+  finishes: FinishScheduleSpec[];
+}
+
 /** The example room: a pool bar, open to the deck along its long side. Dimensions are invented. */
 export const SAMPLE_ROOM = { widthMm: 7200, depthMm: 3600, heightMm: 2700, openEdges: [0], nameHe: 'בר בריכה (חדר לדוגמה)', nameEn: 'Pool bar (example room)' } as const;
 
@@ -73,14 +88,37 @@ function blank(): Survey {
   };
 }
 
-function load(): Survey {
+function blankProject(): Survey & ProjectExtras {
+  const room = blank();
+  return { ...room, others: [], order: [room.space.id], finishes: [] };
+}
+
+/** The per-room fields of the store, taken as a snapshot that can be parked in `others`. */
+function snapshot(s: Survey): Survey {
+  const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt } = s;
+  return { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt };
+}
+
+/** Every room of the project, the open one included, in bill order. */
+export function projectRooms(s: Survey & ProjectExtras): Survey[] {
+  const all = [snapshot(s), ...s.others];
+  const byId = new Map(all.map((r) => [r.space.id, r]));
+  const ordered = s.order.map((id) => byId.get(id)).filter((r): r is Survey => r != null);
+  return [...ordered, ...all.filter((r) => !s.order.includes(r.space.id))];
+}
+
+function load(): Survey & ProjectExtras {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return blank();
+    if (!raw) return blankProject();
     const parsed = JSON.parse(raw) as Partial<Survey>;
     const base = blank();
-    if (!parsed.space) return base;
+    if (!parsed.space) return blankProject();
+    const extras = parsed as Partial<ProjectExtras>;
     return {
+      others: extras.others ?? [],
+      order: extras.order ?? [parsed.space.id ?? base.space.id],
+      finishes: extras.finishes ?? [],
       space: { ...base.space, ...parsed.space },
       widthMm: parsed.widthMm ?? null,
       depthMm: parsed.depthMm ?? null,
@@ -95,7 +133,7 @@ function load(): Survey {
     };
   } catch {
     // Corrupt or blocked storage falls back to an empty survey rather than losing the screen.
-    return blank();
+    return blankProject();
   }
 }
 
@@ -123,7 +161,7 @@ export function countOf(equipmentIds: string[], id: string): number {
   return equipmentIds.filter((x) => x === id).length;
 }
 
-export interface SurveyState extends Survey {
+export interface SurveyState extends Survey, ProjectExtras {
   setName: (nameHe: string) => void;
   setRectangle: (widthMm: number | null, depthMm: number | null) => void;
   setHeight: (heightMm: number | null) => void;
@@ -143,6 +181,18 @@ export interface SurveyState extends Survey {
   answer: (questionId: string, label: string) => void;
   clearAnswer: (questionId: string) => void;
   setIncludeDesign: (include: boolean) => void;
+  /** Adds an empty room and opens it. */
+  addRoom: () => void;
+  /** Copies the open room `copies` times — forty identical guest rooms are one room, measured once. */
+  duplicateRoom: (copies: number) => void;
+  openRoom: (spaceId: string) => void;
+  /** Removes a room. The last room is emptied instead, so a project always has one. */
+  removeRoom: (spaceId: string) => void;
+  upsertFinish: (spec: FinishScheduleSpec) => void;
+  /** Adds several finishes at once, replacing any that share a code — what an imported schedule does. */
+  importFinishes: (specs: FinishScheduleSpec[]) => void;
+  removeFinish: (code: string) => void;
+  toggleFinishRoom: (code: string, spaceId: string) => void;
   /** Replaces the outline with the example room and marks it as an example. */
   loadSample: () => void;
   /** Takes the example room out entirely, so a real measurement never sits on an invented one. */
@@ -155,9 +205,10 @@ const nextId = (prefix: string) => `${prefix}_${Date.now().toString(36)}${(seq++
 
 export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
-    const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign } = get();
-    const next: Survey = { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt: Date.now() };
-    set({ updatedAt: next.updatedAt });
+    const updatedAt = Date.now();
+    set({ updatedAt });
+    const { others, order, finishes } = get();
+    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
@@ -173,7 +224,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
   return {
     ...load(),
 
-    setName: (nameHe) => patchSpace({ nameHe }),
+    // The person named the room; that is its name whichever language the screen is in.
+    setName: (name) => patchSpace({ nameHe: name, nameEn: name }),
 
     setRectangle: (widthMm, depthMm) => {
       // The typed numbers are kept whatever happens; the footprint only exists once both are real.
@@ -258,6 +310,83 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
+    addRoom: () => {
+      const st = get();
+      const ids = projectRooms(st).map((r) => r.space.id);
+      const n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0)) + 1;
+      const room = blank();
+      room.space = { ...room.space, id: `room_${n}`, nameHe: `חלל ${n}`, nameEn: `Space ${n}` };
+      // A new room is on the same floor of the same building until someone says otherwise.
+      room.buildingId = st.buildingId;
+      room.levelId = st.levelId;
+      set({ ...room, others: [...st.others, snapshot(st)], order: [...st.order, room.space.id] });
+      persist();
+    },
+
+    duplicateRoom: (copies) => {
+      const st = get();
+      const count = Math.max(1, Math.min(98, Math.round(copies)));
+      const ids = projectRooms(st).map((r) => r.space.id);
+      let n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0));
+      const source = snapshot(st);
+      const made: Survey[] = [];
+      for (let i = 0; i < count; i++) {
+        n += 1;
+        made.push({ ...source, space: { ...source.space, id: `room_${n}`, nameHe: `${source.space.nameHe} (${i + 2})`, nameEn: `${source.space.nameEn} (${i + 2})` } });
+      }
+      // A copy is used wherever the original is: the finishes that name this room name its copies too.
+      const finishes = st.finishes.map((f) => (f.areas.includes(source.space.id) ? { ...f, areas: [...f.areas, ...made.map((m) => m.space.id)] } : f));
+      set({ others: [...st.others, ...made], order: [...st.order, ...made.map((m) => m.space.id)], finishes });
+      persist();
+    },
+
+    openRoom: (spaceId) => {
+      const st = get();
+      if (st.space.id === spaceId) return;
+      const target = st.others.find((r) => r.space.id === spaceId);
+      if (!target) return;
+      set({ ...target, others: [...st.others.filter((r) => r.space.id !== spaceId), snapshot(st)] });
+      persist();
+    },
+
+    removeRoom: (spaceId) => {
+      const st = get();
+      const finishes = st.finishes.map((f) => ({ ...f, areas: f.areas.filter((id) => id !== spaceId) }));
+      if (st.space.id !== spaceId) {
+        set({ others: st.others.filter((r) => r.space.id !== spaceId), order: st.order.filter((id) => id !== spaceId), finishes });
+      } else if (st.others.length) {
+        const next = projectRooms(st).find((r) => r.space.id !== spaceId)!;
+        set({ ...next, others: st.others.filter((r) => r.space.id !== next.space.id), order: st.order.filter((id) => id !== spaceId), finishes });
+      } else {
+        const room = blank();
+        set({ ...room, order: [room.space.id], finishes });
+      }
+      persist();
+    },
+
+    upsertFinish: (spec) => {
+      const rest = get().finishes.filter((f) => f.code !== spec.code);
+      set({ finishes: [...rest, spec].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })) });
+      persist();
+    },
+
+    importFinishes: (specs) => {
+      const codes = new Set(specs.map((x) => x.code));
+      const kept = get().finishes.filter((f) => !codes.has(f.code));
+      set({ finishes: [...kept, ...specs].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })) });
+      persist();
+    },
+
+    removeFinish: (code) => {
+      set({ finishes: get().finishes.filter((f) => f.code !== code) });
+      persist();
+    },
+
+    toggleFinishRoom: (code, spaceId) => {
+      set({ finishes: get().finishes.map((f) => (f.code !== code ? f : { ...f, areas: f.areas.includes(spaceId) ? f.areas.filter((id) => id !== spaceId) : [...f.areas, spaceId] })) });
+      persist();
+    },
+
     loadSample: () => {
       set({ widthMm: SAMPLE_ROOM.widthMm, depthMm: SAMPLE_ROOM.depthMm, sample: true });
       patchSpace({
@@ -277,7 +406,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     reset: () => {
-      set(blank());
+      set(blankProject());
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch {
