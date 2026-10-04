@@ -1,5 +1,6 @@
 import { LICENSED_TRADES } from '../equipment/catalog';
 import { TRADE_LABEL, UNIT_LABEL, byLocation, byTrade, totals, type BoqLine, type Totals, type Trade } from './line';
+import { numberBill } from './numbering';
 
 /**
  * The bill as a file somebody can open.
@@ -145,4 +146,83 @@ export function tenderPackages(lines: BoqLine[]): TenderPackage[] {
     totals: g.totals,
     licensed: LICENSED_TRADES.has(g.extra.trade),
   }));
+}
+
+const DOC_HEADER_HE = ['סעיף', 'מקור הסעיף', 'תאור', "יח'", 'כמות', 'מחיר', 'סה"כ', 'מה חסר לקביעת הכמות', 'הנחה'];
+const DOC_HEADER_EN = ['Item', 'Item source', 'Description', 'Unit', 'Quantity', 'Price', 'Total', 'What the quantity is waiting on', 'Assumption'];
+
+export interface BillDocumentOptions {
+  locale?: 'he' | 'en';
+  /** What a room is called by the people who use it. Falls back to the space id. */
+  roomName?: (location: BoqLine['location']) => string;
+  /** Keep only these lines, after numbering — so a package for one trade keeps the bill's own numbers. */
+  only?: (line: BoqLine) => boolean;
+}
+
+/**
+ * The bill as the document the industry reads.
+ *
+ * The first seven columns are the ones a published Israeli bill carries, in its order: item, item
+ * source, description, unit, quantity, price, total. It is laid out room, chapter, sub-chapter, item,
+ * with a "סה"כ ל…" row closing each, and numbered `מבנה.פרק.תת-פרק.סעיף`. Two columns follow that a
+ * conventional bill has no place for: what a missing quantity is waiting on, and what a stated one
+ * rests on.
+ *
+ * A total is written only where every line under it is priced. A partial sum in the total column would
+ * be read as the total, so an incomplete group leaves the cell empty and says how far it got.
+ */
+export function billDocumentCsv(lines: BoqLine[], options: BillDocumentOptions = {}): string {
+  const locale = options.locale ?? 'he';
+  const he = locale === 'he';
+  const roomName = options.roomName ?? ((l) => l.spaceId);
+  const keep = options.only ?? (() => true);
+  const { structures } = numberBill(lines);
+  const out: (string | number)[][] = [he ? DOC_HEADER_HE : DOC_HEADER_EN];
+
+  const closing = (label: string, group: BoqLine[]) => {
+    const t = totals(group);
+    const note = t.complete ? '' : he ? `${t.pricedLines} מתוך ${t.lines} שורות מתומחרות` : `${t.pricedLines} of ${t.lines} lines priced`;
+    out.push(['', '', he ? `סה"כ ל${label}` : `Total for ${label}`, '', '', '', t.complete ? t.pricedIls : '', note, '']);
+  };
+
+  const all: BoqLine[] = [];
+  for (const structure of structures) {
+    const inRoom = structure.chapters.flatMap((c) => c.subChapters.flatMap((s) => s.lines.map((n) => n.line))).filter(keep);
+    if (!inRoom.length) continue;
+    const place = [roomName(structure.location), he ? `קומה ${structure.location.levelId}` : `level ${structure.location.levelId}`, structure.location.buildingId].filter(Boolean).join(' · ');
+    out.push([structure.code, '', place]);
+
+    for (const chapter of structure.chapters) {
+      const inChapter = chapter.subChapters.flatMap((s) => s.lines.map((n) => n.line)).filter(keep);
+      if (!inChapter.length) continue;
+      out.push([chapter.code, '', he ? chapter.he : chapter.en]);
+
+      for (const sub of chapter.subChapters) {
+        const kept = sub.lines.filter((n) => keep(n.line));
+        if (!kept.length) continue;
+        out.push([sub.code, '', he ? sub.he : sub.en]);
+        for (const { line: l, number } of kept) {
+          out.push([
+            number,
+            l.sources.map((s) => s.title ?? s.reference ?? '').filter(Boolean).join(' | '),
+            he ? l.descriptionHe : l.descriptionEn,
+            he ? UNIT_LABEL[l.unit].he : UNIT_LABEL[l.unit].en,
+            l.quantity ?? '',
+            l.unitPriceIls ?? '',
+            l.quantity != null && l.unitPriceIls != null ? l.quantity * l.unitPriceIls : '',
+            (he ? l.unknownReasonHe : l.unknownReasonEn) ?? '',
+            (he ? l.assumptionHe : l.assumptionEn) ?? '',
+          ]);
+        }
+        closing(he ? sub.he : sub.en, kept.map((n) => n.line));
+      }
+      closing(he ? chapter.he : chapter.en, inChapter);
+    }
+    closing(roomName(structure.location), inRoom);
+    out.push([]);
+    all.push(...inRoom);
+  }
+  closing(he ? 'כתב הכמויות' : 'the bill', all);
+
+  return BOM + out.map((r) => r.map(csvCell).join(',')).join('\r\n');
 }

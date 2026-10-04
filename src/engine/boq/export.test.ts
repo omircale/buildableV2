@@ -60,12 +60,10 @@ describe('the bill as a file', () => {
   it('writes an empty quantity rather than a zero, and says why it is empty', () => {
     // A zero would be priced as nothing. An empty cell with a reason is a question somebody can answer.
     const csv = billCsv(wholeRoom());
-    const runRow = csv.split('\r\n').find((r) => r.includes('צינור/כבל הזנה'))!;
-    expect(runRow).toBeTruthy();
-    const cells = runRow.split(',');
-    expect(cells).toContain(''); // the quantity cell
-    expect(runRow).toContain('תכנון');
-    expect(runRow).not.toMatch(/,0,/);
+    const row = csv.split('\r\n').find((r) => r.includes('הבאת אספקת מים חמים'))!;
+    expect(row).toBeTruthy();
+    expect(row).toContain('אין מקור');
+    expect(row).not.toMatch(/,0,/);
   });
 
   it('every subtotal says how many of its lines it could not price', () => {
@@ -104,7 +102,7 @@ describe('what the bill is waiting on', () => {
   it('distinguishes a missing quantity from a missing price', () => {
     const summary = billSummary(wholeRoom());
     expect(summary.pending.some((p) => p.en.includes('waiting on a quote'))).toBe(true);
-    expect(summary.pending.some((p) => p.en.includes('licensed'))).toBe(true);
+    expect(summary.pending.some((p) => p.en.includes('source reaches this room'))).toBe(true);
   });
 
   it('reports the same money on both axes', () => {

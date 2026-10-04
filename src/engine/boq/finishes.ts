@@ -108,6 +108,39 @@ export interface FinishLinesInput {
   spaces: Space[];
   /** Where each space sits — a hotel's building and floor, which the space model does not carry. */
   locationOf: (spaceId: string) => LineLocation;
+  /** What a room is called. A published bill opens a finish line with it: "אולם רב תכליתי - ריצוף…". */
+  placeName?: (spaceId: string) => { he: string; en: string };
+}
+
+/**
+ * A flooring maker's own published wastage guidance for timber floors.
+ *
+ * It is one manufacturer's recommendation for its own products, not a rule and not necessarily the
+ * recommendation of whoever makes the floor in a given schedule. So the allowance it produces is an
+ * assumption with its source attached, for the installer to confirm — and it exists only for timber
+ * floors, because that is all the source speaks about.
+ */
+const TIMBER_WASTE_SOURCE: Source = {
+  title: 'Havwoods — Everything you need to know about wastage in timber flooring',
+  reference: 'plank 10% under 100 m² / 7% above; herringbone and chevron 15% under 100 m² / 12% above',
+  url: 'https://www.havwoods.com/au/news/everything-you-need-to-know-about-wastage/',
+};
+
+const PATTERNED = /herringbone|chevron|אדרה|שברון|דג/i;
+
+/** The published allowance for a timber floor of this pattern and total area, or null for anything else. */
+export function timberWasteRate(spec: FinishScheduleSpec, totalAreaM2: number): { rate: number; source: Source } | null {
+  if (spec.category !== 'wood' || spec.surface !== 'floor') return null;
+  const patterned = PATTERNED.test(spec.pattern ?? '');
+  const small = totalAreaM2 < 100;
+  return { rate: patterned ? (small ? 0.15 : 0.12) : small ? 0.1 : 0.07, source: TIMBER_WASTE_SOURCE };
+}
+
+/** The chapter a finish is filed under. Painting has its own; stone goes with its trade. */
+function chapterFor(spec: FinishScheduleSpec): string | undefined {
+  if (spec.category === 'paint') return '11';
+  if (spec.category === 'stone') return undefined;
+  return '10';
 }
 
 /**
@@ -120,7 +153,7 @@ export interface FinishLinesInput {
  * a herringbone floor wastes against a straight-laid one is a fact about a laying method that has to
  * come from a floorer, not from a shape.
  */
-export function finishLines({ specs, spaces, locationOf }: FinishLinesInput): BoqLine[] {
+export function finishLines({ specs, spaces, locationOf, placeName }: FinishLinesInput): BoqLine[] {
   const spaceById = new Map(spaces.map((s) => [s.id, s]));
   const lines: BoqLine[] = [];
 
@@ -132,9 +165,18 @@ export function finishLines({ specs, spaces, locationOf }: FinishLinesInput): Bo
   }
 
   for (const spec of specs) {
+    // The published thresholds speak of the installation as a whole, so the rate is set by the
+    // finish's total measured area across its rooms, not room by room.
+    const totalArea = spec.areas.reduce((a, id) => {
+      const sp = spaceById.get(id);
+      return a + ((sp && measuredAreaM2(spec, sp)) || 0);
+    }, 0);
+    const waste = timberWasteRate(spec, totalArea);
+
     for (const spaceId of spec.areas) {
       const space = spaceById.get(spaceId);
       const location = locationOf(spaceId);
+      const place = placeName?.(spaceId);
       const shared = spec.surface === 'floor' ? (floorClaims.get(spaceId) ?? []) : [];
       const contested = shared.length > 1;
       const area = space ? measuredAreaM2(spec, space) : null;
@@ -165,9 +207,10 @@ export function finishLines({ specs, spaces, locationOf }: FinishLinesInput): Bo
       lines.push({
         id: `finish_${spec.code}_${spaceId}`,
         trade: spec.category === 'stone' ? 'worktops' : 'finishes',
-        section: `${spec.category}_${spec.surface}`,
-        descriptionHe: describe(spec, 'he'),
-        descriptionEn: describe(spec, 'en'),
+        chapter: chapterFor(spec),
+        section: spec.surface,
+        descriptionHe: (place ? `${place.he} - ` : '') + describe(spec, 'he'),
+        descriptionEn: (place ? `${place.en} - ` : '') + describe(spec, 'en'),
         unit: 'm2',
         quantity: quantity == null ? null : Math.round(quantity * 100) / 100,
         unknownReasonHe: whyHe,
@@ -180,26 +223,36 @@ export function finishLines({ specs, spaces, locationOf }: FinishLinesInput): Bo
         sources: spec.sources,
       });
 
-      // The waste allowance is a floorer's figure, and the pattern is why.
+      // Waste. For a timber floor a maker's published guidance gives a figure to start from, kept as an
+      // assumption with its source. For anything else it is the installer's figure and stays unknown.
       if (quantity != null) {
+        const wasteQty = waste ? Math.round(quantity * waste.rate * 100) / 100 : null;
+        const pct = waste ? Math.round(waste.rate * 100) : null;
         lines.push({
           id: `finish_${spec.code}_${spaceId}_waste`,
           trade: spec.category === 'stone' ? 'worktops' : 'finishes',
-          section: `${spec.category}_${spec.surface}`,
-          descriptionHe: `תוספת פחת ל-${spec.code}${spec.pattern ? ` (${spec.pattern})` : ''}.`,
-          descriptionEn: `Waste allowance for ${spec.code}${spec.pattern ? ` (${spec.pattern})` : ''}.`,
+          chapter: chapterFor(spec),
+          section: spec.surface,
+          descriptionHe: (place ? `${place.he} - ` : '') + `תוספת פחת ל-${spec.code}${spec.pattern ? ` (${spec.pattern})` : ''}.`,
+          descriptionEn: (place ? `${place.en} - ` : '') + `Waste allowance for ${spec.code}${spec.pattern ? ` (${spec.pattern})` : ''}.`,
           unit: 'm2',
-          quantity: null,
-          unknownReasonHe: spec.pattern
-            ? `אחוז הפחת תלוי בשיטת ההנחה (${spec.pattern}) ובמידות החדר, והוא נתון של הרצף — לא נגזר מהשטח.`
-            : 'אחוז הפחת הוא נתון של הרצף ואינו נגזר מהשטח.',
-          unknownReasonEn: spec.pattern
-            ? `The waste percentage depends on the laying method (${spec.pattern}) and the room's shape. It is the floorer's figure, not something derived from an area.`
-            : "The waste percentage is the floorer's figure and is not derived from an area.",
+          quantity: wasteQty,
+          unknownReasonHe: waste
+            ? undefined
+            : spec.pattern
+              ? `אחוז הפחת תלוי בשיטת ההנחה (${spec.pattern}) ובמידות החדר, והוא נתון של המתקין — לא נגזר מהשטח.`
+              : 'אחוז הפחת הוא נתון של המתקין ואינו נגזר מהשטח.',
+          unknownReasonEn: waste
+            ? undefined
+            : spec.pattern
+              ? `The waste percentage depends on the laying method (${spec.pattern}) and the room's shape. It is the installer's figure, not something derived from an area.`
+              : "The waste percentage is the installer's figure and is not derived from an area.",
+          assumptionHe: waste ? `${pct}% לפי המלצה שפרסם יצרן פרקט לשיטת הנחה זו ולשטח כולל כזה. היצרן של מפרט זה עשוי להמליץ אחרת — לאשר מול המתקין.` : undefined,
+          assumptionEn: waste ? `${pct}% per a timber-floor maker's published guidance for this laying method and total area. The maker of this specification may recommend otherwise — confirm with the installer.` : undefined,
           location,
           origin: { kind: 'surface', ref: spec.code },
           unitPriceIls: null,
-          sources: [],
+          sources: waste ? [waste.source] : [],
         });
       }
     }

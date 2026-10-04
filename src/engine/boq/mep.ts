@@ -13,10 +13,12 @@ import type { BoqLine, LineLocation, Trade } from './line';
  * diameter the drain is, what fall it runs at and how it gets there is designed, and in Israel and the
  * US alike it requires a licensed professional's sign-off.
  *
- * So this module emits point counts with real quantities, and emits the runs between them with
- * `quantity: null` and a reason that names the licensed trade. That is not a limitation to be fixed
- * later — a linear metre of pipe is the output of a route somebody has to design, and producing a
- * plausible one would be worse than producing nothing, because it would look like an answer.
+ * So this module emits points, in the unit an Israeli bill uses for them. A point there is priced per
+ * נק', and that price includes the run that feeds it — a published bill reads "נקודת מאור … וקווי הזנתם
+ * עד הלוח". There is therefore no separate line for a length of pipe or cable, and none is invented:
+ * the length is the output of a route somebody licensed has to design, and it lives inside the point's
+ * price, not beside it. What this engine can add is the straight-line distance to the nearest measured
+ * source, stated as exactly that.
  *
  * What is still missing here is the chapter and section coding of a real Israeli bill, which has to come
  * off an actual document rather than out of this engine. Sections below carry descriptive keys as a
@@ -55,13 +57,13 @@ export interface MepLinesInput {
 /**
  * The MEP chapters of a bill for one room.
  *
- * Three kinds of line come out, and only the first carries a number:
+ * Three kinds of line come out:
  *
- * 1. **Points to create** — counted, from what the equipment declares it needs against what the room
- *    already has.
- * 2. **The run to each point** — `quantity: null`. A length is a route, and a route is design.
- * 3. **A service the room does not have at all** — `quantity: null`, as a lump, because bringing a hot
+ * 1. **Points to create** — counted in נק', from what the equipment declares it needs against what
+ *    the room already has. Each includes its own feed, as a point does in an Israeli bill.
+ * 2. **A service the room does not have at all** — `quantity: null`, as a lump, because bringing a hot
  *    water supply into a room is a job whose extent nobody can state from a survey of that room alone.
+ * 3. **A clearance** — space the joinery has to leave around an item, filed with the joinery.
  */
 export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLinesInput): BoqLine[] {
   const needs = matchServices(space, servicesFor(equipmentIds), atMm);
@@ -79,33 +81,19 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
     const label = KIND_LABEL[need.kind];
     const here = supply.find((s) => s.kind === need.kind);
 
+    const distanceHe = here?.nearestSourceMm != null ? `המקור הקרוב ביותר שנמדד נמצא במרחק אווירי של ${(here.nearestSourceMm / 1000).toFixed(1)} מ'. מרחק אווירי אינו אורך צינור.` : undefined;
+    const distanceEn = here?.nearestSourceMm != null ? `The nearest measured source is ${(here.nearestSourceMm / 1000).toFixed(1)} m away in a straight line. A straight-line distance is not a length of pipe.` : undefined;
+
     lines.push({
       id: `mep_${need.kind}_points`,
       trade,
-      section: `${need.kind}_points`,
-      descriptionHe: `נקודת ${label.he} חדשה. ${LICENSED_NOTE.he}.`,
-      descriptionEn: `New ${label.en} point. ${LICENSED_NOTE.en}.`,
-      unit: 'unit',
+      section: 'points',
+      descriptionHe: `נקודת ${label.he} חדשה, כולל קו ההזנה עד המקור. ${LICENSED_NOTE.he}.`,
+      descriptionEn: `New ${label.en} point, including the run that feeds it from its source. ${LICENSED_NOTE.en}.`,
+      unit: 'point',
       quantity: need.toCreate,
-      location,
-      origin: { kind: 'service_point', ref: need.kind },
-      unitPriceIls: null,
-      sources: [],
-    });
-
-    // The run to those points. This engine will never fill this quantity in.
-    const distanceHe = here?.nearestSourceMm != null ? ` המקור הקרוב ביותר שנמדד נמצא במרחק אווירי של ${(here.nearestSourceMm / 1000).toFixed(1)} מ'.` : '';
-    const distanceEn = here?.nearestSourceMm != null ? ` The nearest measured source is ${(here.nearestSourceMm / 1000).toFixed(1)} m away in a straight line.` : '';
-    lines.push({
-      id: `mep_${need.kind}_run`,
-      trade,
-      section: `${need.kind}_runs`,
-      descriptionHe: `צינור/כבל הזנה לנקודות ${label.he}.${distanceHe}`,
-      descriptionEn: `Supply run to the ${label.en} points.${distanceEn}`,
-      unit: 'm',
-      quantity: null,
-      unknownReasonHe: `אורך התוואי הוא תוצר של תכנון ${TRADE_HE[trade]} מוסמך, ואינו נגזר ממידות החדר. המרחק האווירי אינו אורך צינור.`,
-      unknownReasonEn: `The length of the run is the output of licensed ${trade} design, not something derived from the room. A straight-line distance is not a length of pipe.`,
+      assumptionHe: distanceHe,
+      assumptionEn: distanceEn,
       location,
       origin: { kind: 'service_point', ref: need.kind },
       unitPriceIls: null,
@@ -154,7 +142,7 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
     lines.push({
       id: `mep_${s.kind}_bring_supply`,
       trade,
-      section: `${s.kind}_supply`,
+      section: 'supply',
       descriptionHe: `הבאת אספקת ${label.he} אל החלל. ${LICENSED_NOTE.he}.`,
       descriptionEn: `Bring a ${label.en} supply to the room. ${LICENSED_NOTE.en}.`,
       unit: 'lump',
@@ -170,20 +158,6 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
 
   return lines;
 }
-
-const TRADE_HE: Record<Trade, string> = {
-  demolition: 'הריסה',
-  builder_work: 'בנייה',
-  joinery: 'נגרות',
-  worktops: 'משטחים',
-  plumbing: 'אינסטלציה',
-  electrical: 'חשמל',
-  gas: 'גז',
-  hvac: 'מיזוג',
-  finishes: 'גמרים',
-  equipment: 'ציוד',
-  logistics: 'הובלה',
-};
 
 /**
  * What somebody has to go and establish before the MEP chapters can be priced.

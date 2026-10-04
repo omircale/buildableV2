@@ -28,10 +28,15 @@ export type Trade =
   | 'logistics';
 
 /** Units an Israeli bill is written in. */
-export type BoqUnit = 'unit' | 'm' | 'm2' | 'm3' | 'kg' | 'lump';
+/**
+ * `point` is its own unit, not a count of items. In an Israeli bill a plumbing or electrical point is
+ * priced per נק', and that price includes the run that feeds it — "נקודת מאור … וקווי הזנתם עד הלוח".
+ */
+export type BoqUnit = 'unit' | 'point' | 'm' | 'm2' | 'm3' | 'kg' | 'lump';
 
 export const UNIT_LABEL: Record<BoqUnit, { he: string; en: string }> = {
   unit: { he: "יח'", en: 'no.' },
+  point: { he: "נק'", en: 'pt' },
   m: { he: "מ'", en: 'm' },
   m2: { he: 'מ"ר', en: 'm²' },
   m3: { he: 'מ"ק', en: 'm³' },
@@ -82,6 +87,11 @@ export interface LineOrigin {
 export interface BoqLine {
   id: string;
   trade: Trade;
+  /**
+   * The Blue Book chapter this line is filed under, when it differs from its trade's usual one —
+   * painting is chapter 11 although it is a finish like flooring, which is chapter 10.
+   */
+  chapter?: string;
   /** Section within the chapter, for ordering and subtotals. */
   section: string;
   descriptionHe: string;

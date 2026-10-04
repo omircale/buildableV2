@@ -42,7 +42,7 @@ describe('points are counted', () => {
   it('a point line carries a real quantity', () => {
     const cold = lines().find((l) => l.id === 'mep_water_cold_points')!;
     expect(cold.quantity).toBe(1);
-    expect(cold.unit).toBe('unit');
+    expect(cold.unit).toBe('point');
     expect(cold.trade).toBe('plumbing');
   });
 
@@ -52,7 +52,7 @@ describe('points are counted', () => {
   });
 
   it('the point counts across the bill match what the room is short of', () => {
-    const points = lines().filter((l) => l.section.endsWith('_points'));
+    const points = lines().filter((l) => l.section === 'points');
     expect(points.reduce((a, l) => a + (l.quantity ?? 0), 0)).toBe(4);
   });
 });
@@ -111,45 +111,42 @@ describe('a clearance reaches the joiner without becoming a point', () => {
   });
 });
 
-describe('a length is never counted, because a length is a design', () => {
-  it('every run line has no quantity and says why', () => {
-    const runs = lines().filter((l) => l.section.endsWith('_runs'));
-    expect(runs.length).toBeGreaterThan(0);
-    for (const r of runs) {
-      expect(r.quantity, r.id).toBeNull();
-      expect(r.unit).toBe('m');
-      expect(r.unknownReasonHe, r.id).toBeTruthy();
-      expect(r.unknownReasonEn, r.id).toBeTruthy();
-    }
+describe('a point includes its own feed, the way an Israeli bill prices one', () => {
+  it('is counted in points, not in items', () => {
+    // A published bill prices "נקודת מאור … וקווי הזנתם עד הלוח" per נק'. The unit is the convention.
+    for (const l of lines().filter((x) => x.section === 'points')) expect(l.unit, l.id).toBe('point');
   });
 
-  it('the reason names the licensed trade rather than blaming missing data', () => {
-    const run = lines().find((l) => l.id === 'mep_drain_run')!;
-    expect(run.unknownReasonHe).toContain('אינסטלציה');
-    expect(run.unknownReasonEn).toContain('licensed plumbing design');
+  it('says the feed is inside the point', () => {
+    const drain = lines().find((l) => l.id === 'mep_drain_points')!;
+    expect(drain.descriptionHe).toContain('כולל קו ההזנה עד המקור');
+    expect(drain.descriptionEn).toContain('including the run that feeds it');
+  });
+
+  it('there is no line for a length of pipe or cable anywhere', () => {
+    // The length is the output of a licensed design and lives inside the point's price. A separate
+    // metre line would need a number nobody has, and would not match how the trade is tendered.
+    expect(lines().some((l) => l.unit === 'm')).toBe(false);
   });
 
   it('reports the straight-line distance and says in the same breath that it is not a pipe length', () => {
     // The distance is a genuinely useful fact about the room. Calling it a length of pipe would not be.
-    const run = lines().find((l) => l.id === 'mep_drain_run')!;
-    expect(run.descriptionHe).toMatch(/מרחק אווירי של \d+\.\d מ'/);
-    expect(run.descriptionEn).toMatch(/\d+\.\d m away in a straight line/);
-    expect(run.unknownReasonHe).toContain('המרחק האווירי אינו אורך צינור');
-    expect(run.unknownReasonEn).toContain('not a length of pipe');
+    const drain = lines().find((l) => l.id === 'mep_drain_points')!;
+    expect(drain.assumptionHe).toMatch(/מרחק אווירי של \d+\.\d מ'/);
+    expect(drain.assumptionHe).toContain('מרחק אווירי אינו אורך צינור');
+    expect(drain.assumptionEn).toContain('not a length of pipe');
   });
 
   it('omits the distance rather than guessing when the source was never located', () => {
     const unlocated = SOURCES.map((s) => ({ ...s, atMm: null }));
-    const run = mepLines({ space: poolBar(), sources: unlocated, equipmentIds: BAR_EQUIPMENT, location: AT, atMm: { x: 0, y: 0, z: 0 } }).find(
-      (l) => l.id === 'mep_drain_run',
-    )!;
-    expect(run.descriptionHe).not.toContain('מרחק');
-    expect(run.quantity).toBeNull();
+    const drain = mepLines({ space: poolBar(), sources: unlocated, equipmentIds: BAR_EQUIPMENT, location: AT, atMm: { x: 0, y: 0, z: 0 } }).find((l) => l.id === 'mep_drain_points')!;
+    expect(drain.assumptionHe).toBeUndefined();
+    expect(drain.quantity).toBeGreaterThan(0);
   });
 
   it('omits the distance when nobody has placed the equipment yet', () => {
-    const run = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: BAR_EQUIPMENT, location: AT }).find((l) => l.id === 'mep_drain_run')!;
-    expect(run.descriptionEn).not.toContain('straight line');
+    const drain = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: BAR_EQUIPMENT, location: AT }).find((l) => l.id === 'mep_drain_points')!;
+    expect(drain.assumptionEn).toBeUndefined();
   });
 });
 
@@ -189,7 +186,7 @@ describe('every MEP line flags the licensed trade', () => {
   });
 
   it('every description says out loud that it is a quantity and not a design', () => {
-    for (const l of lines().filter((x) => !x.section.endsWith('_runs') && x.section !== 'clearances')) {
+    for (const l of lines().filter((x) => x.section !== 'clearances')) {
       expect(l.descriptionHe, l.id).toContain('בעל מקצוע מוסמך');
       expect(l.descriptionEn, l.id).toContain('licensed professional');
     }
@@ -241,7 +238,7 @@ describe('the questions the bill is waiting on', () => {
   it('an unsurveyed room is all questions and still emits its point counts', () => {
     const blank = emptySpace('pool_bar', 'בר', 'Bar');
     const generated = mepLines({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT, location: AT });
-    expect(generated.filter((l) => l.section.endsWith('_points')).every((l) => l.quantity! > 0)).toBe(true);
+    expect(generated.filter((l) => l.section === 'points').every((l) => l.quantity! > 0)).toBe(true);
     expect(mepOpenQuestions({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT }).length).toBe(4);
   });
 });
