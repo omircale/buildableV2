@@ -4,6 +4,7 @@ import { runDesign } from '../engine';
 import { useT } from '../i18n';
 import { useDesign, type LocalProject } from '../state/designStore';
 import { useUi } from '../state/uiStore';
+import { BillsSection } from '../ui/account/Bills';
 import { AppHeader } from '../ui/AppHeader';
 import { buttonClass, downloadText, inputClass } from '../ui/common';
 import { artKindFor } from '../ui/furnitureCatalog';
@@ -135,13 +136,16 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
   return (
     <div className="flex min-h-full flex-col bg-paper">
       <AppHeader auth={auth} />
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 py-9">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex max-w-2xl flex-col gap-2">
-            <h1 className="text-title leading-tight font-bold tracking-tight">{t.projects.title}</h1>
-            <p className="text-lg leading-relaxed text-muted">{t.projects.subtitle}</p>
+      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-9">
+        <h1 className="text-title leading-tight font-bold tracking-tight">{t.projects.title}</h1>
+        <BillsSection auth={auth} />
+
+        <div className="flex flex-wrap items-end justify-between gap-4 border-t border-line pt-6">
+          <div className="flex max-w-2xl flex-col gap-1">
+            <h2 className="text-xl font-semibold">{t.projects.designsTitle}</h2>
+            <p className="text-body leading-relaxed text-muted">{t.projects.subtitle}</p>
           </div>
-          <a href="#/" className={buttonClass('primary', 'md')}>
+          <a href="#/" className={buttonClass('secondary', 'md')}>
             {t.projects.newProject}
           </a>
         </div>
@@ -183,7 +187,6 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
           />
         </section>
         {restoreMessage && <p className={`rounded-xl px-4 py-3 text-body ${restoreMessage.ok ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>{restoreMessage.text}</p>}
-        <p className="rounded-xl bg-sunken p-4 text-body leading-relaxed text-muted">{t.projects.cloudNote}</p>
       </main>
     </div>
   );

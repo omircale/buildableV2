@@ -3,6 +3,7 @@ import type { AuthState } from '../cloud/supabase';
 import { useT } from '../i18n';
 import { useSurvey } from '../state/spaceStore';
 import { useUi } from '../state/uiStore';
+import { CloudSave } from '../ui/account/Bills';
 import { AppHeader } from '../ui/AppHeader';
 import { Button } from '../ui/common';
 import { IconCheck } from '../ui/icons';
@@ -143,6 +144,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
             {stage === 'edit' && (
               <div className="space-y-5 p-5">
                 <RoomSwitcher bill={bill} />
+                <CloudSave auth={auth} />
                 <ProjectBackup />
                 <div className="rounded-2xl border border-line">
                   <SurveyEditor bill={bill} />

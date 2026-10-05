@@ -1,5 +1,6 @@
 import type { AuthState } from '../cloud/supabase';
 import { useT } from '../i18n';
+import { CloudSave } from '../ui/account/Bills';
 import { AppHeader } from '../ui/AppHeader';
 import { BillView } from '../ui/survey/BillView';
 import { FinishSchedule } from '../ui/survey/FinishSchedule';
@@ -22,6 +23,7 @@ export function SpacePage({ auth }: { auth: AuthState }) {
         <p className="max-w-2xl text-body leading-relaxed text-muted">{t.survey.intro}</p>
         <SampleBanner />
         <RoomSwitcher bill={bill} />
+        <CloudSave auth={auth} />
         <ProjectBackup />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">

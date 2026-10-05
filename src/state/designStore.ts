@@ -1,10 +1,11 @@
 import { create } from 'zustand';
+import { onOwnerChange, ownedKey } from './owner';
 import { DEFAULT_CONFIG, DEFAULT_OPEN_SHELF, ENGINE_VERSION, withDefaults, type ComponentRole, type DesignChange, type DesignParams, type EngineeringConfig, type ParamsPatch } from '../engine';
 
 export type ViewMode = 'design' | 'structural' | 'exploded' | 'measure' | 'warnings';
 
-const STORAGE_KEY = 'buildable.design.v2';
-const PROJECTS_KEY = 'buildable.projects.v1';
+const STORAGE_BASE = 'buildable.design.v2';
+const PROJECTS_BASE = 'buildable.projects.v1';
 const HISTORY_LIMIT = 100;
 const COALESCE_MS = 600;
 const DEFAULT_NAME = 'פרויקט חדש';
@@ -44,7 +45,7 @@ export interface ProjectsBackup {
   projects: LocalProject[];
 }
 
-interface DesignState extends Persisted {
+export interface DesignState extends Persisted {
   projects: LocalProject[];
   /** Set when the browser refused to save (private mode, full storage) — the UI warns and offers a file backup. */
   saveError: boolean;
@@ -93,7 +94,7 @@ const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? c
 
 function loadProjects(): LocalProject[] {
   try {
-    const raw = localStorage.getItem(PROJECTS_KEY);
+    const raw = localStorage.getItem(ownedKey(PROJECTS_BASE));
     if (!raw) return [];
     const list = JSON.parse(raw) as Partial<LocalProject>[];
     return list.flatMap((p) => {
@@ -107,7 +108,7 @@ function loadProjects(): LocalProject[] {
 
 function loadActive(): Persisted {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(ownedKey(STORAGE_BASE));
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Persisted>;
       const params = withDefaults(parsed.params);
@@ -130,8 +131,8 @@ function loadActive(): Persisted {
 
 function writeStorage(active: Persisted, projects: LocalProject[]): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(active));
-    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+    localStorage.setItem(ownedKey(STORAGE_BASE), JSON.stringify(active));
+    localStorage.setItem(ownedKey(PROJECTS_BASE), JSON.stringify(projects));
     return true;
   } catch {
     // Storage may be full or disabled; the design stays in memory and the UI says so.
@@ -288,4 +289,10 @@ export const useDesign = create<DesignState>((set, get) => {
       return restored.length;
     },
   };
+});
+
+// Another person signed in, or the last one signed out: their designs replace the last person's, history and all.
+onOwnerChange(() => {
+  const active = loadActive();
+  useDesign.setState({ ...active, projects: withActive(active, loadProjects()), past: [], future: [], previous: null, lastEdit: null, selectedId: null, isolated: false, saveError: false });
 });

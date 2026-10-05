@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { supabase, type AuthState } from '../cloud/supabase';
+import { useCallback, useEffect, useState } from 'react';
+import { invite, listInvited, listMembers, removeMember, supabase, uninvite, type AuthState, type MemberRow } from '../cloud/supabase';
 import { CONFIG_SOURCES, type EngineeringConfig } from '../engine/config';
 import { HAYOZRIM_EXCLUDED, MATERIAL_LIBRARY, SUPPLIERS, getMaterial, propertiesFor } from '../engine';
 import { useDesign } from '../state/designStore';
 import { Button, Field, Section, inputClass } from '../ui/common';
 
-type Tab = 'usage' | 'materials' | 'config';
+type Tab = 'members' | 'usage' | 'materials' | 'config';
 
 interface StorageRow {
   user_id: string;
@@ -17,7 +17,7 @@ interface StorageRow {
 const KIND_LABEL: Record<string, string> = { mean: 'ממוצע', characteristic: 'אופייני', standard_minimum: 'מינימום תקן', manufacturer: 'יצרן', user_provided: 'משתמש', assumption: 'הנחה' };
 
 export function AdminPage({ auth }: { auth: AuthState }) {
-  const [tab, setTab] = useState<Tab>('usage');
+  const [tab, setTab] = useState<Tab>('members');
   if (auth.loading) return <p className="p-8 text-sm">טוען…</p>;
   if (!supabase || !auth.session) {
     return (
@@ -41,6 +41,7 @@ export function AdminPage({ auth }: { auth: AuthState }) {
         <nav className="flex gap-1">
           {(
             [
+              ['members', 'חשבונות'],
               ['usage', 'שימוש ועלויות'],
               ['materials', 'ספריית חומרים'],
               ['config', 'ספים הנדסיים'],
@@ -53,10 +54,107 @@ export function AdminPage({ auth }: { auth: AuthState }) {
         </nav>
       </header>
       <main className="mx-auto max-w-6xl p-5">
+        {tab === 'members' && <MembersTab selfId={auth.session.user.id} />}
         {tab === 'usage' && <UsageTab />}
         {tab === 'materials' && <MaterialsTab />}
         {tab === 'config' && <ConfigTab userId={auth.session.user.id} />}
       </main>
+    </div>
+  );
+}
+
+/**
+ * Who may work here. Signing up grants nothing by itself: an address becomes a working account once it
+ * is on this list and its owner has confirmed the mailbox. The admin sees who the accounts are — not
+ * what is in them; a customer's bills are closed to the admin by the database, not by this screen.
+ */
+function MembersTab({ selfId }: { selfId: string }) {
+  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [invited, setInvited] = useState<{ email: string; created_at: string }[]>([]);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
+    Promise.all([listMembers(), listInvited()]).then(
+      ([m, i]) => {
+        setMembers(m);
+        setInvited(i);
+        setError(null);
+      },
+      (e: { message?: string }) => setError(e.message ?? 'הטעינה נכשלה'),
+    );
+  }, []);
+  useEffect(refresh, [refresh]);
+
+  const act = (work: Promise<void>) => void work.then(refresh, (e: { message?: string; code?: string }) => setError(e.code === '23505' ? 'הכתובת כבר הוזמנה.' : (e.message ?? 'הפעולה נכשלה')));
+  const joined = new Set(members.map((m) => m.email.toLowerCase()));
+  const waiting = invited.filter((i) => !joined.has(i.email));
+
+  return (
+    <div className="space-y-6">
+      <section className="space-y-2">
+        <h2 className="font-semibold">הזמנת חשבון</h2>
+        <p className="max-w-prose text-sm text-muted">
+          מזינים כתובת אימייל. מי שנרשם עם הכתובת הזו ומאמת אותה מקבל חשבון פעיל — ורואה רק את הפרויקטים של עצמו. אם כבר נרשם ואימת, החשבון נפתח מיד.
+        </p>
+        <form
+          className="flex flex-wrap gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            act(invite(email).then(() => setEmail('')));
+          }}
+        >
+          <input className={`${inputClass} max-w-sm`} type="email" required dir="ltr" placeholder="name@company.co.il" aria-label="אימייל להזמנה" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Button variant="primary" type="submit">
+            הזמנה
+          </Button>
+        </form>
+        {error && <p className="text-sm text-bad">{error}</p>}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">חשבונות פעילים · {members.length}</h2>
+        <ul className="divide-y divide-line rounded-xl bg-panel ring-1 ring-line">
+          {members.map((m) => (
+            <li key={m.user_id} className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+              <span dir="ltr" className="min-w-0 flex-1 truncate">
+                {m.email}
+              </span>
+              <span className="rounded-full bg-sunken px-2 py-0.5 text-xs">{m.role === 'admin' ? 'מנהל' : 'חשבון'}</span>
+              {m.user_id !== selfId && m.role !== 'admin' && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    // Closing an account also takes its invitation back, or the next sign-in would reopen it.
+                    if (confirm(`לסגור את הגישה של ${m.email}? הפרויקטים שלו נשארים שמורים, אבל הוא לא יוכל לפתוח אותם.`)) act(removeMember(m.user_id).then(() => uninvite(m.email.toLowerCase())));
+                  }}
+                >
+                  סגירת גישה
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {waiting.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-semibold">הוזמנו ועוד לא נרשמו · {waiting.length}</h2>
+          <ul className="divide-y divide-line rounded-xl bg-panel ring-1 ring-line">
+            {waiting.map((i) => (
+              <li key={i.email} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <span dir="ltr" className="min-w-0 flex-1 truncate">
+                  {i.email}
+                </span>
+                <Button size="sm" variant="ghost" onClick={() => act(uninvite(i.email))}>
+                  ביטול הזמנה
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

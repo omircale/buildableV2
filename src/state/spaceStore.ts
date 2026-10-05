@@ -1,3 +1,4 @@
+import { onOwnerChange, ownedKey } from './owner';
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
 import type { ServiceKind } from '../engine';
@@ -12,7 +13,8 @@ import type { DesignParams, FinishScheduleSpec, Sector, ServiceSource } from '..
  * never stored, so there is no second copy of the truth to drift.
  */
 
-const STORAGE_KEY = 'buildable.survey.v1';
+const STORAGE_BASE = 'buildable.survey.v1';
+const storageKey = () => ownedKey(STORAGE_BASE);
 
 export interface Survey {
   /** The room as the engine models it. */
@@ -196,7 +198,7 @@ export function projectRooms(s: Survey & ProjectExtras): Survey[] {
 
 function load(): Survey & ProjectExtras {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey());
     return (raw && reviveProject(JSON.parse(raw))) || blankProject();
   } catch {
     // Corrupt or blocked storage falls back to an empty survey rather than losing the screen.
@@ -288,7 +290,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     const { others, order, finishes, describeText } = get();
     const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey(), JSON.stringify(next));
     } catch {
       // Storage may be full or disabled; the survey stays in memory for this session.
     }
@@ -552,10 +554,13 @@ export const useSurvey = create<SurveyState>((set, get) => {
       remember('project_reset');
       set(blankProject());
       try {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(storageKey());
       } catch {
         // Nothing to do; the in-memory reset already happened.
       }
     },
   };
 });
+
+// Another person signed in, or the last one signed out: the screen shows their work, not the last person's.
+onOwnerChange(() => useSurvey.setState({ ...load(), undoable: null }));

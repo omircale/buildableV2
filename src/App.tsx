@@ -12,6 +12,7 @@ import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { HomePage } from './pages/Home';
 import { NotFoundPage } from './pages/NotFound';
 import { LoginPage } from './pages/Login';
+import { setOwner } from './state/owner';
 import { ProjectsPage } from './pages/Projects';
 import { SpacePage } from './pages/Space';
 import { DecorsPage } from './pages/Decors';
@@ -160,6 +161,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, [route]);
 
+  // Local work is kept under whoever is signed in, so the stores are told the moment that changes.
+  const userId = auth.session?.user.id ?? null;
+  useEffect(() => {
+    if (!auth.loading) setOwner(userId);
+  }, [userId, auth.loading]);
+
   useEffect(() => {
     if (!supabase || !auth.role) return;
     supabase
@@ -173,7 +180,9 @@ export default function App() {
   }, [auth.role, setConfig]);
 
   let page;
-  if (route.startsWith('#/admin')) page = <AdminPage auth={auth} />;
+  // Someone who came from a reset e-mail chooses a new password before anything else.
+  if (auth.recovery) page = <LoginPage auth={auth} />;
+  else if (route.startsWith('#/admin')) page = <AdminPage auth={auth} />;
   else if (route.startsWith('#/login')) page = <LoginPage auth={auth} />;
   else if (route.startsWith('#/projects')) page = <ProjectsPage auth={auth} />;
   else if (route.startsWith('#/decors')) page = <DecorsPage auth={auth} />;
