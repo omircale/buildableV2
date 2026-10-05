@@ -58,7 +58,7 @@ function Stepper({ step, result }: { step: Step; result: DesignResult }) {
                 >
                   {done ? <IconCheck size={14} strokeWidth={2.6} /> : i + 1}
                 </span>
-                <span className="text-[15px]">{t.flow.steps[s]}</span>
+                <span className="text-[0.9375rem]">{t.flow.steps[s]}</span>
               </a>
             </li>
           );
@@ -89,7 +89,7 @@ function LayersMenu({ roles }: { roles: ComponentRole[] }) {
         <div className="absolute bottom-12 start-0 z-20 w-48 rounded-xl bg-panel p-2 shadow-lg ring-1 ring-line">
           <div className="px-2 pb-1 text-xs font-semibold text-muted">{t.viewport.layers}</div>
           {roles.map((r) => (
-            <label key={r} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-[15px] hover:bg-sunken">
+            <label key={r} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-[0.9375rem] hover:bg-sunken">
               <input type="checkbox" className="h-4 w-4" checked={!hidden.includes(r)} onChange={() => toggleRole(r)} />
               {t.viewport.roles[r]}
             </label>
@@ -130,7 +130,7 @@ function Viewport({ result }: { result: DesignResult }) {
         </Button>
       </div>
       {viewMode === 'structural' && (
-        <div className="absolute end-4 bottom-20 flex flex-col gap-1.5 rounded-xl bg-panel/95 px-3 py-2.5 text-[13px] shadow-sm ring-1 ring-line">
+        <div className="absolute end-4 bottom-20 flex flex-col gap-1.5 rounded-xl bg-panel/95 px-3 py-2.5 text-[0.8125rem] shadow-sm ring-1 ring-line">
           {(['GREEN', 'YELLOW', 'RED', 'GREY'] as Status[]).map((s) => (
             <span key={s} className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm" style={{ background: STATUS_COLOR[s] }} />
@@ -149,7 +149,7 @@ function Viewport({ result }: { result: DesignResult }) {
                 role="radio"
                 aria-checked={viewMode === m}
                 onClick={() => setViewMode(m)}
-                className={`h-10 rounded-lg px-3.5 text-[15px] ${viewMode === m ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-sunken'}`}
+                className={`h-10 rounded-lg px-3.5 text-[0.9375rem] ${viewMode === m ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-sunken'}`}
               >
                 {t.viewport.modes[m]}
               </button>

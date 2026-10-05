@@ -74,9 +74,9 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
         <h1 className="text-2xl font-bold">{t.booklet.title}</h1>
         <p className="mb-2 text-sm text-gray-600">{projectName}</p>
         <AssemblyDiagram model={model} steps={assembly} stepIndex={null} className="mx-auto h-[95mm] w-full" />
-        {bom.totalMassKg != null && <p className="mt-2 text-[11px] font-semibold">{t.booklet.weight(bom.totalMassKg)}</p>}
+        {bom.totalMassKg != null && <p className="mt-2 text-[0.6875rem] font-semibold">{t.booklet.weight(bom.totalMassKg)}</p>}
         <h2 className="mt-1 mb-1 text-base font-bold">{t.booklet.parts}</h2>
-        <table className="w-full border-collapse text-[10px]">
+        <table className="w-full border-collapse text-[0.625rem]">
           <thead>
             <tr>
               {t.booklet.partCols.map((h) => (
@@ -100,7 +100,7 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
           </tbody>
         </table>
         <h2 className="mt-3 mb-1 text-base font-bold">{t.booklet.hardware}</h2>
-        <table className="w-full border-collapse text-[10px]">
+        <table className="w-full border-collapse text-[0.625rem]">
           <tbody>
             {bom.hardware.map((h) => (
               <tr key={h.id}>
@@ -111,7 +111,7 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
             ))}
           </tbody>
         </table>
-        <p className="mt-auto pt-2 text-[9px] text-gray-500">{t.booklet.disclaimer}</p>
+        <p className="mt-auto pt-2 text-[0.5625rem] text-gray-500">{t.booklet.disclaimer}</p>
       </section>
       {pages.map((stepsOnPage, pi) => (
         <section key={pi} data-pdf-page className={page}>
@@ -120,11 +120,11 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
               <div key={s.n} className="flex flex-col rounded-lg border border-gray-300 p-[4mm]">
                 <div className="flex items-start gap-2">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-base font-bold text-white">{s.n}</span>
-                  <span className="text-[12px] leading-snug font-semibold">{s.title}</span>
+                  <span className="text-[0.75rem] leading-snug font-semibold">{s.title}</span>
                 </div>
                 <AssemblyDiagram model={model} steps={assembly} stepIndex={s.n - 1} className="my-2 min-h-0 w-full flex-1" />
                 {s.hardware.length > 0 && (
-                  <p className="text-[10px]">
+                  <p className="text-[0.625rem]">
                     {s.hardware
                       .map((id) => hwName(id))
                       .filter(Boolean)
@@ -132,11 +132,11 @@ export function AssemblyBooklet({ result, projectName }: { result: DesignResult;
                       .join(' · ')}
                   </p>
                 )}
-                {s.warning && <p className="mt-1 text-[10px] font-semibold">⚠ {s.warning}</p>}
+                {s.warning && <p className="mt-1 text-[0.625rem] font-semibold">⚠ {s.warning}</p>}
               </div>
             ))}
           </div>
-          <p className="pt-2 text-center text-[9px] text-gray-500">
+          <p className="pt-2 text-center text-[0.5625rem] text-gray-500">
             {t.booklet.page(pi + 2, pages.length + 1)}
           </p>
         </section>

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
 import type { ServiceKind } from '../engine';
-import type { FinishScheduleSpec, ServiceSource } from '../engine';
+import type { DesignParams, FinishScheduleSpec, ServiceSource } from '../engine';
 
 /**
  * A room a maintenance manager is surveying, and what is going into it.
@@ -48,11 +48,49 @@ export interface Survey {
    * Only the answers that change nothing in the model live here — "I don't know, ask on site" — so the
    * question is not asked again. Answers that do change the model are written to the model itself.
    */
-  answers: Record<string, string>;
-  /** Whether the piece in the design editor is part of this room's bill. Off until someone says so. */
-  includeDesign: boolean;
+  answers: Record<string, AnswerCode>;
+  /**
+   * The piece of furniture put in this room, as it was when it was put there.
+   *
+   * It is a copy, not a pointer to whatever the design editor has open. A bill that followed the editor
+   * would change every time someone opened a different design — the bar counter in a tendered room
+   * quietly becoming a child's bed. Bringing a later change of the design into the room is a deliberate
+   * act: put the piece in again.
+   */
+  piece: IncludedPiece | null;
   updatedAt: number | null;
 }
+
+export interface IncludedPiece {
+  name: string;
+  params: DesignParams;
+}
+
+/**
+ * How a refinement question was closed without changing the model.
+ *
+ * Stored as a code, never as the words on the button. The words depend on the language the screen was
+ * in, and an answer saved as Hebrew text was unrecognisable after a switch to English — the screen then
+ * reported that every question had been answered when three had only been deferred.
+ */
+export type AnswerCode = 'ask_on_site' | 'none' | 'not_stated' | 'all_built' | 'open_marked';
+const ANSWER_CODES: readonly AnswerCode[] = ['ask_on_site', 'none', 'not_stated', 'all_built', 'open_marked'];
+
+/** Answers saved before codes existed were button text, in either language. They are read back once. */
+function answerCode(questionId: string, saved: unknown): AnswerCode {
+  if (ANSWER_CODES.includes(saved as AnswerCode)) return saved as AnswerCode;
+  const text = String(saved);
+  if (/כל הקירות בנויים|Every wall is built/.test(text)) return 'all_built';
+  if (/^(פתוח|Open)/.test(text)) return 'open_marked';
+  if (/אין בחלל|None in the space/.test(text)) return 'none';
+  return questionId.startsWith('capacity:') ? 'not_stated' : 'ask_on_site';
+}
+
+/** The interchange format numbers a room with two digits, so a bill cannot hold more than this. */
+export const MAX_ROOMS = 99;
+
+/** What the last undoable action was, so the screen can say what "undo" will bring back. */
+export type UndoKind = 'room_removed' | 'finish_removed' | 'source_removed' | 'point_removed' | 'rooms_duplicated' | 'project_reset' | 'backup_restored' | 'finishes_imported';
 
 /**
  * A project is several rooms and one finish schedule.
@@ -67,6 +105,8 @@ export interface ProjectExtras {
   order: string[];
   /** The project's finish schedule. A finish names the rooms it is used in by their space ids. */
   finishes: FinishScheduleSpec[];
+  /** What was last written in the describe step, kept so leaving the step does not erase it. */
+  describeText: string;
 }
 
 /** The example room: a pool bar, open to the deck along its long side. Dimensions are invented. */
@@ -83,20 +123,60 @@ function blank(): Survey {
     equipmentIds: [],
     sources: [],
     answers: {},
-    includeDesign: false,
+    piece: null,
     updatedAt: null,
   };
 }
 
 function blankProject(): Survey & ProjectExtras {
   const room = blank();
-  return { ...room, others: [], order: [room.space.id], finishes: [] };
+  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '' };
+}
+
+/** A saved room read back into today's shape, whatever version wrote it. */
+function reviveRoom(saved: Partial<Survey>): Survey {
+  const base = blank();
+  const answers: Record<string, AnswerCode> = {};
+  for (const [id, value] of Object.entries(saved.answers ?? {})) answers[id] = answerCode(id, value);
+  return {
+    space: { ...base.space, ...saved.space },
+    widthMm: saved.widthMm ?? null,
+    depthMm: saved.depthMm ?? null,
+    sample: saved.sample ?? false,
+    buildingId: saved.buildingId ?? base.buildingId,
+    levelId: saved.levelId ?? base.levelId,
+    equipmentIds: saved.equipmentIds ?? [],
+    sources: saved.sources ?? [],
+    answers,
+    // An older save only recorded *that* a piece was included, not which. It cannot be reconstructed,
+    // so the room comes back without one rather than with whatever the editor happens to hold.
+    piece: saved.piece ?? null,
+    updatedAt: saved.updatedAt ?? null,
+  };
+}
+
+/** A whole saved project read back, or null when the text is not one. */
+function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+  const saved = parsed as Partial<Survey & ProjectExtras>;
+  if (!saved.space || typeof saved.space !== 'object' || !Array.isArray(saved.space.footprintMm)) return null;
+  const open = reviveRoom(saved);
+  const others = Array.isArray(saved.others) ? saved.others.filter((r) => r?.space?.id).map(reviveRoom) : [];
+  const ids = [open.space.id, ...others.map((r) => r.space.id)];
+  const order = Array.isArray(saved.order) ? saved.order.filter((id) => ids.includes(id)) : [];
+  return {
+    ...open,
+    others,
+    order: [...order, ...ids.filter((id) => !order.includes(id))],
+    finishes: Array.isArray(saved.finishes) ? saved.finishes : [],
+    describeText: typeof saved.describeText === 'string' ? saved.describeText : '',
+  };
 }
 
 /** The per-room fields of the store, taken as a snapshot that can be parked in `others`. */
 function snapshot(s: Survey): Survey {
-  const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt } = s;
-  return { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, includeDesign, updatedAt };
+  const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, piece, updatedAt } = s;
+  return { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, piece, updatedAt };
 }
 
 /** Every room of the project, the open one included, in bill order. */
@@ -110,27 +190,7 @@ export function projectRooms(s: Survey & ProjectExtras): Survey[] {
 function load(): Survey & ProjectExtras {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return blankProject();
-    const parsed = JSON.parse(raw) as Partial<Survey>;
-    const base = blank();
-    if (!parsed.space) return blankProject();
-    const extras = parsed as Partial<ProjectExtras>;
-    return {
-      others: extras.others ?? [],
-      order: extras.order ?? [parsed.space.id ?? base.space.id],
-      finishes: extras.finishes ?? [],
-      space: { ...base.space, ...parsed.space },
-      widthMm: parsed.widthMm ?? null,
-      depthMm: parsed.depthMm ?? null,
-      sample: parsed.sample ?? false,
-      buildingId: parsed.buildingId ?? base.buildingId,
-      levelId: parsed.levelId ?? base.levelId,
-      equipmentIds: parsed.equipmentIds ?? [],
-      sources: parsed.sources ?? [],
-      answers: parsed.answers ?? {},
-      includeDesign: parsed.includeDesign ?? false,
-      updatedAt: parsed.updatedAt ?? null,
-    };
+    return (raw && reviveProject(JSON.parse(raw))) || blankProject();
   } catch {
     // Corrupt or blocked storage falls back to an empty survey rather than losing the screen.
     return blankProject();
@@ -178,9 +238,19 @@ export interface SurveyState extends Survey, ProjectExtras {
   addSource: (kind: ServiceKind, patch?: Partial<ServiceSource>) => string;
   updateSource: (id: string, patch: Partial<ServiceSource>) => void;
   removeSource: (id: string) => void;
-  answer: (questionId: string, label: string) => void;
+  answer: (questionId: string, code: AnswerCode) => void;
   clearAnswer: (questionId: string) => void;
-  setIncludeDesign: (include: boolean) => void;
+  /** Puts a piece in the open room as it is now, or takes it out with null. */
+  setPiece: (piece: IncludedPiece | null) => void;
+  setDescribeText: (text: string) => void;
+  /** The last action that can be taken back, or null. Not saved: it is gone after a refresh. */
+  undoable: { kind: UndoKind; snapshot: string } | null;
+  undo: () => void;
+  dismissUndo: () => void;
+  /** The whole project as a file's contents. */
+  exportProject: () => string;
+  /** Replaces the project with one read from a backup file. False when the text is not a project. */
+  restoreProject: (text: string) => boolean;
   /** Adds an empty room and opens it. */
   addRoom: () => void;
   /** Copies the open room `copies` times — forty identical guest rooms are one room, measured once. */
@@ -207,13 +277,19 @@ export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
     const updatedAt = Date.now();
     set({ updatedAt });
-    const { others, order, finishes } = get();
-    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes };
+    const { others, order, finishes, describeText } = get();
+    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
       // Storage may be full or disabled; the survey stays in memory for this session.
     }
+  };
+
+  /** The project as it stands, taken before an action that destroys something, so it can be put back. */
+  const remember = (kind: UndoKind) => {
+    const { others, order, finishes, describeText } = get();
+    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText }) } });
   };
 
   const patchSpace = (patch: Partial<Space>) => {
@@ -223,6 +299,42 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
   return {
     ...load(),
+    undoable: null,
+
+    undo: () => {
+      const last = get().undoable;
+      const back = last && reviveProject(JSON.parse(last.snapshot));
+      if (!back) return;
+      set({ ...back, undoable: null });
+      persist();
+    },
+
+    dismissUndo: () => set({ undoable: null }),
+
+    exportProject: () => {
+      const { others, order, finishes, describeText } = get();
+      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText }, null, 2);
+    },
+
+    restoreProject: (text) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return false;
+      }
+      const project = reviveProject(parsed);
+      if (!project) return false;
+      remember('backup_restored');
+      set(project);
+      persist();
+      return true;
+    },
+
+    setDescribeText: (describeText) => {
+      set({ describeText });
+      persist();
+    },
 
     // The person named the room; that is its name whichever language the screen is in.
     setName: (name) => patchSpace({ nameHe: name, nameEn: name }),
@@ -271,7 +383,10 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
     updateConnection: (id, patch) => patchSpace({ connections: get().space.connections.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
 
-    removeConnection: (id) => patchSpace({ connections: get().space.connections.filter((c) => c.id !== id) }),
+    removeConnection: (id) => {
+      remember('point_removed');
+      patchSpace({ connections: get().space.connections.filter((c) => c.id !== id) });
+    },
 
     addSource: (kind, patch) => {
       const source: ServiceSource = { id: nextId('src'), kind, nameHe: '', nameEn: '', atMm: null, spareWays: null, ...patch };
@@ -286,6 +401,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     removeSource: (id) => {
+      remember('source_removed');
       // A point fed from a source that is being deleted loses its feed rather than keeping a dead id.
       set({
         sources: get().sources.filter((s) => s.id !== id),
@@ -294,8 +410,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
-    answer: (questionId, label) => {
-      set({ answers: { ...get().answers, [questionId]: label } });
+    answer: (questionId, code) => {
+      set({ answers: { ...get().answers, [questionId]: code } });
       persist();
     },
 
@@ -305,14 +421,16 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
-    setIncludeDesign: (includeDesign) => {
-      set({ includeDesign });
+    setPiece: (piece) => {
+      // A deep copy, so nothing the editor does later can reach into the room.
+      set({ piece: piece ? { name: piece.name, params: JSON.parse(JSON.stringify(piece.params)) as DesignParams } : null });
       persist();
     },
 
     addRoom: () => {
       const st = get();
       const ids = projectRooms(st).map((r) => r.space.id);
+      if (ids.length >= MAX_ROOMS) return;
       const n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0)) + 1;
       const room = blank();
       room.space = { ...room.space, id: `room_${n}`, nameHe: `חלל ${n}`, nameEn: `Space ${n}` };
@@ -325,8 +443,11 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
     duplicateRoom: (copies) => {
       const st = get();
-      const count = Math.max(1, Math.min(98, Math.round(copies)));
       const ids = projectRooms(st).map((r) => r.space.id);
+      // Never past what a bill can number: the copies are cut to the room that is left.
+      const count = Math.min(Math.max(1, Math.round(copies)), MAX_ROOMS - ids.length);
+      if (count < 1) return;
+      remember('rooms_duplicated');
       let n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0));
       const source = snapshot(st);
       const made: Survey[] = [];
@@ -350,6 +471,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     removeRoom: (spaceId) => {
+      remember('room_removed');
       const st = get();
       const finishes = st.finishes.map((f) => ({ ...f, areas: f.areas.filter((id) => id !== spaceId) }));
       if (st.space.id !== spaceId) {
@@ -371,13 +493,19 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     importFinishes: (specs) => {
+      remember('finishes_imported');
+      const existing = new Map(get().finishes.map((f) => [f.code, f]));
+      // A re-imported finish that names no rooms keeps the rooms it already had: a schedule file often
+      // carries no room column at all, and importing it must not empty every finish's rooms.
+      const merged = specs.map((spec) => (spec.areas.length === 0 && existing.get(spec.code)?.areas.length ? { ...spec, areas: existing.get(spec.code)!.areas } : spec));
       const codes = new Set(specs.map((x) => x.code));
       const kept = get().finishes.filter((f) => !codes.has(f.code));
-      set({ finishes: [...kept, ...specs].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })) });
+      set({ finishes: [...kept, ...merged].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })) });
       persist();
     },
 
     removeFinish: (code) => {
+      remember('finish_removed');
       set({ finishes: get().finishes.filter((f) => f.code !== code) });
       persist();
     },
@@ -406,6 +534,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     reset: () => {
+      remember('project_reset');
       set(blankProject());
       try {
         localStorage.removeItem(STORAGE_KEY);

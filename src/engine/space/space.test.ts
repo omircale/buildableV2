@@ -338,3 +338,43 @@ describe('a measurement error is reported, not absorbed', () => {
     }
   });
 });
+
+describe('a dimension typed in the wrong unit is questioned, not accepted in silence', () => {
+  const sized = (w: number, d: number, h: number | null = 2700): Space => ({
+    ...emptySpace('r', 'x', 'x'),
+    footprintMm: [
+      { x: 0, y: 0 },
+      { x: w, y: 0 },
+      { x: w, y: d },
+      { x: 0, y: d },
+    ],
+    heightMm: h,
+  });
+
+  it('metres typed into a centimetre field: a room seven centimetres wide', () => {
+    // Found by audit: 7.2 × 3.6 typed as centimetres gave "floor area 0.00 m²" and no explanation.
+    const problems = spaceProblems(sized(72, 36));
+    expect(problems.map((p) => p.code)).toEqual(['dimension_unlikely']);
+    expect(problems[0].severity).toBe('yellow');
+    expect(problems[0].he).toContain('במטרים במקום בסנטימטרים');
+  });
+
+  it('a room ten kilometres long', () => {
+    expect(spaceProblems(sized(9_999_990, 5000))[0].en).toContain('millimetres instead of centimetres');
+  });
+
+  it('a ceiling of 2.7 centimetres, or of 27 metres', () => {
+    expect(spaceProblems(sized(5000, 4000, 27)).map((p) => p.code)).toEqual(['height_unlikely']);
+    expect(spaceProblems(sized(5000, 4000, 27_000)).map((p) => p.code)).toEqual(['height_unlikely']);
+  });
+
+  it('an ordinary room, a long corridor and a tall lobby raise nothing', () => {
+    expect(spaceProblems(sized(7200, 3600))).toEqual([]);
+    expect(spaceProblems(sized(60_000, 1800, 2400))).toEqual([]);
+    expect(spaceProblems(sized(20_000, 15_000, 9000))).toEqual([]);
+  });
+
+  it('is a question about the unit and never blocks: the room keeps its area', () => {
+    expect(floorAreaM2(sized(72, 36))).toBeCloseTo(0.002592, 9);
+  });
+});

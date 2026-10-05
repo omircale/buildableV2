@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { DesignResult } from '../../engine';
+import { IconRedo, IconUndo } from '../icons';
 import { buildExportScene, disposeExportScene } from './exportScene';
 import { distanceM, fitsWithin, formatDistance, turned } from './placement';
 
@@ -218,26 +219,26 @@ export function ArPlacement({ design, designName, he, labels }: { design: Design
           ? labels.measureSecond
           : labels.measureFirst;
 
-  const chip = 'rounded-full px-4 py-2.5 text-[14px] font-medium shadow';
+  const chip = 'rounded-full px-4 py-2.5 text-[0.875rem] font-medium shadow';
 
   return (
     <div className="space-y-2">
       <button type="button" onClick={() => void start()} className="inline-flex h-12 items-center justify-center rounded-lg bg-accent px-6 text-base font-semibold text-on-accent">
         {labels.start}
       </button>
-      <p className="text-[12.5px] leading-snug text-muted">{labels.measureNote}</p>
-      {error && <p className="text-[13px] text-bad">{error}</p>}
+      <p className="text-[0.7812rem] leading-snug text-muted">{labels.measureNote}</p>
+      {error && <p className="text-[0.8125rem] text-bad">{error}</p>}
 
       {/* Shown full-screen over the camera while the session runs. */}
       <div ref={overlayRef} dir={he ? 'rtl' : 'ltr'} aria-hidden={!active} className="pointer-events-none fixed inset-0 z-50 flex-col justify-between p-4" style={{ display: 'none' }}>
         <div className="space-y-2">
-          <p className="mx-auto w-fit max-w-full rounded-2xl bg-black/65 px-4 py-2 text-center text-[15px] text-white">{status}</p>
+          <p className="mx-auto w-fit max-w-full rounded-2xl bg-black/65 px-4 py-2 text-center text-[0.9375rem] text-white">{status}</p>
           {mode === 'measure' && distance != null && (
-            <p className={`mx-auto w-fit max-w-full rounded-2xl px-4 py-2 text-center text-[14px] text-white ${fitsWithin(widthM, distance) ? 'bg-emerald-700/85' : 'bg-red-700/85'}`}>
+            <p className={`mx-auto w-fit max-w-full rounded-2xl px-4 py-2 text-center text-[0.875rem] text-white ${fitsWithin(widthM, distance) ? 'bg-emerald-700/85' : 'bg-red-700/85'}`}>
               {fitsWithin(widthM, distance) ? labels.fits(designName, formatDistance(widthM, he)) : labels.tooWide(designName, formatDistance(widthM, he))}
             </p>
           )}
-          {mode === 'measure' && <p className="mx-auto w-fit max-w-full rounded-2xl bg-black/50 px-3 py-1.5 text-center text-[12px] text-white">{labels.measureNote}</p>}
+          {mode === 'measure' && <p className="mx-auto w-fit max-w-full rounded-2xl bg-black/50 px-3 py-1.5 text-center text-[0.75rem] text-white">{labels.measureNote}</p>}
         </div>
 
         <div ref={controlsRef} className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 pb-2">
@@ -250,10 +251,10 @@ export function ArPlacement({ design, designName, he, labels }: { design: Design
           {placed && mode === 'place' && (
             <>
               <button type="button" aria-label={labels.turnLeft} onClick={() => turn(1)} className={`${chip} bg-black/65 text-white`}>
-                ⟲
+                <IconUndo size={20} />
               </button>
               <button type="button" aria-label={labels.turnRight} onClick={() => turn(-1)} className={`${chip} bg-black/65 text-white`}>
-                ⟳
+                <IconRedo size={20} />
               </button>
             </>
           )}

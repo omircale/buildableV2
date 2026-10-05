@@ -28,7 +28,7 @@ export function SearchButton({ compact }: { compact?: boolean }) {
       type="button"
       onClick={() => setCommandOpen(true)}
       aria-label={t.header.search}
-      className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-lg text-[15px] text-muted ring-1 ring-line hover:bg-sunken ${compact ? 'w-10 justify-center' : 'w-10 justify-center md:w-64 md:justify-start md:px-3'}`}
+      className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-lg text-[0.9375rem] text-muted ring-1 ring-line hover:bg-sunken ${compact ? 'w-10 justify-center' : 'w-10 justify-center md:w-64 md:justify-start md:px-3'}`}
     >
       <IconSearch size={18} />
       {!compact && (
@@ -50,7 +50,7 @@ export function AppHeader({ auth, start, center, end }: { auth: AuthState; start
   return (
     <header className="no-print flex h-16 shrink-0 items-center gap-2 border-b border-line bg-panel px-3 sm:gap-3 sm:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <a href="#/" className="flex items-center gap-2 rounded-lg text-accent" aria-label={t.header.home} title={t.header.home}>
+        <a href="#/" className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg text-accent" aria-label={t.header.home} title={t.header.home}>
           <IconLogo size={26} />
           {!start && <span className="text-xl font-bold tracking-tight text-ink">Buildable</span>}
         </a>
@@ -60,20 +60,20 @@ export function AppHeader({ auth, start, center, end }: { auth: AuthState; start
       <div className="flex shrink-0 items-center justify-end gap-1 sm:min-w-0 sm:flex-1">
         {end}
         {/* In the editor the header also carries the stepper, so the link only shows where there is room. */}
-        <a href="#/projects" className={`${center ? 'hidden 2xl:inline-flex' : 'hidden sm:inline-flex'} h-10 items-center rounded-lg px-3 text-[15px] whitespace-nowrap hover:bg-sunken`}>
+        <a href="#/projects" className={`${center ? 'hidden 2xl:inline-flex' : 'hidden sm:inline-flex'} h-10 items-center rounded-lg px-3 text-[0.9375rem] whitespace-nowrap hover:bg-sunken`}>
           {t.header.projects}
         </a>
         <SearchButton compact={Boolean(center)} />
-        <button type="button" onClick={() => setLocale(locale === 'he' ? 'en' : 'he')} aria-label={t.header.switchLanguageLabel} title={t.header.switchLanguageLabel} className="inline-flex h-10 items-center rounded-lg px-3 text-[15px] hover:bg-sunken">
+        <button type="button" onClick={() => setLocale(locale === 'he' ? 'en' : 'he')} aria-label={t.header.switchLanguageLabel} title={t.header.switchLanguageLabel} className="inline-flex h-10 items-center rounded-lg px-3 text-[0.9375rem] hover:bg-sunken">
           {t.header.switchLanguage}
         </button>
         <ThemeToggle />
         {auth.role === 'admin' && (
-          <a href="#/admin" className="inline-flex h-10 items-center rounded-lg px-3 text-[15px] hover:bg-sunken">
+          <a href="#/admin" className="inline-flex h-10 items-center rounded-lg px-3 text-[0.9375rem] hover:bg-sunken">
             {t.header.admin}
           </a>
         )}
-        <a href="#/login" title={auth.session?.user.email ?? t.header.signIn} className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[15px] whitespace-nowrap ring-1 ring-line hover:bg-sunken">
+        <a href="#/login" title={auth.session?.user.email ?? t.header.signIn} className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[0.9375rem] whitespace-nowrap ring-1 ring-line hover:bg-sunken">
           <IconUser size={18} />
           {!auth.session && <span className="hidden sm:inline">{t.header.signIn}</span>}
         </a>

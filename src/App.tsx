@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, useAuth } from './cloud/supabase';
 import { DEFAULT_CONFIG, type EngineeringConfig } from './engine';
 import { useT } from './i18n';
@@ -18,6 +18,15 @@ import { useResolvedTheme, useUi } from './state/uiStore';
 import { CommandPalette, useRegisterCommands, type Command } from './ui/CommandPalette';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { FURNITURE_TYPES, presetFor } from './ui/furnitureCatalog';
+
+/** Moves focus to the page's content. The content is not a control, so it is made focusable for this. */
+function focusMain(): boolean {
+  const main = document.querySelector('main');
+  if (!main) return false;
+  main.setAttribute('tabindex', '-1');
+  (main as HTMLElement).focus({ preventScroll: true });
+  return true;
+}
 
 function useHashRoute(): string {
   const [hash, setHash] = useState(window.location.hash || '#/');
@@ -108,6 +117,44 @@ export default function App() {
   const setConfig = useDesign((s) => s.setConfig);
   useDocumentPreferences();
   useGlobalCommands();
+  const projectName = useDesign((s) => s.projectName);
+
+  // Each page says what it is. History, tabs and a screen reader all read this.
+  const pageTitle = route.startsWith('#/journey')
+    ? `${t.journey.stages[journeyStage(route)].title} — ${t.journey.title}`
+    : route.startsWith('#/space')
+      ? t.survey.title
+      : route.startsWith('#/design')
+        ? projectName
+        : route.startsWith('#/projects')
+          ? t.header.projects
+          : route.startsWith('#/decors')
+            ? t.decors.openCatalog
+            : route.startsWith('#/login')
+              ? t.header.signIn
+              : route.startsWith('#/admin')
+                ? t.header.admin
+                : t.home.title;
+  useEffect(() => {
+    document.title = `${pageTitle} · Buildable`;
+  }, [pageTitle]);
+
+  // After a move to another page the content takes the focus, so a keyboard or a screen reader starts
+  // from the new page instead of from wherever the old one left it. Not on first load.
+  const firstRoute = useRef(true);
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    // A page that loads on demand has no content yet when the route changes, so this waits for it —
+    // briefly, and gives up rather than stealing focus from someone who has already moved on.
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (focusMain() || ++tries > 20) clearInterval(timer);
+    }, 80);
+    return () => clearInterval(timer);
+  }, [route]);
 
   useEffect(() => {
     if (!supabase || !auth.role) return;
@@ -135,6 +182,9 @@ export default function App() {
 
   return (
     <>
+      <button type="button" onClick={focusMain} className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">
+        {t.common.skipToContent}
+      </button>
       <ErrorBoundary locale={locale} key={route.split('/')[1]}>
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-paper text-muted">{t.common.loading}</div>}>{page}</Suspense>
       </ErrorBoundary>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import { useSurvey } from '../../state/spaceStore';
 import { Button } from '../common';
+import { IconCheck, IconX } from '../icons';
 import { NullableCm } from '../survey/SurveyEditor';
 
 /**
@@ -107,40 +108,46 @@ export function ScanStage({ onDone }: { onDone: () => void }) {
     <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
       <div className="space-y-3 text-center">
         <ScanAnimation play={play} />
-        <button type="button" className="text-[13px] text-muted underline underline-offset-2" onClick={() => setPlay((n) => n + 1)}>
+        <button type="button" className="text-[0.8125rem] text-muted underline underline-offset-2" onClick={() => setPlay((n) => n + 1)}>
           {s.replay}
         </button>
       </div>
 
       <div className="space-y-5">
         <section>
-          <h3 className="text-[14px] font-semibold">{s.howTitle}</h3>
-          <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted">{s.howBody}</p>
+          <h3 className="text-[0.875rem] font-semibold">{s.howTitle}</h3>
+          <p className="mt-1 max-w-prose text-[0.875rem] leading-relaxed text-muted">{s.howBody}</p>
         </section>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <section className="rounded-xl bg-ok-soft px-4 py-3">
-            <h3 className="text-[13.5px] font-semibold">{s.seesTitle}</h3>
-            <ul className="mt-1.5 space-y-1 text-[13px]">
+            <h3 className="text-[0.8438rem] font-semibold">{s.seesTitle}</h3>
+            <ul className="mt-1.5 space-y-1 text-[0.8125rem]">
               {s.sees.map((x) => (
-                <li key={x}>✓ {x}</li>
+                <li key={x} className="flex items-start gap-1.5">
+                  <IconCheck size={16} className="mt-0.5 shrink-0 text-ok" />
+                  {x}
+                </li>
               ))}
             </ul>
           </section>
           <section className="rounded-xl bg-warn-soft px-4 py-3">
-            <h3 className="text-[13.5px] font-semibold">{s.missesTitle}</h3>
-            <ul className="mt-1.5 space-y-1 text-[13px]">
+            <h3 className="text-[0.8438rem] font-semibold">{s.missesTitle}</h3>
+            <ul className="mt-1.5 space-y-1 text-[0.8125rem]">
               {s.misses.map((x) => (
-                <li key={x}>✕ {x}</li>
+                <li key={x} className="flex items-start gap-1.5">
+                  <IconX size={16} className="mt-0.5 shrink-0 text-warn" />
+                  {x}
+                </li>
               ))}
             </ul>
-            <p className="mt-2 text-[12.5px] leading-snug text-muted">{s.missesNote}</p>
+            <p className="mt-2 text-[0.7812rem] leading-snug text-muted">{s.missesNote}</p>
           </section>
         </div>
 
         <section className="rounded-xl border border-line px-4 py-3">
-          <h3 className="text-[13.5px] font-semibold">{s.needsTitle}</h3>
-          <ul className="mt-1.5 list-disc space-y-0.5 ps-5 text-[13px] text-muted">
+          <h3 className="text-[0.8438rem] font-semibold">{s.needsTitle}</h3>
+          <ul className="mt-1.5 list-disc space-y-0.5 ps-5 text-[0.8125rem] text-muted">
             {s.needs.map((x) => (
               <li key={x}>{x}</li>
             ))}
@@ -160,14 +167,14 @@ export function ScanStage({ onDone }: { onDone: () => void }) {
             </Button>
           </div>
 
-          <div className="flex items-center gap-3 text-[12.5px] text-muted">
+          <div className="flex items-center gap-3 text-[0.7812rem] text-muted">
             <span className="h-px flex-1 bg-line" />
             {s.or}
             <span className="h-px flex-1 bg-line" />
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-[13.5px] font-semibold">{s.ownTitle}</h3>
+            <h3 className="text-[0.8438rem] font-semibold">{s.ownTitle}</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               <NullableCm label={t.survey.width} value={survey.sample ? null : survey.widthMm} onChange={(v) => own((st) => st.setRectangle(v, st.depthMm))} />
               <NullableCm label={t.survey.depth} value={survey.sample ? null : survey.depthMm} onChange={(v) => own((st) => st.setRectangle(st.widthMm, v))} />

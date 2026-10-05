@@ -23,7 +23,7 @@ export function StatusIcon({ status, size = 14 }: { status: Status; size?: numbe
 export function StatusBadge({ status, label }: { status: Status; label?: string }) {
   const t = useT();
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-semibold ring-1 ${STATUS_CLASS[status]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.8125rem] font-semibold ring-1 ${STATUS_CLASS[status]}`}>
       <StatusIcon status={status} size={12} />
       {label ?? t.status[status]}
     </span>
@@ -33,16 +33,16 @@ export function StatusBadge({ status, label }: { status: Status; label?: string 
 export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-baseline justify-between gap-2 text-[13px] font-medium text-muted">
+      <span className="mb-1.5 flex items-baseline justify-between gap-2 text-[0.8125rem] font-medium text-muted">
         <span className="shrink-0">{label}</span>
-        {hint && <span className="text-[13px] font-normal">{hint}</span>}
+        {hint && <span className="text-[0.8125rem] font-normal">{hint}</span>}
       </span>
       {children}
     </label>
   );
 }
 
-export const inputClass = 'h-10 w-full rounded-lg border border-line-strong bg-panel px-3 text-[15px] text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-50';
+export const inputClass = 'h-10 w-full rounded-lg border border-field bg-panel px-3 text-[0.9375rem] text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-50';
 
 export function SearchField({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label?: string }) {
   return (
@@ -136,12 +136,12 @@ export function Section({
             className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-2 text-start"
           >
             <IconChevronDown size={16} className={`shrink-0 text-muted transition ${open ? '' : 'rtl:rotate-90 ltr:-rotate-90'}`} />
-            <span className="text-[15px] font-semibold">{title}</span>
+            <span className="text-[0.9375rem] font-semibold">{title}</span>
             {count != null && <span className="rounded-full bg-sunken px-1.5 text-xs text-muted">{count}</span>}
-            {!open && summary && <span className="ms-auto truncate ps-2 text-[13px] text-muted">{summary}</span>}
+            {!open && summary && <span className="ms-auto truncate ps-2 text-[0.8125rem] text-muted">{summary}</span>}
           </button>
         ) : (
-          <h3 className="flex min-h-12 flex-1 items-center text-[15px] font-semibold">{title}</h3>
+          <h3 className="flex min-h-12 flex-1 items-center text-[0.9375rem] font-semibold">{title}</h3>
         )}
         {open && right}
       </div>
@@ -163,7 +163,7 @@ export function buttonClass(variant: Variant = 'secondary', size: 'md' | 'lg' | 
     ghost: 'text-ink hover:bg-sunken',
     danger: 'bg-panel text-bad ring-1 ring-bad/40 hover:bg-bad-soft',
   }[variant];
-  const sizes = { sm: 'h-9 px-3 text-sm', md: 'h-10 px-4 text-[15px]', lg: 'h-12 px-6 text-base' }[size];
+  const sizes = { sm: 'h-9 px-3 text-sm', md: 'h-10 px-4 text-[0.9375rem]', lg: 'h-12 px-6 text-base' }[size];
   return `inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-40 ${styles} ${sizes}`;
 }
 
@@ -227,9 +227,9 @@ export function UnitInput({ value, onChange, unit, scale = 1, min, max, step = 1
           const v = Number(e.target.value);
           if (e.target.value !== '' && Number.isFinite(v)) onChange(v * scale);
         }}
-        className="num h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink outline-none"
+        className="num h-full min-w-0 flex-1 bg-transparent px-3 text-[0.9375rem] text-ink outline-none"
       />
-      <span className="pe-3 text-[13px] text-muted">{unit}</span>
+      <span className="pe-3 text-[0.8125rem] text-muted">{unit}</span>
     </div>
   );
 }
@@ -240,7 +240,7 @@ export function Stepper({ value, onChange, min, max, label, format }: { value: n
       <button type="button" aria-label={`${label} −`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))} className="flex h-full w-10 items-center justify-center rounded-s-lg hover:bg-sunken disabled:opacity-35">
         <IconMinus size={16} />
       </button>
-      <span className="min-w-24 px-2 text-center text-[15px]" aria-live="polite">
+      <span className="min-w-24 px-2 text-center text-[0.9375rem]" aria-live="polite">
         {format(value)}
       </span>
       <button type="button" aria-label={`${label} +`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))} className="flex h-full w-10 items-center justify-center rounded-e-lg hover:bg-sunken disabled:opacity-35">

@@ -16,32 +16,32 @@ export function TenderStage({ bill }: { bill: RoomBill }) {
   const { lines, roomName } = bill;
   const packages = tenderPackages(lines);
 
-  if (packages.length === 0) return <p className="text-[14px] text-muted">{k.empty}</p>;
+  if (packages.length === 0) return <p className="text-[0.875rem] text-muted">{k.empty}</p>;
 
   return (
     <div className="space-y-4">
-      <p className="max-w-prose text-[14px] leading-relaxed text-muted">{k.intro}</p>
+      <p className="max-w-prose text-[0.875rem] leading-relaxed text-muted">{k.intro}</p>
       <div className="grid gap-3 md:grid-cols-2">
         {packages.map((pkg) => (
           <div key={pkg.trade} className="flex flex-col gap-3 rounded-xl border border-line px-4 py-3">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h3 className="text-[15px] font-semibold">{he ? pkg.he : pkg.en}</h3>
-              <span className="text-[12.5px] text-muted">{k.lines(pkg.totals.lines)}</span>
-              {pkg.totals.missingQuantity > 0 && <span className="text-[12.5px] text-muted">· {k.pending(pkg.totals.missingQuantity)}</span>}
+              <h3 className="text-[0.9375rem] font-semibold">{he ? pkg.he : pkg.en}</h3>
+              <span className="text-[0.7812rem] text-muted">{k.lines(pkg.totals.lines)}</span>
+              {pkg.totals.missingQuantity > 0 && <span className="text-[0.7812rem] text-muted">· {k.pending(pkg.totals.missingQuantity)}</span>}
             </div>
-            {pkg.licensed && <span className="self-start rounded-full bg-warn-soft px-2.5 py-0.5 text-[12px]">{k.licensed}</span>}
+            {pkg.licensed && <span className="self-start rounded-full bg-warn-soft px-2.5 py-0.5 text-[0.75rem]">{k.licensed}</span>}
             <div className="mt-auto flex flex-wrap items-center gap-2">
               {/* Numbered against the whole bill, so a contractor's package and the bill it came from agree. */}
               <Button onClick={() => downloadText(`tender-${pkg.trade}.csv`, billDocumentCsv(lines, { locale, roomName, only: (l) => l.trade === pkg.trade }), 'text/csv;charset=utf-8')}>{k.download}</Button>
               <Button variant="ghost" disabled>
                 {k.send}
               </Button>
-              <span className="text-[12px] text-muted">{k.sendPrototype}</span>
+              <span className="text-[0.75rem] text-muted">{k.sendPrototype}</span>
             </div>
           </div>
         ))}
       </div>
-      <p className="text-[12.5px] text-muted">{k.noSuppliers}</p>
+      <p className="text-[0.7812rem] text-muted">{k.noSuppliers}</p>
     </div>
   );
 }

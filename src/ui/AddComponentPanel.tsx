@@ -45,7 +45,7 @@ export function AddComponentPanel({ result }: { result: DesignResult }) {
   if (!openings.length)
     return (
       <Section title={t.addons.title} defaultOpen={false}>
-        <p className="text-[14px] leading-relaxed text-muted">{t.addons.noOpenings}</p>
+        <p className="text-[0.875rem] leading-relaxed text-muted">{t.addons.noOpenings}</p>
       </Section>
     );
 
@@ -59,7 +59,7 @@ export function AddComponentPanel({ result }: { result: DesignResult }) {
               const checks = result.report.checks.filter((c) => c.id.endsWith(a.id));
               return (
                 <li key={a.id} className="flex items-center gap-3 rounded-lg bg-sunken px-3 py-2">
-                  <span className="flex-1 text-[14px]">
+                  <span className="flex-1 text-[0.875rem]">
                     <span className="font-medium">{t.addons.kinds[a.kind].name}</span>
                     {/* An addon whose opening is gone is not built; say so rather than listing it as if it were. */}
                     <span className="text-muted"> · {opening ? opening.name : t.addons.openingGone}</span>
@@ -88,20 +88,20 @@ export function AddComponentPanel({ result }: { result: DesignResult }) {
                 className="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-start hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="flex-1">
-                  <span className="block text-[15px] font-medium">{label}</span>
-                  <span className="block text-[13px] leading-snug text-muted">{blurb}</span>
+                  <span className="block text-[0.9375rem] font-medium">{label}</span>
+                  <span className="block text-[0.8125rem] leading-snug text-muted">{blurb}</span>
                 </span>
-                <span className="num shrink-0 pt-0.5 text-[12px] text-muted">{fits.length ? t.addons.spots(fits.length) : t.addons.noRoom}</span>
+                <span className="num shrink-0 pt-0.5 text-[0.75rem] text-muted">{fits.length ? t.addons.spots(fits.length) : t.addons.noRoom}</span>
               </button>
 
               {picking === kind && fits.length > 0 && (
                 <ul className="flex flex-col gap-1 border-t border-line px-3 py-2">
-                  <li className="pb-1 text-[13px] text-muted">{t.addons.chooseSpot}</li>
+                  <li className="pb-1 text-[0.8125rem] text-muted">{t.addons.chooseSpot}</li>
                   {fits.map((o) => (
                     <li key={o.id}>
-                      <button type="button" onClick={() => add(kind, o)} className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-start text-[14px] hover:bg-sunken">
+                      <button type="button" onClick={() => add(kind, o)} className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-start text-[0.875rem] hover:bg-sunken">
                         <span className="flex-1">{o.name}</span>
-                        <span className="num text-[12px] text-muted">
+                        <span className="num text-[0.75rem] text-muted">
                           {formatCm(o.size.x)} × {formatCm(o.size.y)} × {formatCm(o.size.z)} {t.common.cm}
                         </span>
                       </button>
@@ -112,7 +112,7 @@ export function AddComponentPanel({ result }: { result: DesignResult }) {
             </li>
           ))}
         </ul>
-        {catalog.length === 0 && <p className="text-[14px] text-muted">{t.addons.noMatches}</p>}
+        {catalog.length === 0 && <p className="text-[0.875rem] text-muted">{t.addons.noMatches}</p>}
       </div>
     </Section>
   );

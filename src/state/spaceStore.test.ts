@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { floorAreaM2, matchServices, servicesFor, wallsOf, whatIsMissing } from '../engine';
-import { countOf, projectRooms, rectangleSize, type SurveyState } from './spaceStore';
+import { DEFAULT_CHAIR, DEFAULT_OPEN_SHELF } from '../engine';
+import { MAX_ROOMS, countOf, projectRooms, rectangleSize, type SurveyState } from './spaceStore';
 
 function memoryStorage() {
   const data = new Map<string, string>();
@@ -257,18 +258,17 @@ describe('answers and new ids', () => {
     expect(useSurvey.getState().space.connections[0]).toMatchObject({ id: pt, fedBy: src, existing: true });
   });
 
-  it('an answer is kept and can be withdrawn', () => {
-    useSurvey.getState().answer('supply:gas', 'לא יודע — לשאול בשטח');
-    expect(useSurvey.getState().answers['supply:gas']).toBe('לא יודע — לשאול בשטח');
+  it('an answer is kept as a code and can be withdrawn', () => {
+    useSurvey.getState().answer('supply:gas', 'ask_on_site');
+    expect(useSurvey.getState().answers['supply:gas']).toBe('ask_on_site');
     useSurvey.getState().clearAnswer('supply:gas');
     expect(useSurvey.getState().answers).toEqual({});
   });
 
-  it('the designed piece is left out of the bill until someone includes it', () => {
-    expect(useSurvey.getState().includeDesign).toBe(false);
-    useSurvey.getState().setIncludeDesign(true);
-    expect(useSurvey.getState().includeDesign).toBe(true);
+  it('a room has no piece until someone puts one in', () => {
+    expect(useSurvey.getState().piece).toBeNull();
   });
+
 });
 
 describe('a project is several rooms', () => {
@@ -385,5 +385,190 @@ describe('the finish schedule', () => {
     expect(useSurvey.getState().finishes[0].areas).toEqual(['room_1']);
     useSurvey.getState().toggleFinishRoom('WD-2', 'room_1');
     expect(useSurvey.getState().finishes[0].areas).toEqual([]);
+  });
+});
+
+describe('the piece in a room is a copy, not a pointer to the editor', () => {
+  it('keeps the design as it was when it was put in', () => {
+    // Found by audit: the bill read whatever the editor had open, so opening another design changed
+    // every room's bill.
+    const params = { ...DEFAULT_OPEN_SHELF, widthMm: 1500 };
+    useSurvey.getState().setPiece({ name: 'בר אחורי', params });
+    params.widthMm = 9999; // the editor moves on
+    const kept = useSurvey.getState().piece!;
+    expect(kept.name).toBe('בר אחורי');
+    expect((kept.params as typeof DEFAULT_OPEN_SHELF).widthMm).toBe(1500);
+  });
+
+  it('each room holds its own piece', () => {
+    useSurvey.getState().setPiece({ name: 'מדף', params: DEFAULT_OPEN_SHELF });
+    useSurvey.getState().addRoom();
+    expect(useSurvey.getState().piece).toBeNull();
+    useSurvey.getState().setPiece({ name: 'כיסא', params: DEFAULT_CHAIR });
+    useSurvey.getState().openRoom('room_1');
+    expect(useSurvey.getState().piece!.name).toBe('מדף');
+  });
+
+  it('survives a refresh, and is taken out with null', () => {
+    useSurvey.getState().setPiece({ name: 'מדף', params: DEFAULT_OPEN_SHELF });
+    expect(JSON.parse(localStorage.getItem('buildable.survey.v1')!).piece.name).toBe('מדף');
+    useSurvey.getState().setPiece(null);
+    expect(useSurvey.getState().piece).toBeNull();
+  });
+
+  it('a save from before pieces were copies comes back without one', async () => {
+    // It only recorded that a piece was included, not which. Restoring "whatever the editor holds"
+    // would be a guess.
+    localStorage.setItem('buildable.survey.v1', JSON.stringify({ space: { id: 'room_1', footprintMm: [], connections: [], apertures: [], obstacles: [], zones: [], nameHe: 'x', nameEn: 'x', heightMm: null }, includeDesign: true }));
+    vi.resetModules();
+    const fresh = (await import('./spaceStore')).useSurvey;
+    expect(fresh.getState().piece).toBeNull();
+  });
+});
+
+describe('answers saved as button text are read back as codes', () => {
+  it('whichever language they were saved in', async () => {
+    // Found by audit: answers were stored as Hebrew text, and after a switch to English the screen
+    // claimed every question had been answered.
+    localStorage.setItem(
+      'buildable.survey.v1',
+      JSON.stringify({
+        space: { id: 'room_1', footprintMm: [], connections: [], apertures: [], obstacles: [], zones: [], nameHe: 'x', nameEn: 'x', heightMm: null },
+        answers: { open_sides: 'כל הקירות בנויים', 'supply:drain': 'לא יודע — לשאול בשטח', 'supply:gas': 'None in the space', 'capacity:electrical': 'Not stated — ask on site', height: 'ask_on_site' },
+      }),
+    );
+    vi.resetModules();
+    const fresh = (await import('./spaceStore')).useSurvey;
+    expect(fresh.getState().answers).toEqual({ open_sides: 'all_built', 'supply:drain': 'ask_on_site', 'supply:gas': 'none', 'capacity:electrical': 'not_stated', height: 'ask_on_site' });
+  });
+});
+
+describe('a bill cannot hold more rooms than it can number', () => {
+  it('copying stops at the limit instead of passing it', () => {
+    // Found by audit: 104 rooms were reachable, and the warning came only afterwards.
+    useSurvey.getState().duplicateRoom(98);
+    expect(projectRooms(useSurvey.getState() as never)).toHaveLength(MAX_ROOMS);
+    useSurvey.getState().duplicateRoom(5);
+    useSurvey.getState().addRoom();
+    expect(projectRooms(useSurvey.getState() as never)).toHaveLength(MAX_ROOMS);
+  });
+
+  it('a request for more copies than there is room for is cut to what fits', () => {
+    useSurvey.getState().duplicateRoom(90);
+    useSurvey.getState().duplicateRoom(50);
+    expect(projectRooms(useSurvey.getState() as never)).toHaveLength(MAX_ROOMS);
+  });
+});
+
+describe('what is destroyed can be put back', () => {
+  const spec = (code: string, areas: string[] = []) => ({ code, category: 'wood' as const, itemNameEn: code, surface: 'floor' as const, product: { type: null, color: null, finish: null, sizeMm: null, thicknessMm: null, wearLayerMm: null }, areas, scope: 'unknown' as const, sources: [] });
+
+  it('a removed finish comes back with its rooms', () => {
+    useSurvey.getState().upsertFinish(spec('WD-2', ['room_1']));
+    useSurvey.getState().removeFinish('WD-2');
+    expect(useSurvey.getState().finishes).toEqual([]);
+    expect(useSurvey.getState().undoable?.kind).toBe('finish_removed');
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().finishes[0]).toMatchObject({ code: 'WD-2', areas: ['room_1'] });
+    expect(useSurvey.getState().undoable).toBeNull();
+  });
+
+  it('a removed room comes back measured', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().addRoom();
+    useSurvey.getState().removeRoom('room_1');
+    useSurvey.getState().undo();
+    const first = projectRooms(useSurvey.getState() as never).find((r) => r.space.id === 'room_1')!;
+    expect(floorAreaM2(first.space)).toBeCloseTo(20, 6);
+  });
+
+  it('ninety-eight copies made by a slip of the finger are one undo away', () => {
+    useSurvey.getState().duplicateRoom(98);
+    useSurvey.getState().undo();
+    expect(projectRooms(useSurvey.getState() as never)).toHaveLength(1);
+  });
+
+  it('a reset project comes back whole', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().toggleEquipment('ice_maker');
+    useSurvey.getState().reset();
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().equipmentIds).toEqual(['ice_maker']);
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(20, 6);
+  });
+
+  it('removed points and sources come back too', () => {
+    const src = useSurvey.getState().addSource('drain', { nameHe: 'קולטן' });
+    const pt = useSurvey.getState().addConnection('drain', { fedBy: src });
+    useSurvey.getState().removeSource(src);
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().sources).toHaveLength(1);
+    expect(useSurvey.getState().space.connections[0].fedBy).toBe(src);
+    useSurvey.getState().removeConnection(pt);
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().space.connections).toHaveLength(1);
+  });
+
+  it('undo with nothing to undo does nothing', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    useSurvey.getState().undo();
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(20, 6);
+  });
+});
+
+describe('importing a schedule does not empty the rooms of finishes it already knows', () => {
+  const spec = (code: string, areas: string[] = []) => ({ code, category: 'wood' as const, itemNameEn: code, surface: 'floor' as const, product: { type: null, color: null, finish: null, sizeMm: null, thicknessMm: null, wearLayerMm: null }, areas, scope: 'unknown' as const, sources: [] });
+
+  it('a re-imported finish that names no rooms keeps the ones it had', () => {
+    useSurvey.getState().upsertFinish(spec('WD-2', ['room_1']));
+    useSurvey.getState().importFinishes([{ ...spec('WD-2'), pattern: 'Herringbone' }]);
+    expect(useSurvey.getState().finishes[0]).toMatchObject({ pattern: 'Herringbone', areas: ['room_1'] });
+  });
+
+  it('a re-imported finish that does name rooms is taken at its word', () => {
+    useSurvey.getState().addRoom();
+    useSurvey.getState().upsertFinish(spec('WD-2', ['room_1']));
+    useSurvey.getState().importFinishes([spec('WD-2', ['room_2'])]);
+    expect(useSurvey.getState().finishes[0].areas).toEqual(['room_2']);
+  });
+});
+
+describe('a project can be taken away as a file and brought back', () => {
+  it('round-trips rooms, finishes, pieces and answers', () => {
+    const s = useSurvey.getState();
+    s.setRectangle(7200, 3600);
+    s.setPiece({ name: 'מדף', params: DEFAULT_OPEN_SHELF });
+    s.answer('supply:gas', 'none');
+    s.addRoom();
+    useSurvey.getState().setDescribeText('בר בריכה עם כיור');
+    const file = useSurvey.getState().exportProject();
+
+    useSurvey.getState().reset();
+    expect(useSurvey.getState().restoreProject(file)).toBe(true);
+    const rooms = projectRooms(useSurvey.getState() as never);
+    expect(rooms.map((r) => r.space.id)).toEqual(['room_1', 'room_2']);
+    expect(rooms[0].piece!.name).toBe('מדף');
+    expect(rooms[0].answers).toEqual({ 'supply:gas': 'none' });
+    expect(useSurvey.getState().describeText).toBe('בר בריכה עם כיור');
+  });
+
+  it('refuses a file that is not a project, and leaves the project alone', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    for (const bad of ['not json', '{}', '[]', '{"space":"x"}', 'null']) expect(useSurvey.getState().restoreProject(bad), bad).toBe(false);
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(20, 6);
+  });
+
+  it('restoring a backup can itself be undone', () => {
+    useSurvey.getState().setRectangle(5000, 4000);
+    const file = useSurvey.getState().exportProject();
+    useSurvey.getState().setRectangle(9000, 9000);
+    useSurvey.getState().restoreProject(file);
+    useSurvey.getState().undo();
+    expect(floorAreaM2(useSurvey.getState().space)).toBeCloseTo(81, 6);
+  });
+
+  it('the text written in the describe step survives a refresh', () => {
+    useSurvey.getState().setDescribeText('מטבח עם שני כיורים');
+    expect(JSON.parse(localStorage.getItem('buildable.survey.v1')!).describeText).toBe('מטבח עם שני כיורים');
   });
 });

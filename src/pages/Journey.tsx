@@ -13,8 +13,10 @@ import { ScanStage } from '../ui/journey/ScanStage';
 import { TenderStage } from '../ui/journey/TenderStage';
 import { BillView } from '../ui/survey/BillView';
 import { FinishSchedule } from '../ui/survey/FinishSchedule';
+import { ProjectBackup } from '../ui/survey/ProjectBackup';
 import { RoomSwitcher } from '../ui/survey/RoomSwitcher';
 import { SampleBanner, SurveyEditor } from '../ui/survey/SurveyEditor';
+import { UndoToast } from '../ui/survey/UndoToast';
 import { useRoomBill } from '../ui/survey/useRoomBill';
 import { STAGES, type Stage } from './journeyStages';
 
@@ -66,12 +68,12 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
 
   return (
     <div className="flex min-h-screen flex-col bg-paper text-ink">
-      <AppHeader auth={auth} start={<h1 className="truncate text-[15px] font-semibold">{j.title}</h1>} />
+      <AppHeader auth={auth} start={<h1 className="truncate text-[0.9375rem] font-semibold">{j.title}</h1>} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-6">
         <div className="space-y-3">
-          <p className="max-w-3xl text-[14px] leading-relaxed text-muted">{j.intro}</p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-muted">
+          <p className="max-w-3xl text-[0.875rem] leading-relaxed text-muted">{j.intro}</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[0.7812rem] text-muted">
             {(['live', 'prototype', 'partial'] as const).map((m) => (
               <li key={m} className="flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${MODE_STYLE[m].dot}`} aria-hidden />
@@ -90,7 +92,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                   type="button"
                   onClick={() => go(s)}
                   aria-current={s === stage ? 'step' : undefined}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] transition ${s === stage ? 'border-ink bg-ink text-paper' : 'border-line bg-panel hover:bg-sunken'}`}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[0.8125rem] transition ${s === stage ? 'border-ink bg-ink text-paper' : 'border-line bg-panel hover:bg-sunken'}`}
                 >
                   <span className="tabular-nums opacity-70">{i + 1}</span>
                   <span className={`h-1.5 w-1.5 rounded-full ${MODE_STYLE[MODE[s]].dot}`} aria-hidden />
@@ -106,13 +108,13 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
         <article className="rounded-2xl border border-line bg-panel">
           <header className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-start sm:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="text-[12.5px] text-muted">{j.stepOf(index + 1, STAGES.length)}</div>
-              <h2 className="text-[20px] font-semibold text-balance">{j.stages[stage].title}</h2>
-              <p className="mt-0.5 text-[14px] text-muted">{j.stages[stage].purpose}</p>
+              <div className="text-[0.7812rem] text-muted">{j.stepOf(index + 1, STAGES.length)}</div>
+              <h2 className="text-[1.25rem] font-semibold text-balance">{j.stages[stage].title}</h2>
+              <p className="mt-0.5 text-[0.875rem] text-muted">{j.stages[stage].purpose}</p>
             </div>
             <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1 sm:text-end">
-              <span className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] font-semibold ${MODE_STYLE[mode].pill}`}>{j.modes[mode]}</span>
-              <span className="text-[12px] leading-snug text-muted sm:max-w-[30ch]">{j.modeHints[mode]}</span>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-[0.7812rem] font-semibold ${MODE_STYLE[mode].pill}`}>{j.modes[mode]}</span>
+              <span className="text-[0.75rem] leading-snug text-muted sm:max-w-[30ch]">{j.modeHints[mode]}</span>
             </div>
           </header>
 
@@ -123,6 +125,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
             {stage === 'edit' && (
               <div className="space-y-5 p-5">
                 <RoomSwitcher bill={bill} />
+                <ProjectBackup />
                 <div className="rounded-2xl border border-line">
                   <SurveyEditor bill={bill} />
                 </div>
@@ -132,7 +135,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
             {stage === 'walk' &&
               (survey.space.footprintMm.length < 3 ? (
                 <div className="space-y-3 py-6 text-center">
-                  <p className="text-[14px] text-muted">{j.walk.needsRoom}</p>
+                  <p className="text-[0.875rem] text-muted">{j.walk.needsRoom}</p>
                   <Button onClick={() => go('scan')}>{j.walk.toScan}</Button>
                 </div>
               ) : (
@@ -142,17 +145,22 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                       <RoomScene
                         space={survey.space}
                         equipmentIds={survey.equipmentIds}
-                        design={survey.includeDesign ? bill.design : null}
-                        designName={bill.designName}
+                        design={bill.pieceOf(survey.space.id)?.result ?? null}
+                        designName={survey.piece?.name ?? bill.designName}
                         he={he}
                         labels={j.walk.labels}
                       />
                     </Suspense>
                   </div>
-                  <aside className="space-y-4 text-[13px]">
+                  <aside className="space-y-4 text-[0.8125rem]">
                     <label className="flex items-start gap-2.5 rounded-lg border border-line px-3 py-2">
-                      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]" checked={survey.includeDesign} onChange={(e) => survey.setIncludeDesign(e.target.checked)} />
-                      {j.walk.includePiece(bill.designName)}
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+                        checked={survey.piece != null}
+                        onChange={(e) => survey.setPiece(e.target.checked ? { name: bill.designName, params: bill.design.model.params } : null)}
+                      />
+                      {j.walk.includePiece(survey.piece?.name ?? bill.designName)}
                     </label>
                     <section>
                       <h3 className="font-semibold">{j.walk.legendTitle}</h3>
@@ -196,6 +204,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
           </footer>
         </article>
       </main>
+      <UndoToast />
     </div>
   );
 }

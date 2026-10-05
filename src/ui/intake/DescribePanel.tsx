@@ -44,8 +44,8 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
   return (
     <section className="flex flex-col gap-4 rounded-2xl bg-panel p-6 ring-1 ring-line" aria-label={t.intake.title}>
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-[22px] leading-tight font-bold">{t.intake.title}</h2>
-        <p className="text-[15px] leading-relaxed text-muted">{t.intake.subtitle}</p>
+        <h2 className="text-[1.375rem] leading-tight font-bold">{t.intake.title}</h2>
+        <p className="text-[0.9375rem] leading-relaxed text-muted">{t.intake.subtitle}</p>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -55,7 +55,7 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
           onKeyDown={(e) => e.key === 'Enter' && ready && start()}
           placeholder={t.intake.placeholder}
           aria-label={t.intake.title}
-          className={`${inputClass} h-12 flex-1 text-[16px]`}
+          className={`${inputClass} h-12 flex-1 text-[1rem]`}
         />
         <Button variant="primary" size="lg" onClick={start} disabled={!ready}>
           {t.intake.open}
@@ -67,7 +67,7 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
         <ul className="flex flex-wrap gap-2">
           {t.intake.examples.map((ex) => (
             <li key={ex}>
-              <button type="button" onClick={() => setText(ex)} className="rounded-full bg-sunken px-3 py-1.5 text-[13px] text-muted hover:text-ink">
+              <button type="button" onClick={() => setText(ex)} className="rounded-full bg-sunken px-3 py-1.5 text-[0.8125rem] text-muted hover:text-ink">
                 {ex}
               </button>
             </li>
@@ -79,12 +79,12 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
         <div className="flex flex-col gap-3">
           {claims.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="text-[13px] font-medium text-muted">{t.intake.understood}</span>
+              <span className="text-[0.8125rem] font-medium text-muted">{t.intake.understood}</span>
               <ul className="flex flex-wrap gap-2">
                 {claims.map((c, i) => (
-                  <li key={`${c.field}-${i}`} className="rounded-lg bg-ok-soft px-3 py-1.5 text-[14px] text-ok">
+                  <li key={`${c.field}-${i}`} className="rounded-lg bg-ok-soft px-3 py-1.5 text-[0.875rem] text-ok">
                     {claimLabel(c, t)}
-                    <span className="text-[12px] opacity-70"> · “{c.source}”</span>
+                    <span className="text-[0.75rem] opacity-70"> · “{c.source}”</span>
                   </li>
                 ))}
               </ul>
@@ -92,16 +92,16 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
           )}
 
           {reading.unread.length > 0 && (
-            <p className="text-[14px] leading-relaxed text-warn">{t.intake.notUnderstood(reading.unread.map((u) => `“${u.phrase}”`).join(', '))}</p>
+            <p className="text-[0.875rem] leading-relaxed text-warn">{t.intake.notUnderstood(reading.unread.map((u) => `“${u.phrase}”`).join(', '))}</p>
           )}
 
           {gaps.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="text-[13px] font-medium text-muted">{t.intake.stillNeeded}</span>
+              <span className="text-[0.8125rem] font-medium text-muted">{t.intake.stillNeeded}</span>
               <div className="flex flex-wrap items-end gap-3">
                 {gaps.includes('kind') && (
                   <label className="flex flex-col gap-1">
-                    <span className="text-[13px] text-muted">{t.intake.whichPiece}</span>
+                    <span className="text-[0.8125rem] text-muted">{t.intake.whichPiece}</span>
                     <select value={answers.kind ?? ''} onChange={(e) => setAnswers({ ...answers, kind: e.target.value })} className={`${inputClass} w-56`}>
                       <option value="">{t.intake.choose}</option>
                       {available.map((f) => (
@@ -116,7 +116,7 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
                   .filter((g) => gaps.includes(g))
                   .map((g) => (
                     <label key={g} className="flex flex-col gap-1">
-                      <span className="text-[13px] text-muted">{t.intake.axis[g]}</span>
+                      <span className="text-[0.8125rem] text-muted">{t.intake.axis[g]}</span>
                       <input
                         type="number"
                         min={1}
@@ -129,7 +129,7 @@ export function DescribePanel({ onStart }: { onStart: (kind: FurnitureKind, spac
                   ))}
               </div>
               {/* Sizes left blank are not guessed here; the piece opens at its own stated starting size. */}
-              <p className="text-[13px] leading-relaxed text-muted">{t.intake.blankNote}</p>
+              <p className="text-[0.8125rem] leading-relaxed text-muted">{t.intake.blankNote}</p>
             </div>
           )}
         </div>

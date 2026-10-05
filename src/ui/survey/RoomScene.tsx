@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { EQUIPMENT, wallsOf, type DesignResult, type Space } from '../../engine';
+import { useResolvedTheme } from '../../state/uiStore';
 import { buildExportScene, disposeExportScene } from '../ar/exportScene';
 
 const MM = 0.001;
@@ -41,7 +42,7 @@ function Label({ children, he, tone = 'muted' }: { children: React.ReactNode; he
   return (
     <div
       dir={he ? 'rtl' : 'ltr'}
-      className={`pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[11.5px] leading-tight shadow-sm ${tone === 'accent' ? 'bg-accent text-on-accent' : 'bg-panel/95 text-ink'}`}
+      className={`pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[0.7188rem] leading-tight shadow-sm ${tone === 'accent' ? 'bg-accent text-on-accent' : 'bg-panel/95 text-ink'}`}
     >
       {children}
     </div>
@@ -62,6 +63,10 @@ export function RoomScene({ space, equipmentIds, design, designName, he, labels 
   // A browser with no WebXR at all is known at first render; null means "has WebXR, still asking".
   const [vrSupported, setVrSupported] = useState<boolean | null>(() => ((navigator as Navigator & { xr?: XRSystem }).xr ? null : false));
   const [inVr, setInVr] = useState(false);
+  // The scene sits inside the page, so its backdrop is the page's sunken surface in either theme. The
+  // two values are --color-sunken from index.css; reading the variable during render would return the
+  // previous theme's, because the theme attribute is written after it.
+  const backdrop = useResolvedTheme() === 'dark' ? '#1b1916' : '#efebe4';
 
   useEffect(() => {
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
@@ -140,7 +145,7 @@ export function RoomScene({ space, equipmentIds, design, designName, he, labels 
           gl.xr.enabled = true;
         }}
       >
-        <color attach="background" args={['#ebe7df']} />
+        <color attach="background" args={[backdrop]} />
         <hemisphereLight args={['#ffffff', '#e4ded2', 2.6]} />
         <directionalLight position={[3, 6, -4]} intensity={1.4} />
 
@@ -213,16 +218,16 @@ export function RoomScene({ space, equipmentIds, design, designName, he, labels 
       <div className="absolute bottom-3 start-3 end-3 flex flex-wrap items-center gap-2">
         {vrSupported ? (
           inVr ? (
-            <button type="button" className="rounded-lg bg-panel px-3 py-2 text-[13px] font-medium shadow" onClick={() => glRef.current?.xr.getSession()?.end()}>
+            <button type="button" className="rounded-lg bg-panel px-3 py-2 text-[0.8125rem] font-medium shadow" onClick={() => glRef.current?.xr.getSession()?.end()}>
               {labels.exitVr}
             </button>
           ) : (
-            <button type="button" className="rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-on-accent shadow" onClick={() => void enterVr()}>
+            <button type="button" className="rounded-lg bg-accent px-3 py-2 text-[0.8125rem] font-medium text-on-accent shadow" onClick={() => void enterVr()}>
               {labels.enterVr}
             </button>
           )
         ) : (
-          vrSupported === false && <span className="rounded-lg bg-panel/90 px-3 py-2 text-[12.5px] text-muted shadow-sm">{labels.vrUnavailable}</span>
+          vrSupported === false && <span className="rounded-lg bg-panel/90 px-3 py-2 text-[0.7812rem] text-muted shadow-sm">{labels.vrUnavailable}</span>
         )}
       </div>
     </div>

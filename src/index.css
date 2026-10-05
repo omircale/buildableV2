@@ -11,6 +11,8 @@
   --color-sunken: #efebe4;
   --color-line: #e3ddd3;
   --color-line-strong: #d6cec2;
+  /* The edge of something a person types into or picks from. Unlike a divider it has to be seen: ≥ 3:1. */
+  --color-field: #8c8275;
   --color-muted: #6b6358;
   --color-accent: #9a5b2e;
   --color-accent-ink: #8a4f24;
@@ -33,6 +35,7 @@
   --color-sunken: #1b1916;
   --color-line: #36312b;
   --color-line-strong: #4a443c;
+  --color-field: #857b6e;
   --color-muted: #a89f92;
   --color-accent: #d9955f;
   --color-accent-ink: #e3a06b;
@@ -67,6 +70,11 @@ body {
   outline-offset: 2px;
 }
 
+/* The page's content takes focus on navigation; it is a place to start reading, not a control to ring. */
+main:focus {
+  outline: none;
+}
+
 .num {
   font-variant-numeric: tabular-nums;
   direction: ltr;
@@ -84,6 +92,50 @@ input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/*
+ * On a phone, fingers and Safari set the rules, and they are set here once rather than per screen.
+ *
+ * A control is at least 44px tall, whatever height its own class gives it. And anything typed into is
+ * at least 16px: below that, iOS zooms the whole page in on every tap of a field and leaves it there.
+ * `pointer: coarse` is a touch screen; a mouse keeps the denser desktop sizes.
+ */
+@media (pointer: coarse) {
+  button,
+  summary,
+  select,
+  [role='button'],
+  a[class*='inline-flex'] {
+    min-height: 44px;
+  }
+  button,
+  [role='button'] {
+    min-width: 44px;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: max(16px, 1em);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
+
+/* Someone who has asked their device for less motion gets none that is only decoration. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @utility scrollbar-none {

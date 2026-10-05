@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { wallsOf, type ServiceKind } from '../../engine';
 import { useT } from '../../i18n';
-import { useSurvey } from '../../state/spaceStore';
+import { useSurvey, type AnswerCode } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 import { Button, Chip, inputClass } from '../common';
 import { NullableCm } from '../survey/SurveyEditor';
@@ -10,9 +10,14 @@ import { refinementQuestions, type Question } from '../survey/questions';
 
 const metres = (mm: number) => (mm / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
+/** The words for an answer in whichever language the screen is in now. */
+function answerLabel(r: { askOnSite: string; none: string; notStated: string; openNone: string; openDone: string }, code: AnswerCode): string {
+  return { ask_on_site: r.askOnSite, none: r.none, not_stated: r.notStated, all_built: r.openNone, open_marked: r.openDone }[code];
+}
+
 function Bubble({ from, children }: { from: 'system' | 'fact'; children: ReactNode }) {
   return (
-    <div className={`max-w-[46ch] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed ${from === 'system' ? 'rounded-ss-sm bg-accent-soft' : 'ms-auto rounded-se-sm bg-sunken text-muted'}`}>
+    <div className={`max-w-[46ch] rounded-2xl px-4 py-2.5 text-[0.875rem] leading-relaxed ${from === 'system' ? 'rounded-ss-sm bg-accent-soft' : 'ms-auto rounded-se-sm bg-sunken text-muted'}`}>
       {children}
     </div>
   );
@@ -28,9 +33,9 @@ function QuestionForm({ q }: { q: Question }) {
   const [d, setD] = useState<number | null>(null);
   const [h, setH] = useState<number | null>(null);
 
-  const deferButton = (label = r.askOnSite) => (
-    <Button variant="ghost" onClick={() => survey.answer(q.id, label)}>
-      {label}
+  const deferButton = (code: AnswerCode = 'ask_on_site') => (
+    <Button variant="ghost" onClick={() => survey.answer(q.id, code)}>
+      {answerLabel(r, code)}
     </Button>
   );
 
@@ -82,7 +87,7 @@ function QuestionForm({ q }: { q: Question }) {
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="primary" disabled={open.length === 0} onClick={() => survey.answer(q.id, r.openAnswer(open.join(', ')))}>
+            <Button variant="primary" disabled={open.length === 0} onClick={() => survey.answer(q.id, 'open_marked')}>
               {r.openDone}
             </Button>
             <Button
@@ -92,7 +97,7 @@ function QuestionForm({ q }: { q: Question }) {
                 walls.forEach((wall, i) => {
                   if (!wall.built) useSurvey.getState().toggleOpenEdge(i);
                 });
-                survey.answer(q.id, r.openNone);
+                survey.answer(q.id, 'all_built');
               }}
             >
               {r.openNone}
@@ -122,7 +127,7 @@ function QuestionForm({ q }: { q: Question }) {
             <Button variant="primary" disabled={!name} onClick={save}>
               {r.save}
             </Button>
-            {q.status === 'no_source' && deferButton(r.none)}
+            {q.status === 'no_source' && deferButton('none')}
             {deferButton()}
           </div>
         </div>
@@ -146,7 +151,7 @@ function QuestionForm({ q }: { q: Question }) {
             >
               {r.save}
             </Button>
-            {deferButton(r.notStated)}
+            {deferButton('not_stated')}
           </div>
         </div>
       );
@@ -179,13 +184,14 @@ export function RefineStage() {
     const [type, kind] = id.split(':') as ['supply' | 'capacity', ServiceKind];
     return type === 'supply' ? r.topics.supply(serviceName(kind, he)) : r.topics.capacity(serviceName(kind, he));
   };
-  for (const [id, a] of Object.entries(survey.answers)) {
+  for (const [id, code] of Object.entries(survey.answers)) {
     // Open walls are already read back from the model above; repeating the answer would say it twice.
-    if (id === 'open_sides' && openWalls.length) continue;
-    facts.push(r.facts.answer(topic(id), a));
+    if (code === 'open_marked') continue;
+    facts.push(r.facts.answer(topic(id), answerLabel(r, code)));
   }
 
-  const deferred = Object.values(survey.answers).filter((a) => a === r.askOnSite || a === r.notStated).length;
+  // Counted by what was answered, not by the words it was answered in.
+  const deferred = Object.values(survey.answers).filter((code) => code === 'ask_on_site' || code === 'not_stated').length;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -193,21 +199,21 @@ export function RefineStage() {
         {current ? (
           <>
             <QuestionForm key={current.id} q={current} />
-            {questions.length > 1 && <p className="text-[12.5px] text-muted">{r.remaining(questions.length - 1)}</p>}
+            {questions.length > 1 && <p className="text-[0.7812rem] text-muted">{r.remaining(questions.length - 1)}</p>}
           </>
         ) : (
           <div className="rounded-xl bg-ok-soft px-4 py-3">
-            <div className="text-[14px] font-semibold">{r.doneTitle}</div>
-            <p className="mt-1 text-[13px] text-muted">{r.doneBody(deferred)}</p>
+            <div className="text-[0.875rem] font-semibold">{r.doneTitle}</div>
+            <p className="mt-1 text-[0.8125rem] text-muted">{r.doneBody(deferred)}</p>
           </div>
         )}
-        <p className="max-w-prose text-[12.5px] leading-relaxed text-muted">{r.note}</p>
+        <p className="max-w-prose text-[0.7812rem] leading-relaxed text-muted">{r.note}</p>
       </div>
 
       <aside className="space-y-2">
-        <h3 className="text-[13.5px] font-semibold">{r.settled}</h3>
+        <h3 className="text-[0.8438rem] font-semibold">{r.settled}</h3>
         {facts.length === 0 ? (
-          <p className="text-[13px] text-muted">{r.nothingSettled}</p>
+          <p className="text-[0.8125rem] text-muted">{r.nothingSettled}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {facts.map((f, i) => (

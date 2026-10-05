@@ -57,7 +57,7 @@ export function ArOverlay({ result, onClose }: { result: DesignResult; onClose: 
   return (
     <div className="absolute inset-0 z-30 flex flex-col bg-paper/98" role="dialog" aria-modal="true" aria-label={t.ar.viewInRoom}>
       <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
-        <h2 className="flex-1 text-[15px] font-semibold">{t.ar.viewInRoom}</h2>
+        <h2 className="flex-1 text-[0.9375rem] font-semibold">{t.ar.viewInRoom}</h2>
         <IconButton label={t.common.close} onClick={onClose}>
           <IconX size={18} />
         </IconButton>
@@ -66,24 +66,24 @@ export function ArOverlay({ result, onClose }: { result: DesignResult; onClose: 
       <div className="relative flex min-h-0 flex-1 items-center justify-center p-4">
         {error ? (
           <div className="flex max-w-sm flex-col gap-3 text-center">
-            <p className="text-[15px] leading-relaxed text-bad">{error}</p>
+            <p className="text-[0.9375rem] leading-relaxed text-bad">{error}</p>
             <Button variant="secondary" onClick={onClose}>
               {t.ar.backToEditing}
             </Button>
           </div>
         ) : urls ? (
-          <Suspense fallback={<p className="text-[15px] text-muted">{t.ar.hosting}</p>}>
+          <Suspense fallback={<p className="text-[0.9375rem] text-muted">{t.ar.hosting}</p>}>
             <div className="relative w-full max-w-2xl">
               <RoomViewer glbUrl={urls.glb} usdzUrl={urls.usdz} alt={projectName} arButtonLabel={t.ar.placeInRoom} onArUnavailable={() => setUnavailable(true)} />
             </div>
           </Suspense>
         ) : (
-          <p className="text-[15px] text-muted">{t.ar.hosting}</p>
+          <p className="text-[0.9375rem] text-muted">{t.ar.hosting}</p>
         )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5">
-        <p className="flex-1 text-[13px] leading-relaxed text-muted">{unavailable ? t.ar.noArHere : t.ar.editHint}</p>
+        <p className="flex-1 text-[0.8125rem] leading-relaxed text-muted">{unavailable ? t.ar.noArHere : t.ar.editHint}</p>
         <Button variant="primary" onClick={onClose}>
           {t.ar.backToEditing}
         </Button>

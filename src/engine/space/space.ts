@@ -251,8 +251,40 @@ export interface SpaceProblem {
  * quantities are wrong in a way nobody can see. This is the only place in the space model that says
  * something is wrong — and it says it about the measurements, never about the design.
  */
+/**
+ * Sizes outside which a room is far more likely a slip of the keyboard than a room.
+ *
+ * These are not engineering limits and no standard is behind them. They exist to catch one mistake:
+ * a dimension typed in the wrong unit — metres into a centimetre field gives a room seven centimetres
+ * wide, and the area that follows reads "0.00 m²" with nothing to say why. A room really can be 80 m
+ * long, so the finding is a question ("check the unit"), never a refusal.
+ */
+export const UNLIKELY = { sideMinMm: 1000, sideMaxMm: 100_000, heightMinMm: 1800, heightMaxMm: 15_000 } as const;
+
 export function spaceProblems(space: Space): SpaceProblem[] {
   const problems: SpaceProblem[] = [];
+
+  const sides = wallsOf(space).map((w) => w.lengthMm);
+  if (sides.length && (Math.min(...sides) < UNLIKELY.sideMinMm || Math.max(...sides) > UNLIKELY.sideMaxMm)) {
+    const small = Math.min(...sides) < UNLIKELY.sideMinMm;
+    problems.push({
+      code: 'dimension_unlikely',
+      severity: 'yellow',
+      subject: 'footprint',
+      he: small ? `אחד מצדי החדר קצר ממטר (${(Math.min(...sides) / 10).toFixed(0)} ס"מ). ייתכן שהמידה הוקלדה במטרים במקום בסנטימטרים?` : `אחד מצדי החדר ארוך מ-100 מטר. ייתכן שהמידה הוקלדה במילימטרים במקום בסנטימטרים?`,
+      en: small ? `One side of the room is under a metre (${(Math.min(...sides) / 10).toFixed(0)} cm). Was the dimension typed in metres instead of centimetres?` : `One side of the room is over 100 metres. Was the dimension typed in millimetres instead of centimetres?`,
+    });
+  }
+  if (space.heightMm != null && (space.heightMm < UNLIKELY.heightMinMm || space.heightMm > UNLIKELY.heightMaxMm)) {
+    const small = space.heightMm < UNLIKELY.heightMinMm;
+    problems.push({
+      code: 'height_unlikely',
+      severity: 'yellow',
+      subject: 'height',
+      he: small ? `גובה התקרה שהוזן הוא ${(space.heightMm / 10).toFixed(0)} ס"מ. ייתכן שהוקלד במטרים במקום בסנטימטרים?` : `גובה התקרה שהוזן הוא מעל 15 מטר. ייתכן שהוקלד במילימטרים במקום בסנטימטרים?`,
+      en: small ? `The ceiling height entered is ${(space.heightMm / 10).toFixed(0)} cm. Was it typed in metres instead of centimetres?` : `The ceiling height entered is over 15 metres. Was it typed in millimetres instead of centimetres?`,
+    });
+  }
   const walls = new Map(wallsOf(space).map((w) => [w.id, w]));
 
   for (const ap of space.apertures) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useT } from '../../i18n';
-import { useSurvey } from '../../state/spaceStore';
+import { MAX_ROOMS, useSurvey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 import { Button, Chip } from '../common';
 import type { RoomBill } from './useRoomBill';
@@ -20,11 +20,13 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
   const survey = useSurvey();
   const [copies, setCopies] = useState(1);
   const rooms = bill.rooms;
-  const nameOf = (r: (typeof rooms)[number]) => (he ? r.space.nameHe : r.space.nameEn) || r.space.id;
+  const left = MAX_ROOMS - rooms.length;
+  // A room nobody named is called that, never by the id the system gave it.
+  const nameOf = (r: (typeof rooms)[number]) => (he ? r.space.nameHe : r.space.nameEn) || t.survey.unnamed;
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line bg-panel px-4 py-3">
-      <span className="text-[13.5px] font-semibold">{t.survey.rooms}</span>
+      <span className="text-[0.8438rem] font-semibold">{t.survey.rooms}</span>
 
       {rooms.length <= CHIPS_UP_TO ? (
         <div className="flex flex-wrap gap-1.5">
@@ -35,7 +37,7 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
           ))}
         </div>
       ) : (
-        <select className="h-9 rounded-lg border border-line-strong bg-panel px-2 text-[14px]" value={survey.space.id} onChange={(e) => survey.openRoom(e.target.value)} aria-label={t.survey.rooms}>
+        <select className="h-9 rounded-lg border border-field bg-panel px-2 text-[0.875rem]" value={survey.space.id} onChange={(e) => survey.openRoom(e.target.value)} aria-label={t.survey.rooms}>
           {rooms.map((r) => (
             <option key={r.space.id} value={r.space.id}>
               {nameOf(r)}
@@ -44,35 +46,31 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
         </select>
       )}
 
-      {rooms.length > 1 && <span className="text-[12.5px] text-muted">{t.survey.roomsCount(rooms.length)}</span>}
+      {rooms.length > 1 && <span className="text-[0.7812rem] text-muted">{t.survey.roomsCount(rooms.length)}</span>}
+      {left < 10 && <span className="text-[0.7812rem] text-warn">{left < 1 ? t.survey.roomsFull(MAX_ROOMS) : t.survey.roomsLeft(left)}</span>}
 
       <div className="ms-auto flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={survey.addRoom}>
+        <Button size="sm" disabled={left < 1} onClick={survey.addRoom}>
           + {t.survey.addRoom}
         </Button>
-        <span className="flex items-center gap-1.5 rounded-lg ring-1 ring-line-strong">
-          <Button size="sm" variant="ghost" onClick={() => survey.duplicateRoom(copies)} title={t.survey.duplicateHint}>
+        <span className="flex items-center gap-1.5 rounded-lg ring-1 ring-field">
+          <Button size="sm" variant="ghost" disabled={left < 1} onClick={() => survey.duplicateRoom(copies)} title={t.survey.duplicateHint}>
             {t.survey.duplicate}
           </Button>
-          <span className="text-[13px] text-muted">×</span>
+          <span className="text-[0.8125rem] text-muted">×</span>
           <input
             type="number"
             min={1}
-            max={98}
-            value={copies}
-            onChange={(e) => setCopies(Math.max(1, Math.min(98, Number(e.target.value) || 1)))}
+            max={Math.max(1, left)}
+            inputMode="numeric"
+            value={Math.min(copies, Math.max(1, left))}
+            onChange={(e) => setCopies(Math.max(1, Math.min(Math.max(1, left), Number(e.target.value) || 1)))}
             aria-label={t.survey.copies}
-            className="h-9 w-14 rounded-e-lg bg-transparent px-1 text-center text-[14px] tabular-nums outline-none"
+            className="h-9 w-14 rounded-e-lg bg-transparent px-1 text-center text-[0.875rem] tabular-nums outline-none"
           />
         </span>
         {rooms.length > 1 && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (window.confirm(t.survey.removeRoomConfirm(nameOf(rooms.find((r) => r.space.id === survey.space.id)!)))) survey.removeRoom(survey.space.id);
-            }}
-          >
+          <Button size="sm" variant="ghost" onClick={() => survey.removeRoom(survey.space.id)}>
             {t.survey.removeRoom}
           </Button>
         )}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { UNIT_LABEL, billDocumentCsv, billSummary, chapterLabel, numberBill, type NumberedLine } from '../../engine';
+import { UNIT_LABEL, billDocumentCsv, billProblems, billSummary, chapterLabel, numberBill, type NumberedLine } from '../../engine';
 import { useT } from '../../i18n';
 import { useSurvey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
@@ -20,22 +20,22 @@ function LineRow({ item, place }: { item: NumberedLine; place?: string }) {
     <li className="border-b border-line py-2.5 last:border-0">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-muted">
+          <div className="flex flex-wrap items-baseline gap-x-2 text-[0.75rem] text-muted">
             <span className="tabular-nums" dir="ltr">
               {number}
             </span>
             {place && <span>· {place}</span>}
           </div>
-          <div className="text-[14px] leading-snug">{he ? line.descriptionHe : line.descriptionEn}</div>
-          {why && <div className="mt-1 text-[12.5px] leading-snug text-muted">{why}</div>}
-          {assumption && <div className="mt-1 text-[12.5px] leading-snug text-muted">{assumption}</div>}
+          <div className="text-[0.875rem] leading-snug">{he ? line.descriptionHe : line.descriptionEn}</div>
+          {why && <div className="mt-1 text-[0.7812rem] leading-snug text-muted">{why}</div>}
+          {assumption && <div className="mt-1 text-[0.7812rem] leading-snug text-muted">{assumption}</div>}
         </div>
         <div className="shrink-0 text-end tabular-nums">
           {line.quantity == null ? (
-            <span className="rounded-full bg-unknown-soft px-2 py-0.5 text-[12px] text-muted">—</span>
+            <span className="rounded-full bg-unknown-soft px-2 py-0.5 text-[0.75rem] text-muted">—</span>
           ) : (
-            <span className="text-[15px] font-semibold">
-              {line.quantity} <span className="text-[12px] font-normal text-muted">{unit}</span>
+            <span className="text-[0.9375rem] font-semibold">
+              {line.quantity} <span className="text-[0.75rem] font-normal text-muted">{unit}</span>
             </span>
           )}
         </div>
@@ -58,7 +58,20 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
   const reset = useSurvey((s) => s.reset);
   const [axis, setAxis] = useState<'room' | 'chapter'>('room');
   const [query, setQuery] = useState('');
-  const { lines, roomName } = bill;
+  // Which groups the person opened or closed themselves; anything not in here follows the default.
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const { lines, roomName, rooms } = bill;
+
+  // The bill checking itself. A room with no floor cannot be placed in the document, and anything the
+  // engine's own validator objects to is said here rather than left in a test file.
+  const unplaced = rooms.filter((r) => r.levelId.trim() === '');
+  const integrity = useMemo(
+    () =>
+      billProblems(lines, { levelIds: [...new Set(rooms.map((r) => r.levelId))], spaces: rooms.map((r) => r.space) })
+        .filter((p) => p.code !== 'line_on_unknown_level')
+        .map((p) => p.code),
+    [lines, rooms],
+  );
 
   const { structures, numbered, problems } = useMemo(() => numberBill(lines), [lines]);
   const summary = useMemo(() => billSummary(lines), [lines]);
@@ -88,7 +101,7 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-        <h2 className="text-[15px] font-semibold">{t.survey.billSection}</h2>
+        <h2 className="text-[0.9375rem] font-semibold">{t.survey.billSection}</h2>
         <div className="ms-auto flex items-center gap-2">
           <Chip selected={axis === 'room'} onClick={() => setAxis('room')}>
             {t.survey.byLocation}
@@ -100,10 +113,10 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
       </div>
 
       {lines.length === 0 ? (
-        <p className="px-5 py-10 text-center text-[14px] text-muted">{t.survey.noLines}</p>
+        <p className="px-5 py-10 text-center text-[0.875rem] text-muted">{t.survey.noLines}</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-[12.5px] text-muted">
+          <div aria-live="polite" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-[0.7812rem] text-muted">
             <span>{t.survey.lines(summary.totals.lines)}</span>
             {structures.length > 1 && <span>{t.survey.roomsCount(structures.length)}</span>}
             {summary.totals.missingQuantity > 0 && <span>{t.survey.unquantified(summary.totals.missingQuantity)}</span>}
@@ -115,8 +128,14 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
             <input type="search" className={inputClass} placeholder={t.survey.searchBill} aria-label={t.survey.searchBill} value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
 
-          {problems.length > 0 && (
-            <ul className="space-y-0.5 border-b border-line bg-warn-soft px-5 py-2.5 text-[12.5px] leading-snug">
+          {(problems.length > 0 || unplaced.length > 0 || integrity.length > 0) && (
+            <ul role="status" className="space-y-0.5 border-b border-line bg-warn-soft px-5 py-2.5 text-[0.7812rem] leading-snug">
+              {unplaced.map((r) => (
+                <li key={r.space.id}>{t.survey.noLevel((he ? r.space.nameHe : r.space.nameEn) || t.survey.unnamed)}</li>
+              ))}
+              {[...new Set(integrity)].map((code) => (
+                <li key={code}>{t.survey.integrity(code)}</li>
+              ))}
               {problems.map((p) => (
                 <li key={p.code + (p.lineId ?? '')}>{he ? p.he : p.en}</li>
               ))}
@@ -125,27 +144,41 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
 
           <div className="overflow-y-auto px-5" style={{ maxHeight }}>
             {visible.length === 0 ? (
-              <p className="py-8 text-center text-[14px] text-muted">{t.survey.noMatch}</p>
+              <p className="py-8 text-center text-[0.875rem] text-muted">{t.survey.noMatch}</p>
             ) : (
               visible.map((g, gi) => {
                 const count = g.sections.reduce((a, s) => a + s.items.length, 0);
+                const id = `${axis}-${g.key}`;
+                // A search opens everything it found; otherwise the first few groups start open, and
+                // whatever the person opened or closed stays that way.
+                const open = searching || (toggled[id] ?? (visible.length <= OPEN_BY_DEFAULT || gi === 0));
                 return (
-                  // A search opens everything it found; otherwise only the first few groups start open.
-                  <details key={`${axis}-${g.key}-${searching}`} open={searching || visible.length <= OPEN_BY_DEFAULT || gi === 0} className="border-b border-line py-1 last:border-0">
-                    <summary className="flex cursor-pointer items-baseline gap-2 py-2 text-[14px] font-semibold">
+                  <details
+                    key={id}
+                    open={open}
+                    onToggle={(e) => {
+                      // Read now: the event is released before a state updater would get to it.
+                      const now = e.currentTarget.open;
+                      setToggled((was) => (was[id] === now ? was : { ...was, [id]: now }));
+                    }}
+                    className="border-b border-line py-1 last:border-0"
+                  >
+                    <summary className="flex cursor-pointer items-baseline gap-2 py-2 text-[0.875rem] font-semibold">
                       <span>{g.title}</span>
-                      <span className="text-[12.5px] font-normal text-muted">{t.survey.lines(count)}</span>
+                      <span className="text-[0.7812rem] font-normal text-muted">{t.survey.lines(count)}</span>
                     </summary>
-                    {g.sections.map((s) => (
-                      <div key={s.key} className="pb-2">
-                        {s.title && <h4 className="mt-1 text-[12.5px] font-semibold text-muted">{s.title}</h4>}
-                        <ul>
-                          {s.items.map((item) => (
-                            <LineRow key={item.line.id} item={item} place={s.showPlace ? roomName(item.line.location) : undefined} />
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
+                    {/* A closed group's lines are not built at all: a hundred rooms folded shut cost nothing. */}
+                    {open &&
+                      g.sections.map((s) => (
+                        <div key={s.key} className="pb-2">
+                          {s.title && <h3 className="mt-1 text-[0.7812rem] font-semibold text-muted">{s.title}</h3>}
+                          <ul>
+                            {s.items.map((item) => (
+                              <LineRow key={item.line.id} item={item} place={s.showPlace ? roomName(item.line.location) : undefined} />
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
                   </details>
                 );
               })
@@ -153,10 +186,10 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
           </div>
 
           <div className="border-t border-line px-5 py-3">
-            <h3 className="text-[13px] font-semibold">
+            <h3 className="text-[0.8125rem] font-semibold">
               {t.survey.pending} · {summary.pending.length}
             </h3>
-            <p className="mt-0.5 text-[12.5px] leading-snug text-muted">{t.survey.pendingHint}</p>
+            <p className="mt-0.5 text-[0.7812rem] leading-snug text-muted">{t.survey.pendingHint}</p>
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-line px-5 py-3">
@@ -164,12 +197,7 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
               {t.survey.downloadCsv}
             </Button>
             {showReset && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (window.confirm(t.survey.resetConfirm)) reset();
-                }}
-              >
+              <Button variant="ghost" onClick={reset}>
                 {t.survey.reset}
               </Button>
             )}

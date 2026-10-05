@@ -1,3 +1,4 @@
+import { csvCell } from '../csv';
 import { LICENSED_TRADES } from '../equipment/catalog';
 import { TRADE_LABEL, UNIT_LABEL, byLocation, byTrade, totals, type BoqLine, type Totals, type Trade } from './line';
 import { numberBill } from './numbering';
@@ -15,10 +16,6 @@ import { numberBill } from './numbering';
  * work nobody has established.
  */
 
-function csvCell(v: string | number): string {
-  const s = String(v);
-  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
 
 /** The byte order mark; without it Excel opens Hebrew as mojibake. */
 const BOM = '﻿';

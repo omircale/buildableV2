@@ -68,12 +68,12 @@ export function ProjectCard({ project, compact }: { project: LocalProject; compa
             }}
           />
         ) : (
-          <span className="truncate text-[17px] font-semibold" title={project.name}>
+          <span className="truncate text-[1.0625rem] font-semibold" title={project.name}>
             {project.name}
           </span>
         )}
         <span className="text-sm text-muted">{t.furniture[kind].name}</span>
-        <span className="flex flex-wrap gap-x-2 text-[13px] text-muted">
+        <span className="flex flex-wrap gap-x-2 text-[0.8125rem] text-muted">
           {/* Numbers in their own LTR spans so RTL text never reorders "W × H × D" or the price. */}
           <span className="num" dir="ltr">
             {formatCm(o.x)} × {formatCm(o.y)} × {formatCm(o.z)}
@@ -85,7 +85,7 @@ export function ProjectCard({ project, compact }: { project: LocalProject; compa
             </span>
           )}
         </span>
-        <span className="text-[13px] text-muted">
+        <span className="text-[0.8125rem] text-muted">
           {t.projects.edited} {relativeTime(project.updatedAt, locale)}
         </span>
       </div>
@@ -138,7 +138,7 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 py-9">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex max-w-2xl flex-col gap-2">
-            <h1 className="text-[36px] leading-tight font-bold tracking-tight">{t.projects.title}</h1>
+            <h1 className="text-[2.25rem] leading-tight font-bold tracking-tight">{t.projects.title}</h1>
             <p className="text-lg leading-relaxed text-muted">{t.projects.subtitle}</p>
           </div>
           <a href="#/" className={buttonClass('primary', 'md')}>
@@ -146,12 +146,12 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
           </a>
         </div>
         {saveError && (
-          <p className="rounded-xl bg-bad-soft px-4 py-3 text-[15px] text-bad">
+          <p className="rounded-xl bg-bad-soft px-4 py-3 text-[0.9375rem] text-bad">
             <strong>{t.projects.saveErrorTitle}</strong> {t.projects.saveErrorText}
           </p>
         )}
         {projects.length === 0 ? (
-          <p className="rounded-xl bg-panel p-6 text-[15px] text-muted ring-1 ring-line">{t.projects.empty}</p>
+          <p className="rounded-xl bg-panel p-6 text-[0.9375rem] text-muted ring-1 ring-line">{t.projects.empty}</p>
         ) : (
           <>
             <p className="text-sm text-muted">{t.projects.count(projects.length)}</p>
@@ -162,7 +162,7 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
             </div>
           </>
         )}
-        <section className="flex flex-wrap items-center gap-3 rounded-xl bg-sunken p-4 text-[14px] text-muted">
+        <section className="flex flex-wrap items-center gap-3 rounded-xl bg-sunken p-4 text-[0.875rem] text-muted">
           <span className="flex-1 leading-relaxed">{t.projects.localOnly}</span>
           <button type="button" className={buttonClass('secondary', 'sm')} onClick={() => downloadText(`buildable-projects-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(exportAll(), null, 2), 'application/json;charset=utf-8')}>
             {t.projects.backupAll}
@@ -182,8 +182,8 @@ export function ProjectsPage({ auth }: { auth: AuthState }) {
             }}
           />
         </section>
-        {restoreMessage && <p className={`rounded-xl px-4 py-3 text-[14px] ${restoreMessage.ok ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>{restoreMessage.text}</p>}
-        <p className="rounded-xl bg-sunken p-4 text-[14px] leading-relaxed text-muted">{t.projects.cloudNote}</p>
+        {restoreMessage && <p className={`rounded-xl px-4 py-3 text-[0.875rem] ${restoreMessage.ok ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>{restoreMessage.text}</p>}
+        <p className="rounded-xl bg-sunken p-4 text-[0.875rem] leading-relaxed text-muted">{t.projects.cloudNote}</p>
       </main>
     </div>
   );

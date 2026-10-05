@@ -11,10 +11,14 @@ export interface RoomBill {
   rooms: Survey[];
   /** What a room is called by the people who use it, in the current language. */
   roomName: (location: LineLocation) => string;
-  /** The piece from the design editor, run through the engine — present whether or not it is in the bill. */
+  /** The piece open in the design editor right now — what "put in the room" would put there. */
   design: DesignResult;
   designName: string;
-  /** Blocking failures on that piece. A bill that includes a piece which does not stand up must say so. */
+  /** The piece that was put in a room, as it was when it was put there. Null when the room has none. */
+  pieceOf: (spaceId: string) => { name: string; result: DesignResult } | null;
+  /** True when the open room holds a piece and the editor has since moved on from it. */
+  pieceStale: boolean;
+  /** Blocking failures on the open room's piece. A bill with a piece that does not stand up must say so. */
   designBlockedBy: { id: string; title: string; explanation: string }[];
 }
 
@@ -49,9 +53,17 @@ export function useRoomBill(): RoomBill {
     };
 
     const finishes = finishLines({ specs: survey.finishes, spaces: rooms.map((r) => r.space), locationOf, placeName: nameOf });
-    // Whether the piece stands up does not depend on which room it is in, so it is checked once.
-    const designBlockedBy = linesFromDesign({ design, location: locationOf(survey.space.id) }).blockedBy;
     const lines: BoqLine[] = [];
+
+    // Forty copies of a room hold forty copies of the same piece; it is run through the engine once.
+    const results = new Map<string, DesignResult>();
+    const pieceOf = (spaceId: string) => {
+      const piece = byId.get(spaceId)?.piece;
+      if (!piece) return null;
+      const key = JSON.stringify(piece.params);
+      if (!results.has(key)) results.set(key, runDesign(piece.params, config, locale));
+      return { name: piece.name, result: results.get(key)! };
+    };
 
     for (const room of rooms) {
       const id = room.space.id;
@@ -59,22 +71,25 @@ export function useRoomBill(): RoomBill {
       // The same line arises in every room that needs it, so its id carries the room.
       const own = (l: BoqLine): BoqLine => ({ ...l, id: `${id}:${l.id}` });
 
-      if (room.includeDesign) {
+      const piece = pieceOf(id);
+      if (piece) {
         const name = nameOf(id);
-        const fromDesign = linesFromDesign({ design, location, titleHe: designName, titleEn: designName, placeHe: name.he, placeEn: name.en });
-        lines.push(...fromDesign.lines.map(own));
+        lines.push(...linesFromDesign({ design: piece.result, location, titleHe: piece.name, titleEn: piece.name, placeHe: name.he, placeEn: name.en }).lines.map(own));
       }
       lines.push(...finishes.filter((l) => l.location.spaceId === id));
       lines.push(...mepLines({ space: room.space, sources: room.sources, equipmentIds: room.equipmentIds, location }).map(own));
     }
 
+    const open = pieceOf(survey.space.id);
     return {
       lines,
       rooms,
       roomName: (location) => (he ? nameOf(location.spaceId).he : nameOf(location.spaceId).en),
       design,
       designName,
-      designBlockedBy,
+      pieceOf,
+      pieceStale: survey.piece != null && JSON.stringify(survey.piece.params) !== JSON.stringify(params),
+      designBlockedBy: open ? linesFromDesign({ design: open.result, location: locationOf(survey.space.id) }).blockedBy : [],
     };
-  }, [survey, design, designName, he]);
+  }, [survey, design, designName, he, params, config, locale]);
 }

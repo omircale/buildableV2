@@ -45,10 +45,10 @@ export function OrderTab({ result }: { result: DesignResult }) {
   const tooLong = encodeURIComponent(text).length > 6000;
   const ils = t.common.ilsExact;
   return (
-    <div className="space-y-4 text-[13px]">
+    <div className="space-y-4 text-[0.8125rem]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-[15px] font-semibold">{t.mfg.orderTitle}</div>
+          <div className="text-[0.9375rem] font-semibold">{t.mfg.orderTitle}</div>
           <div className="text-muted">{t.mfg.orderSubtitle}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -72,7 +72,7 @@ export function OrderTab({ result }: { result: DesignResult }) {
           <a className={buttonClass('secondary', 'sm')} href={`mailto:?subject=${encodeURIComponent(t.mfg.shareSubject(projectName))}&body=${encodeURIComponent(text)}`} aria-disabled={tooLong} onClick={(e) => tooLong && e.preventDefault()}>
             {t.mfg.shareEmail}
           </a>
-          {tooLong && <span className="text-[12px] text-muted">{t.mfg.shareTooLong}</span>}
+          {tooLong && <span className="text-[0.75rem] text-muted">{t.mfg.shareTooLong}</span>}
         </div>
       </div>
       {q.issues.length > 0 && (
@@ -128,7 +128,7 @@ export function OrderTab({ result }: { result: DesignResult }) {
             <Row key={a.name} label={a.name} value={ils(a.ils)} />
           ))}
           <Row label={t.mfg.shipping} value={ils(q.shippingIls)} />
-          <div className="flex justify-between border-t border-line pt-1.5 text-[15px] font-bold">
+          <div className="flex justify-between border-t border-line pt-1.5 text-[0.9375rem] font-bold">
             <span>{t.mfg.total}</span>
             <span className="num">{ils(q.totalIls)}</span>
           </div>
@@ -203,7 +203,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
 
   return (
     <div className="space-y-3 p-5 text-sm">
-      {result.report.exportBlocked && tab !== 'impact' && tab !== 'order' && <div className="rounded-lg bg-bad-soft px-3 py-2 text-[13px] text-bad">{t.mfg.blockedNotice}</div>}
+      {result.report.exportBlocked && tab !== 'impact' && tab !== 'order' && <div className="rounded-lg bg-bad-soft px-3 py-2 text-[0.8125rem] text-bad">{t.mfg.blockedNotice}</div>}
 
       {tab === 'order' && <OrderTab result={result} />}
 
@@ -211,7 +211,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
 
       {tab === 'cut' && (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full border-collapse text-[0.8125rem]">
             <thead>
               <tr className="border-b border-line text-muted">
                 {t.mfg.cutCols.map((h) => (
@@ -239,7 +239,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
                 {p.machining?.length ? (
                   <tr className="border-b border-line/60 bg-warn-soft/40">
                     <td className={td} />
-                    <td className={`${td} text-[12px]`} colSpan={t.mfg.cutCols.length - 1}>
+                    <td className={`${td} text-[0.75rem]`} colSpan={t.mfg.cutCols.length - 1}>
                       <span className="font-semibold">{t.mfg.machining}:</span> {p.machining.join(' · ')}
                     </td>
                   </tr>
@@ -253,14 +253,14 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
 
       {tab === 'sheets' && (
         <div className="space-y-4">
-          <p className="text-[13px] text-muted">{t.mfg.sheetsNote(config.kerfMm, config.trimMarginMm)}</p>
+          <p className="text-[0.8125rem] text-muted">{t.mfg.sheetsNote(config.kerfMm, config.trimMarginMm)}</p>
           {nesting.map((g) => (
             <div key={`${g.materialId}-${g.thicknessMm}`}>
               <h4 className="mb-1.5 font-semibold">
                 {(() => { const m = getMaterial(g.materialId); return m && materialName(m, locale); })()} {g.thicknessMm} {t.common.mm} · {t.mfg.sheetsCount(g.sheets.length)}
               </h4>
               {g.unplaced.length > 0 && (
-                <p className="text-[13px] text-bad">
+                <p className="text-[0.8125rem] text-bad">
                   {t.mfg.unplaced} {g.unplaced.map((u) => `${u.partId} (${u.reason})`).join(', ')}
                 </p>
               )}
@@ -268,7 +268,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
                 {g.sheets.map((s, i) => (
                   <figure key={s.index} className="rounded-lg bg-panel p-2 ring-1 ring-line">
                     <SheetDiagram group={g} sheetIndex={i} />
-                    <figcaption className="mt-1 text-[13px] text-muted">
+                    <figcaption className="mt-1 text-[0.8125rem] text-muted">
                       {t.mfg.sheetCaption(s.index)}: <span className="num">{s.stock.lengthMm}×{s.stock.widthMm}</span> · {t.mfg.waste} <span className="num">{s.wastePercent}%</span>
                     </figcaption>
                   </figure>
@@ -280,9 +280,9 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
       )}
 
       {tab === 'bom' && (
-        <div className="space-y-5 text-[13px]">
+        <div className="space-y-5 text-[0.8125rem]">
           <div>
-            <h4 className="mb-1.5 text-[15px] font-semibold">{t.mfg.boards}</h4>
+            <h4 className="mb-1.5 text-[0.9375rem] font-semibold">{t.mfg.boards}</h4>
             <table className="w-full">
               <tbody>
                 {bom.sheets.map((s) => (
@@ -303,7 +303,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
           </div>
           {bom.edgeBanding.length > 0 && (
             <div>
-              <h4 className="mb-1.5 text-[15px] font-semibold">{t.mfg.edgeBanding}</h4>
+              <h4 className="mb-1.5 text-[0.9375rem] font-semibold">{t.mfg.edgeBanding}</h4>
               {bom.edgeBanding.map((e) => (
                 <p key={e.basis}>
                   <span className="num">{e.lengthM}</span> m ({e.basis})
@@ -312,7 +312,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
             </div>
           )}
           <div>
-            <h4 className="mb-1.5 text-[15px] font-semibold">{t.mfg.hardware}</h4>
+            <h4 className="mb-1.5 text-[0.9375rem] font-semibold">{t.mfg.hardware}</h4>
             <table className="w-full">
               <tbody>
                 {hardware.map((h) => (
@@ -339,10 +339,10 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
         <ol className="space-y-2">
           {assembly.map((s) => (
             <li key={s.n} className="flex gap-3 rounded-lg bg-panel p-3 ring-1 ring-line">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-on-accent">{s.n}</span>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-[0.8125rem] font-bold text-on-accent">{s.n}</span>
               <AssemblyDiagram model={model} steps={assembly} stepIndex={s.n - 1} className="h-24 w-28 shrink-0 rounded bg-white" />
-              <div className="text-[13px]">
-                <div className="text-[15px] font-medium">{s.title}</div>
+              <div className="text-[0.8125rem]">
+                <div className="text-[0.9375rem] font-medium">{s.title}</div>
                 {s.hardware.length > 0 && (
                   <div className="text-muted">
                     {t.mfg.stepHardware} {s.hardware.map((h) => bom.hardware.find((x) => x.id === h)?.name ?? h).join(', ')}
@@ -357,7 +357,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
 
       {tab === 'impact' &&
         (impact ? (
-          <div className="space-y-2 text-[13px]">
+          <div className="space-y-2 text-[0.8125rem]">
             <p>
               {t.mfg.lastChange} <strong>{impact.changedParams.join(', ') || t.mfg.none}</strong>
             </p>
@@ -388,7 +388,7 @@ export function ManufacturingTab({ result, tab }: { result: DesignResult; tab: E
             )}
           </div>
         ) : (
-          <p className="text-[13px] text-muted">{t.mfg.noChangeYet}</p>
+          <p className="text-[0.8125rem] text-muted">{t.mfg.noChangeYet}</p>
         ))}
     </div>
   );

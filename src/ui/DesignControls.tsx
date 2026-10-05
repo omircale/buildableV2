@@ -59,7 +59,7 @@ export function DimensionFields({ result }: { result: DesignResult }) {
       {fields.map((f) => (
         <Field key={f.key} label={f.label}>
           <UnitInput ariaLabel={f.label} value={p[f.key]} scale={10} unit={t.common.cm} min={f.min} max={f.max} onChange={(v) => set(f.key, v)} />
-          <span className="mt-1 block min-h-5 text-[13px] text-warn">{Math.abs(p[f.key] - f.built) >= 1 ? t.setup.willBuild(formatCm(f.built)) : ''}</span>
+          <span className="mt-1 block min-h-5 text-[0.8125rem] text-warn">{Math.abs(p[f.key] - f.built) >= 1 ? t.setup.willBuild(formatCm(f.built)) : ''}</span>
         </Field>
       ))}
     </div>
@@ -85,7 +85,7 @@ export function ShelfMountingCards() {
           className={`flex min-h-[72px] flex-col justify-center gap-0.5 rounded-xl px-4 py-3 text-start transition disabled:opacity-50 ${params.shelfMounting === id ? 'bg-accent-soft ring-2 ring-accent' : 'bg-panel ring-1 ring-line-strong hover:bg-sunken'}`}
         >
           <span className="text-base font-semibold">{t.setup.mountings[id].name}</span>
-          <span className="text-[13px] text-muted">{t.setup.mountings[id].desc}</span>
+          <span className="text-[0.8125rem] text-muted">{t.setup.mountings[id].desc}</span>
         </button>
       ))}
     </div>
@@ -110,7 +110,7 @@ export function LoadCards() {
           className={`flex min-h-[76px] flex-col justify-center gap-0.5 rounded-xl px-4 py-3 text-start transition ${current === id ? 'bg-accent-soft ring-2 ring-accent' : 'bg-panel ring-1 ring-line-strong hover:bg-sunken'}`}
         >
           <span className="text-base font-semibold">{t.setup.loads[id].name}</span>
-          <span className="text-[13px] text-muted">{t.setup.loads[id].desc}</span>
+          <span className="text-[0.8125rem] text-muted">{t.setup.loads[id].desc}</span>
         </button>
       ))}
     </div>
@@ -145,7 +145,7 @@ function BoardPicker() {
   return (
     <div className="space-y-2">
     <SearchField value={query} onChange={setQuery} placeholder={t.search.boards} />
-    {query && <p className="text-[13px] text-muted">{visible.length ? t.search.showing(visible.length, boards.length) : t.search.noMatches}</p>}
+    {query && <p className="text-[0.8125rem] text-muted">{visible.length ? t.search.showing(visible.length, boards.length) : t.search.noMatches}</p>}
     <div className="max-h-[360px] space-y-1.5 overflow-y-auto p-0.5" role="radiogroup" aria-label={t.structure.board}>
       {visible.map((m) => {
         const sp = supplierProductFor(m)!;
@@ -162,8 +162,8 @@ function BoardPicker() {
             className={`w-full rounded-lg px-3 py-2 text-start transition ${selected ? 'bg-accent-soft ring-2 ring-accent' : 'bg-panel ring-1 ring-line hover:bg-sunken'}`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[15px] font-medium">{productTitle(sp.product, locale)}</span>
-              <span className="shrink-0 text-[13px] text-muted">
+              <span className="text-[0.9375rem] font-medium">{productTitle(sp.product, locale)}</span>
+              <span className="shrink-0 text-[0.8125rem] text-muted">
                 <span className="num">₪{minPrice}</span> {t.structure.perSqm}
               </span>
             </div>
@@ -260,19 +260,19 @@ function ShelfStructureControls({ result, p }: { result: DesignResult; p: OpenSh
       </Section>
       <Section id="division" title={t.structure.division} summary={`${t.setup.shelvesCount(p.shelfCount)}${p.shelfCount && p.shelfMounting === 'pins' ? ` (${t.setup.mountings.pins.name})` : ''} · ${t.setup.dividersCount(p.dividerCount)}`}>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[15px]">{t.structure.shelves}</span>
+          <span className="text-[0.9375rem]">{t.structure.shelves}</span>
           <Stepper label={t.structure.shelves} value={p.shelfCount} min={0} max={12} onChange={(v) => set('shelfCount', v)} format={(v) => String(v)} />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[15px]">{t.structure.dividers}</span>
+          <span className="text-[0.9375rem]">{t.structure.dividers}</span>
           <Stepper label={t.structure.dividers} value={p.dividerCount} min={0} max={6} onChange={(v) => set('dividerCount', v)} format={(v) => String(v)} />
         </div>
         {p.shelfCount > 0 && <ShelfMountingCards />}
-        <label className="flex min-h-10 items-center gap-3 text-[15px]">
+        <label className="flex min-h-10 items-center gap-3 text-[0.9375rem]">
           <input type="checkbox" checked={p.doors === 'hinged'} onChange={(e) => update({ doors: e.target.checked ? 'hinged' : 'none' })} className="h-5 w-5 accent-[var(--color-accent)]" />
           <span>
             {t.structure.doors}
-            <span className="block text-[13px] text-muted">{t.structure.doorsHint}</span>
+            <span className="block text-[0.8125rem] text-muted">{t.structure.doorsHint}</span>
           </span>
         </label>
       </Section>
@@ -288,7 +288,7 @@ function ShelfStructureControls({ result, p }: { result: DesignResult; p: OpenSh
           ))}
         </div>
         <details className="group">
-          <summary className="flex h-10 cursor-pointer list-none items-center gap-2 text-[15px] text-accent-ink">
+          <summary className="flex h-10 cursor-pointer list-none items-center gap-2 text-[0.9375rem] text-accent-ink">
             <IconChevron size={16} className="transition group-open:-rotate-90 ltr:rotate-180 ltr:group-open:rotate-90" />
             {t.structure.more}
           </summary>
@@ -307,11 +307,11 @@ function ShelfStructureControls({ result, p }: { result: DesignResult; p: OpenSh
             <Field label={t.structure.plinth} hint={t.structure.plinthHint}>
               <UnitInput value={p.plinthHeightMm} scale={10} unit={t.common.cm} min={0} max={20} onChange={(v) => set('plinthHeightMm', v)} />
             </Field>
-            <label className="flex min-h-10 items-center gap-3 text-[15px]">
+            <label className="flex min-h-10 items-center gap-3 text-[0.9375rem]">
               <input type="checkbox" checked={p.hasBack} onChange={(e) => update({ hasBack: e.target.checked })} className="h-5 w-5 accent-[var(--color-accent)]" />
               <span>
                 {t.structure.hasBack}
-                <span className="block text-[13px] text-muted">{t.structure.hasBackHint}</span>
+                <span className="block text-[0.8125rem] text-muted">{t.structure.hasBackHint}</span>
               </span>
             </label>
           </div>
@@ -339,14 +339,14 @@ function RoleDecors() {
   };
   return (
     <Section id="role-decors" title={t.look.byRole} defaultOpen={false} summary={custom ? t.look.customized(custom) : t.look.sameAsBody}>
-      <p className="text-[13px] leading-snug text-muted">{t.look.byRoleHint}</p>
+      <p className="text-[0.8125rem] leading-snug text-muted">{t.look.byRoleHint}</p>
       {roles.map((role) => {
         const value = p.roleFinishes?.[role] ?? '';
         const color = body.product.finishes.find((f) => f.id === (value || p.finishId))?.color;
         return (
           <div key={role} className="flex items-center gap-3">
             <span className="h-5 w-5 shrink-0 rounded-full ring-1 ring-black/25" style={{ background: color }} />
-            <span className="w-28 shrink-0 text-[15px]">{t.viewport.roles[role]}</span>
+            <span className="w-28 shrink-0 text-[0.9375rem]">{t.viewport.roles[role]}</span>
             <select aria-label={t.viewport.roles[role]} className={inputClass} value={value} onChange={(e) => setRole(role, e.target.value)}>
               <option value="">{t.look.sameAsBody}</option>
               {body.product.finishes.map((f) => (
@@ -359,7 +359,7 @@ function RoleDecors() {
         );
       })}
       {(custom > 0 || Object.keys(p.partFinishes ?? {}).length > 0) && (
-        <button type="button" onClick={() => update({ roleFinishes: {}, partFinishes: {} })} className="self-start text-[13px] font-medium text-accent-ink underline underline-offset-2">
+        <button type="button" onClick={() => update({ roleFinishes: {}, partFinishes: {} })} className="self-start text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">
           {t.look.resetParts}
         </button>
       )}
@@ -384,7 +384,7 @@ export function LookControls() {
     <div>
       {body && (
         <Section id="decor" title={t.look.decor} count={body.product.finishes.length} summary={(() => { const f = body.product.finishes.find((f) => f.id === p.finishId); return f && finishName(f, locale); })()}>
-          <p className="text-[13px] leading-snug text-muted">{productDescription(body.product, locale)}</p>
+          <p className="text-[0.8125rem] leading-snug text-muted">{productDescription(body.product, locale)}</p>
           {body.product.finishes.length > 6 && <SearchField value={decorQuery} onChange={setDecorQuery} placeholder={t.search.decors} />}
           <div className="flex flex-wrap gap-2">
             {body.product.finishes.filter((f) => matchesQuery(decorQuery, finishName(f, locale))).map((f) => (
@@ -456,20 +456,20 @@ export function LookControls() {
       )}
 
       <Section id="decor-catalog" title={t.decors.openCatalog} defaultOpen={false} summary={decorPreview ? decorPreview.nameHe : undefined}>
-        <p className="text-[13px] leading-snug text-muted">{t.decors.intro}</p>
+        <p className="text-[0.8125rem] leading-snug text-muted">{t.decors.intro}</p>
         <a href="#/decors" className={`${buttonClass('secondary', 'sm')} self-start`}>
           {t.decors.openCatalog}
         </a>
-        <p className="text-[12px] leading-snug text-muted">{DECOR_CATALOG.attribution}</p>
+        <p className="text-[0.75rem] leading-snug text-muted">{DECOR_CATALOG.attribution}</p>
         {decorPreview && (
-          <button type="button" onClick={() => setDecorPreview(null)} className="self-start text-[13px] font-medium text-accent-ink underline underline-offset-2">
+          <button type="button" onClick={() => setDecorPreview(null)} className="self-start text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">
             {t.decors.clearPreview}
           </button>
         )}
       </Section>
 
       <Section id="after-delivery" title={t.look.afterDelivery} defaultOpen={false} summary={t.look.finishTypes[p.finish.type]}>
-        <p className="text-[13px] leading-snug text-muted">{t.look.afterDeliveryHint}</p>
+        <p className="text-[0.8125rem] leading-snug text-muted">{t.look.afterDeliveryHint}</p>
         <div className="grid grid-cols-2 gap-3">
           <Field label={t.look.finishType}>
             <select className={inputClass} value={p.finish.type} onChange={(e) => setFinish({ type: e.target.value as FinishSpec['type'] })}>
@@ -496,7 +496,7 @@ export function LookControls() {
           </Field>
         )}
       </Section>
-      <p className="m-5 rounded-lg bg-sunken p-3 text-[13px] leading-relaxed text-muted">{t.look.comingNote}</p>
+      <p className="m-5 rounded-lg bg-sunken p-3 text-[0.8125rem] leading-relaxed text-muted">{t.look.comingNote}</p>
     </div>
   );
 }
@@ -524,20 +524,20 @@ export function SelectedPartPanel({ result }: { result: DesignResult }) {
     <div>
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <div>
-          <div className="text-[13px] text-muted">{t.structure.selected}</div>
+          <div className="text-[0.8125rem] text-muted">{t.structure.selected}</div>
           <div className="text-xl font-bold">{c.name}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <button type="button" onClick={() => select(null)} className="h-9 rounded-lg px-3 text-[15px] text-accent-ink hover:bg-sunken">
+          <button type="button" onClick={() => select(null)} className="h-9 rounded-lg px-3 text-[0.9375rem] text-accent-ink hover:bg-sunken">
             {t.structure.backToUnit}
           </button>
-          <button type="button" aria-pressed={isolated} onClick={() => setIsolated(!isolated)} className={`h-9 rounded-lg px-3 text-[14px] ring-1 ${isolated ? 'bg-accent-soft font-semibold text-accent-ink ring-accent' : 'ring-line hover:bg-sunken'}`}>
+          <button type="button" aria-pressed={isolated} onClick={() => setIsolated(!isolated)} className={`h-9 rounded-lg px-3 text-[0.875rem] ring-1 ${isolated ? 'bg-accent-soft font-semibold text-accent-ink ring-accent' : 'ring-line hover:bg-sunken'}`}>
             {isolated ? t.structure.showAll : t.structure.isolate}
           </button>
         </div>
       </div>
       <div className="space-y-4 px-5 py-4">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[15px]">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[0.9375rem]">
           <dt className="text-muted">{t.structure.size}</dt>
           <dd className="text-end">
             <span className="num">
@@ -594,7 +594,7 @@ export function SelectedPartPanel({ result }: { result: DesignResult }) {
             </select>
           </Field>
         )}
-        {checks.length === 0 && <p className="text-[15px] text-muted">{t.structure.noChecks}</p>}
+        {checks.length === 0 && <p className="text-[0.9375rem] text-muted">{t.structure.noChecks}</p>}
         <IssuesList checks={checks.filter((x) => x.status !== 'GREEN')} />
         {checks.filter((x) => x.status === 'GREEN').map((check) => (
           <div key={check.id} className="flex items-start gap-2 rounded-xl bg-ok-soft p-3">
@@ -602,9 +602,9 @@ export function SelectedPartPanel({ result }: { result: DesignResult }) {
               <StatusIcon status="GREEN" size={18} />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-semibold">{check.title}</div>
-              {check.calculation && <div className="mt-0.5 text-[13px]">{check.calculation.result}</div>}
-              <button type="button" onClick={() => openAdvanced('checks', check.id)} className="mt-1 text-[13px] font-medium text-accent-ink underline underline-offset-2">
+              <div className="text-[0.9375rem] font-semibold">{check.title}</div>
+              {check.calculation && <div className="mt-0.5 text-[0.8125rem]">{check.calculation.result}</div>}
+              <button type="button" onClick={() => openAdvanced('checks', check.id)} className="mt-1 text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">
                 {t.structure.howCalculated}
               </button>
             </div>

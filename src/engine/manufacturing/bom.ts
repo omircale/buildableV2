@@ -1,3 +1,4 @@
+import { csvCell } from '../csv';
 import { materialName, tr, type EngineLocale } from '../i18n';
 import type { FurnitureModel, HardwareLine, Material, Part } from '../types';
 import type { NestingGroupResult } from './nesting';
@@ -65,10 +66,6 @@ export function estimateMass(parts: Part[], materials: (id: string) => Material 
   return Math.round(total * 10) / 10;
 }
 
-function csvCell(v: string | number): string {
-  const s = String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
 
 /** `locale` selects the material name language (default: current engine locale, Hebrew unless changed). */
 export function cutListCsv(parts: Part[], materials: (id: string) => Material | undefined, locale?: EngineLocale): string {
