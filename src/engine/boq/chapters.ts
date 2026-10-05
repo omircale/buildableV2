@@ -41,6 +41,7 @@ export const CHAPTERS: Record<string, Chapter> = {
   '11': { code: '11', he: 'עבודות צביעה', en: 'Painting', source: BLUE_BOOK },
   '14': { code: '14', he: 'עבודות אבן', en: 'Stone works', source: BLUE_BOOK },
   '15': { code: '15', he: 'מתקני מיזוג אוויר', en: 'Air-conditioning installations', source: BLUE_BOOK },
+  '18': { code: '18', he: 'תשתיות תקשורת', en: 'Communications infrastructure', source: BLUE_BOOK },
   '24': { code: '24', he: 'הריסות ופירוקים', en: 'Demolition and strip-out', source: PUBLISHED_BILLS },
   '30': { code: '30', he: 'ריהוט וציוד מורכב בבניין', en: 'Fitted furniture and equipment', source: PUBLISHED_BILLS },
 };
@@ -60,6 +61,7 @@ export const TRADE_CHAPTER: Partial<Record<Trade, string>> = {
   plumbing: '07',
   electrical: '08',
   hvac: '15',
+  communications: '18',
   finishes: '10',
   equipment: '30',
 };

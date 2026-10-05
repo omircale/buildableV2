@@ -572,3 +572,25 @@ describe('a project can be taken away as a file and brought back', () => {
     expect(JSON.parse(localStorage.getItem('buildable.survey.v1')!).describeText).toBe('מטבח עם שני כיורים');
   });
 });
+
+describe('the kind of place a room is', () => {
+  it('starts as "all", so nothing is hidden before anyone has said what the room is', () => {
+    expect(useSurvey.getState().sector).toBe('all');
+  });
+
+  it('is kept per room, survives a refresh, and a new room starts as the same kind', () => {
+    useSurvey.getState().setSector('office');
+    expect(JSON.parse(localStorage.getItem('buildable.survey.v1')!).sector).toBe('office');
+    useSurvey.getState().addRoom();
+    expect(useSurvey.getState().sector).toBe('office');
+    useSurvey.getState().setSector('shop');
+    useSurvey.getState().openRoom('room_1');
+    expect(useSurvey.getState().sector).toBe('office');
+  });
+
+  it('narrowing the list takes nothing out of the room', () => {
+    useSurvey.getState().toggleEquipment('bar_sink_single');
+    useSurvey.getState().setSector('office');
+    expect(useSurvey.getState().equipmentIds).toEqual(['bar_sink_single']);
+  });
+});

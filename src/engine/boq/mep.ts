@@ -37,6 +37,7 @@ const KIND_LABEL: Record<ServiceKind, { he: string; en: string }> = {
   electrical: { he: 'חשמל', en: 'electrical' },
   gas: { he: 'גז', en: 'gas' },
   ventilation: { he: 'אוורור', en: 'ventilation' },
+  data: { he: 'תקשורת', en: 'data' },
 };
 
 /** The note every MEP line carries, so no reader can mistake a count for a design. */
@@ -44,6 +45,18 @@ const LICENSED_NOTE = {
   he: 'כמות בלבד — קוטר, הגנה ותוואי נקבעים בתכנון של בעל מקצוע מוסמך',
   en: 'Quantity only — diameter, protection and routing are set by a licensed professional’s design',
 };
+
+/**
+ * The note on a data point. It does not speak of a licence, because nothing read so far says that
+ * low-voltage cabling needs one — and claiming a legal requirement nobody verified is as wrong as
+ * omitting one that exists.
+ */
+const DESIGNED_NOTE = {
+  he: 'כמות בלבד — סוג הכבל והתוואי נקבעים בתכנון התקשורת',
+  en: 'Quantity only — cable type and routing are set by the communications design',
+};
+
+const noteFor = (trade: Trade) => (LICENSED_TRADES.has(trade) ? LICENSED_NOTE : DESIGNED_NOTE);
 
 export interface MepLinesInput {
   space: Space;
@@ -88,8 +101,8 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
       id: `mep_${need.kind}_points`,
       trade,
       section: 'points',
-      descriptionHe: `נקודת ${label.he} חדשה, כולל קו ההזנה עד המקור. ${LICENSED_NOTE.he}.`,
-      descriptionEn: `New ${label.en} point, including the run that feeds it from its source. ${LICENSED_NOTE.en}.`,
+      descriptionHe: `נקודת ${label.he} חדשה, כולל קו ההזנה עד המקור. ${noteFor(trade).he}.`,
+      descriptionEn: `New ${label.en} point, including the run that feeds it from its source. ${noteFor(trade).en}.`,
       unit: 'point',
       quantity: need.toCreate,
       assumptionHe: distanceHe,
@@ -143,8 +156,8 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
       id: `mep_${s.kind}_bring_supply`,
       trade,
       section: 'supply',
-      descriptionHe: `הבאת אספקת ${label.he} אל החלל. ${LICENSED_NOTE.he}.`,
-      descriptionEn: `Bring a ${label.en} supply to the room. ${LICENSED_NOTE.en}.`,
+      descriptionHe: `הבאת אספקת ${label.he} אל החלל. ${noteFor(trade).he}.`,
+      descriptionEn: `Bring a ${label.en} supply to the room. ${noteFor(trade).en}.`,
       unit: 'lump',
       quantity: null,
       unknownReasonHe: `אין מקור ${label.he} בחלל. היקף העבודה נקבע לפי מאיפה יימשך המקור, ולא ניתן לקבוע זאת מסקר החדר בלבד.`,

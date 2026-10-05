@@ -25,7 +25,8 @@ export interface SpaceReading {
 }
 
 /** Every phrasing that names a catalogue item. Token sequences, matched after prefix stripping. */
-const EQUIPMENT_TERMS: Record<string, string[][]> = {
+export const EQUIPMENT_TERMS: Record<string, string[][]> = {
+  // The first phrase of each item is the one that names it without doubt; a test reads it back.
   bar_sink_single: [['כיור', 'בר'], ['כיור'], ['כיורים'], ['sink'], ['sinks']],
   bar_tap: [['ברז'], ['ברזים'], ['tap'], ['taps'], ['faucet']],
   undercounter_fridge: [
@@ -42,9 +43,48 @@ const EQUIPMENT_TERMS: Record<string, string[][]> = {
   ice_maker: [['מכונת', 'קרח'], ['מכונות', 'קרח'], ['ice', 'maker'], ['ice', 'machine']],
   grease_trap: [['מפריד', 'שומן'], ['מפרידי', 'שומן'], ['grease', 'trap']],
   waste_bin_unit: [['יחידת', 'פסולת'], ['פח', 'אשפה'], ['פח'], ['פחים'], ['waste', 'unit'], ['bin']],
+
+  hand_wash_basin: [['כיור', 'רחיצת', 'ידיים'], ['כיור', 'ידיים'], ['כיורי', 'ידיים'], ['hand', 'wash', 'basin'], ['handwash', 'basin']],
+  prep_sink_double: [['כיור', 'הכנה'], ['כיור', 'כפול'], ['כיורי', 'הכנה'], ['prep', 'sink']],
+  dishwasher_commercial: [['מדיח', 'כלים', 'תעשייתי'], ['מדיח', 'תעשייתי'], ['מדיח', 'כלים'], ['מדיח'], ['מדיחים'], ['dishwasher'], ['dishwashers']],
+  glasswasher: [['מדיח', 'כוסות'], ['מדיחי', 'כוסות'], ['glasswasher'], ['glass', 'washer']],
+  // A range or a combi oven is only recognised with its fuel: the fuel is what decides the point.
+  range_gas: [['כיריים', 'גז'], ['gas', 'range'], ['gas', 'hob']],
+  range_induction: [['כיריים', 'אינדוקציה'], ['אינדוקציה'], ['induction', 'range'], ['induction', 'hob'], ['induction']],
+  oven_combi_electric: [['תנור', 'קומבי', 'חשמלי'], ['קומביסטימר', 'חשמלי'], ['electric', 'combi', 'oven'], ['electric', 'combi']],
+  oven_combi_gas: [['תנור', 'קומבי', 'גז'], ['קומביסטימר', 'גז'], ['gas', 'combi', 'oven'], ['gas', 'combi']],
+  fryer_electric: [['צ׳יפסר', 'חשמלי'], ["צ'יפסר", 'חשמלי'], ['ציפסר', 'חשמלי'], ['electric', 'fryer']],
+  fryer_gas: [['צ׳יפסר', 'גז'], ["צ'יפסר", 'גז'], ['ציפסר', 'גז'], ['gas', 'fryer']],
+  griddle_gas: [['פלנצ׳ה'], ["פלנצ'ה"], ['פלנצה'], ['גריל', 'גז'], ['griddle'], ['gas', 'grill']],
+  extraction_hood: [['קולט', 'אדים'], ['קולטי', 'אדים'], ['מנדף'], ['מנדפים'], ['extraction', 'hood'], ['hood'], ['hoods']],
+  upright_fridge: [['מקרר', 'עומד'], ['מקררים', 'עומדים'], ['upright', 'fridge'], ['upright', 'refrigerator']],
+  upright_freezer: [['מקפיא', 'עומד'], ['מקפיא'], ['מקפיאים'], ['upright', 'freezer'], ['freezer'], ['freezers']],
+  prep_counter_refrigerated: [['שולחן', 'קירור'], ['שולחנות', 'קירור'], ['סלטייה'], ['refrigerated', 'counter'], ['prep', 'counter']],
+  espresso_machine: [['מכונת', 'אספרסו'], ['מכונות', 'אספרסו'], ['אספרסו'], ['espresso', 'machine'], ['espresso']],
+  coffee_grinder: [['מטחנת', 'קפה'], ['מטחנות', 'קפה'], ['מטחנה'], ['coffee', 'grinder'], ['grinder']],
+
+  workstation: [['עמדת', 'עבודה'], ['עמדות', 'עבודה'], ['עמדות'], ['workstation'], ['workstations'], ['desk'], ['desks']],
+  meeting_room_screen: [['מסך', 'חדר', 'ישיבות'], ['מסך', 'ישיבות'], ['מסך'], ['מסכים'], ['meeting', 'room', 'screen'], ['screen'], ['screens']],
+  printer_mfp: [['מדפסת', 'משולבת'], ['מדפסת'], ['מדפסות'], ['printer'], ['printers']],
+  network_cabinet: [['ארון', 'תקשורת'], ['ארונות', 'תקשורת'], ['network', 'cabinet'], ['comms', 'cabinet'], ['rack']],
+  wifi_access_point: [['נקודת', 'גישה'], ['נקודות', 'גישה'], ['wifi'], ['wi-fi'], ['access', 'point'], ['access', 'points']],
+  kitchenette_sink: [['כיור', 'מטבחון'], ['kitchenette', 'sink']],
+  kitchenette_dishwasher: [['מדיח', 'למטבחון'], ['מדיח', 'מטבחון'], ['kitchenette', 'dishwasher']],
+  kitchenette_fridge: [['מקרר', 'מטבחון'], ['מקרר', 'למטבחון'], ['kitchenette', 'fridge'], ['office', 'fridge']],
+  water_dispenser: [['מתקן', 'מים'], ['מתקני', 'מים'], ['בר', 'מים'], ['water', 'dispenser'], ['water', 'cooler']],
+  split_ac_indoor: [['מזגן', 'מפוצל'], ['מזגן'], ['מזגנים'], ['air', 'conditioner'], ['air', 'conditioners'], ['split', 'ac']],
+
+  pos_terminal: [['עמדת', 'קופה'], ['עמדות', 'קופה'], ['קופה'], ['קופות'], ['point', 'of', 'sale'], ['till'], ['tills'], ['checkout'], ['pos']],
+  display_fridge: [['מקרר', 'תצוגה'], ['מקררי', 'תצוגה'], ['display', 'fridge'], ['display', 'fridges']],
+  display_freezer: [['מקפיא', 'תצוגה'], ['מקפיאי', 'תצוגה'], ['display', 'freezer']],
+  illuminated_sign: [['שלט', 'מואר'], ['שלט'], ['שלטים'], ['illuminated', 'sign'], ['sign'], ['signs']],
+  automatic_door: [['דלת', 'אוטומטית'], ['דלתות', 'אוטומטיות'], ['automatic', 'door'], ['automatic', 'doors']],
+  electric_shutter: [['תריס', 'חשמלי'], ['תריס', 'גלילה'], ['תריס'], ['תריסים'], ['roller', 'shutter'], ['shutter'], ['shutters']],
+  security_camera: [['מצלמת', 'אבטחה'], ['מצלמות', 'אבטחה'], ['מצלמה'], ['מצלמות'], ['security', 'camera'], ['camera'], ['cameras'], ['cctv']],
+  anti_theft_gate: [['שער', 'נגד', 'גניבות'], ['שערי', 'גניבות'], ['anti-theft', 'gate'], ['security', 'gate']],
 };
 
-const ROOM_TERMS: string[][] = [['בר', 'בריכה'], ['pool', 'bar'], ['מטבח'], ['kitchen'], ['ספא'], ['spa'], ['לובי'], ['lobby'], ['בר']];
+const ROOM_TERMS: string[][] = [['בר', 'בריכה'], ['pool', 'bar'], ['חדר', 'ישיבות'], ['meeting', 'room'], ['מטבחון'], ['kitchenette'], ['מטבח'], ['kitchen'], ['מסעדה'], ['restaurant'], ['משרד'], ['office'], ['חנות'], ['shop'], ['store'], ['ספא'], ['spa'], ['לובי'], ['lobby'], ['בר']];
 
 const OPEN_TERMS: string[][] = [['פתוח', 'לבריכה'], ['פתוח', 'לדק'], ['פתוח'], ['פתוחה'], ['open', 'to'], ['open']];
 
@@ -61,11 +101,25 @@ const COUNT_WORDS: Record<string, number> = {
   ארבע: 4,
   חמישה: 5,
   חמש: 5,
+  שישה: 6,
+  שש: 6,
+  שבעה: 7,
+  שבע: 7,
+  שמונה: 8,
+  תשעה: 9,
+  תשע: 9,
+  עשרה: 10,
+  עשר: 10,
   one: 1,
   two: 2,
   three: 3,
   four: 4,
   five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
 };
 
 /** Words that carry no content of their own here. "אין" is deliberately absent: it means something. */

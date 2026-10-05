@@ -180,7 +180,7 @@ describe('every MEP line flags the licensed trade', () => {
   });
 
   it('the flag is derived from the trade so it cannot drift from the line', () => {
-    for (const trade of Object.values(SERVICE_TRADE)) expect(requiresLicensedDesign(trade), trade).toBe(true);
+    for (const trade of Object.values(SERVICE_TRADE)) expect(requiresLicensedDesign(trade), trade).toBe(trade !== 'communications');
     expect(requiresLicensedDesign('joinery')).toBe(false);
     expect(requiresLicensedDesign('finishes')).toBe(false);
   });
@@ -240,5 +240,30 @@ describe('the questions the bill is waiting on', () => {
     const generated = mepLines({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT, location: AT });
     expect(generated.filter((l) => l.section === 'points').every((l) => l.quantity! > 0)).toBe(true);
     expect(mepOpenQuestions({ space: blank, sources: [], equipmentIds: BAR_EQUIPMENT }).length).toBe(4);
+  });
+});
+
+describe('an office: data points are counted, filed under communications, and not called licensed', () => {
+  // A measured room with nothing in it yet, so every point the desks need is a new one.
+  const office = () => mepLines({ space: { ...poolBar(), connections: [] }, sources: [], equipmentIds: ['workstation', 'workstation', 'workstation', 'wifi_access_point'], location: AT });
+
+  it('three desks and an access point are four data points', () => {
+    const data = office().find((l) => l.id === 'mep_data_points')!;
+    expect(data.quantity).toBe(4);
+    expect(data.unit).toBe('point');
+    expect(data.trade).toBe('communications');
+  });
+
+  it('the data line speaks of the communications design and makes no claim about a licence', () => {
+    const data = office().find((l) => l.id === 'mep_data_points')!;
+    expect(data.descriptionHe).toContain('תכנון התקשורת');
+    expect(data.descriptionHe).not.toContain('מוסמך');
+    expect(data.descriptionEn).not.toContain('licensed');
+  });
+
+  it('the power line beside it still does', () => {
+    const power = office().find((l) => l.id === 'mep_electrical_points')!;
+    expect(power.quantity).toBe(3);
+    expect(power.descriptionEn).toContain('licensed professional');
   });
 });

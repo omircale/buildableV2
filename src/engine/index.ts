@@ -176,8 +176,8 @@ export {
   whatIsMissing,
 } from './space/space';
 export type { Space, WallSegment, Aperture, Obstacle, ConnectionPoint, Zone, ConnectionMatch, SpaceProblem } from './space/space';
-export { EQUIPMENT, LICENSED_TRADES, SERVICE_LABEL, SERVICE_TRADE, clearancesFor, equipmentById, servicesFor } from './equipment/catalog';
-export type { EquipmentItem, EquipmentCategory, ServiceKind, ServiceRequirement } from './equipment/catalog';
+export { EQUIPMENT, LICENSED_TRADES, SECTORS, SERVICE_LABEL, SERVICE_TRADE, clearancesFor, equipmentById, equipmentFor, servicesFor } from './equipment/catalog';
+export type { EquipmentItem, EquipmentCategory, Sector, ServiceKind, ServiceRequirement } from './equipment/catalog';
 export { BLOCKING_SUPPLY_STATUSES, danglingFeeds, mismatchedFeeds, supplyReport } from './space/supply';
 export type { ServiceSource, SupplyLine, SupplyStatus } from './space/supply';
 export { TRADE_LABEL, UNIT_LABEL, byLevel, byLocation, byTrade, locationKey, totals } from './boq/line';

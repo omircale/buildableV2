@@ -1,8 +1,9 @@
-import { EQUIPMENT, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
+import { useState } from 'react';
+import { EQUIPMENT, SECTORS, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
 import { useT } from '../../i18n';
 import { countOf, useSurvey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
-import { Chip, Field, FlatSections, Section, inputClass } from '../common';
+import { Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
 import { IconMinus, IconPlus } from '../icons';
 import { SERVICE_KINDS, serviceName } from './services';
 import type { RoomBill } from './useRoomBill';
@@ -66,11 +67,17 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
   const locale = useUi((s) => s.locale);
   const he = locale === 'he';
   const survey = useSurvey();
+  const [equipmentQuery, setEquipmentQuery] = useState('');
   const walls = wallsOf(survey.space);
   const problems = spaceProblems(survey.space);
   const gaps = whatIsMissing(survey.space);
   // A survey that contradicts itself: a point fed from a source that is gone, or from the wrong kind.
   const feedProblems = [...danglingFeeds(survey.space, survey.sources), ...mismatchedFeeds(survey.space, survey.sources)];
+  // What is offered: the items for this kind of place, plus anything already in the room — narrowing
+  // the list must never hide something that is being counted.
+  const offered = EQUIPMENT.filter((item) => survey.sector === 'all' || item.sectors.includes(survey.sector) || survey.equipmentIds.includes(item.id)).filter(
+    (item) => matchesQuery(equipmentQuery, item.nameHe, item.nameEn) || survey.equipmentIds.includes(item.id),
+  );
   const area = he ? UNIT_LABEL.m2.he : UNIT_LABEL.m2.en;
   const length = he ? UNIT_LABEL.m.he : UNIT_LABEL.m.en;
 
@@ -131,8 +138,17 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
 
       <Section title={t.survey.equipmentSection} count={survey.equipmentIds.length}>
         <p className="text-small text-muted">{t.survey.equipmentHint}</p>
+        <div role="group" aria-label={t.survey.sectorLabel} className="flex flex-wrap gap-1.5">
+          {(['all', ...SECTORS] as const).map((sector) => (
+            <Chip key={sector} selected={survey.sector === sector} onClick={() => survey.setSector(sector)}>
+              {t.survey.sectors[sector]}
+            </Chip>
+          ))}
+        </div>
+        <input type="search" className={inputClass} placeholder={t.survey.equipmentSearch} aria-label={t.survey.equipmentSearch} value={equipmentQuery} onChange={(e) => setEquipmentQuery(e.target.value)} />
+        {offered.length === 0 && <p className="text-small text-muted">{t.survey.equipmentNone}</p>}
         <div className="flex flex-wrap gap-2">
-          {EQUIPMENT.map((item) => {
+          {offered.map((item) => {
             const n = countOf(survey.equipmentIds, item.id);
             return (
               <div key={item.id} className="flex items-center gap-1">

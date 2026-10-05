@@ -1,6 +1,6 @@
 import { SERVICE_LABEL, type ServiceKind } from '../../engine';
 
-export const SERVICE_KINDS: ServiceKind[] = ['water_cold', 'water_hot', 'drain', 'electrical', 'gas', 'ventilation'];
+export const SERVICE_KINDS: ServiceKind[] = ['water_cold', 'water_hot', 'drain', 'electrical', 'gas', 'ventilation', 'data'];
 
 /** A service's name for display; the engine's English labels are lower case for use mid-sentence. */
 export function serviceName(kind: ServiceKind, he: boolean): string {

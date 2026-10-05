@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
 import type { ServiceKind } from '../engine';
-import type { DesignParams, FinishScheduleSpec, ServiceSource } from '../engine';
+import type { DesignParams, FinishScheduleSpec, Sector, ServiceSource } from '../engine';
 
 /**
  * A room a maintenance manager is surveying, and what is going into it.
@@ -39,6 +39,11 @@ export interface Survey {
   /** Where the room sits in the hotel. The space model does not carry a building or a floor. */
   buildingId: string;
   levelId: string;
+  /**
+   * Which kind of place this room is, for choosing what equipment to offer first. It narrows a list;
+   * it changes nothing in the bill, and equipment already in the room stays whatever this says.
+   */
+  sector: Sector | 'all';
   /** What is going in, by equipment id. An id appears once per unit — two fridges are two entries. */
   equipmentIds: string[];
   /** The risers, mains and panels the points hang off. */
@@ -120,6 +125,7 @@ function blank(): Survey {
     sample: false,
     buildingId: 'main',
     levelId: '0',
+    sector: 'all',
     equipmentIds: [],
     sources: [],
     answers: {},
@@ -145,6 +151,7 @@ function reviveRoom(saved: Partial<Survey>): Survey {
     sample: saved.sample ?? false,
     buildingId: saved.buildingId ?? base.buildingId,
     levelId: saved.levelId ?? base.levelId,
+    sector: saved.sector ?? 'all',
     equipmentIds: saved.equipmentIds ?? [],
     sources: saved.sources ?? [],
     answers,
@@ -175,8 +182,8 @@ function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
 
 /** The per-room fields of the store, taken as a snapshot that can be parked in `others`. */
 function snapshot(s: Survey): Survey {
-  const { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, piece, updatedAt } = s;
-  return { space, widthMm, depthMm, sample, buildingId, levelId, equipmentIds, sources, answers, piece, updatedAt };
+  const { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, updatedAt } = s;
+  return { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, updatedAt };
 }
 
 /** Every room of the project, the open one included, in bill order. */
@@ -227,6 +234,7 @@ export interface SurveyState extends Survey, ProjectExtras {
   setHeight: (heightMm: number | null) => void;
   toggleOpenEdge: (index: number) => void;
   setPlace: (buildingId: string, levelId: string) => void;
+  setSector: (sector: Sector | 'all') => void;
   /** Adds one of an item, or takes every one of it out if it is already there. */
   toggleEquipment: (id: string) => void;
   setEquipmentCount: (id: string, count: number) => void;
@@ -363,6 +371,11 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
+    setSector: (sector) => {
+      set({ sector });
+      persist();
+    },
+
     toggleEquipment: (id) => {
       const have = get().equipmentIds;
       set({ equipmentIds: have.includes(id) ? have.filter((x) => x !== id) : [...have, id] });
@@ -437,6 +450,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
       // A new room is on the same floor of the same building until someone says otherwise.
       room.buildingId = st.buildingId;
       room.levelId = st.levelId;
+      // …and the same kind of place: the next room of an office is usually an office.
+      room.sector = st.sector;
       set({ ...room, others: [...st.others, snapshot(st)], order: [...st.order, room.space.id] });
       persist();
     },

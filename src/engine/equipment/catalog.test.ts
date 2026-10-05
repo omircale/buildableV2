@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EQUIPMENT, LICENSED_TRADES, SERVICE_TRADE, equipmentById, servicesFor } from './catalog';
+import { EQUIPMENT, LICENSED_TRADES, SECTORS, SERVICE_LABEL, SERVICE_TRADE, clearancesFor, equipmentById, equipmentFor, servicesFor } from './catalog';
 
 describe('the equipment catalogue', () => {
   it('states no size, mass or price it has not been given', () => {
@@ -62,11 +62,87 @@ describe('the licensed line', () => {
     }
   });
 
-  it('every trade a service pulls in is one that needs a licensed professional', () => {
-    // This is rule 02 made testable: everything equipment drags in is plumbing, electrical, gas or
-    // ventilation — all of which this engine counts and never certifies.
-    for (const trade of Object.values(SERVICE_TRADE)) {
-      expect(LICENSED_TRADES.has(trade), trade).toBe(true);
+  it('water, power, gas and air are licensed trades; data is the one this engine does not call licensed', () => {
+    // Rule 02 made testable — with its one honest exception. Nothing read so far says low-voltage
+    // cabling needs a licence, so the engine neither claims it nor denies it: it says "designed".
+    const licensed = Object.entries(SERVICE_TRADE).filter(([, trade]) => LICENSED_TRADES.has(trade)).map(([kind]) => kind);
+    expect(licensed.sort()).toEqual(['drain', 'electrical', 'gas', 'ventilation', 'water_cold', 'water_hot']);
+    expect(SERVICE_TRADE.data).toBe('communications');
+    expect(LICENSED_TRADES.has('communications')).toBe(false);
+  });
+});
+
+describe('the catalogue beyond the bar', () => {
+  it('has something to offer every kind of place', () => {
+    for (const sector of SECTORS) expect(equipmentFor(sector).length, sector).toBeGreaterThanOrEqual(8);
+  });
+
+  it('every item belongs somewhere, and no id is used twice', () => {
+    for (const item of EQUIPMENT) expect(item.sectors.length, item.id).toBeGreaterThan(0);
+    expect(new Set(EQUIPMENT.map((e) => e.id)).size).toBe(EQUIPMENT.length);
+  });
+
+  it('every item is named in both languages', () => {
+    for (const item of EQUIPMENT) {
+      expect(item.nameHe.length, item.id).toBeGreaterThan(0);
+      expect(item.nameEn.length, item.id).toBeGreaterThan(0);
     }
+  });
+
+  it('every service kind an item can ask for has a name and a trade', () => {
+    for (const item of EQUIPMENT) {
+      for (const s of item.services) {
+        expect(SERVICE_LABEL[s.kind], `${item.id} ${s.kind}`).toBeDefined();
+        expect(SERVICE_TRADE[s.kind], `${item.id} ${s.kind}`).toBeDefined();
+      }
+    }
+  });
+
+  it('a desk is one power point and one data point', () => {
+    const needs = servicesFor(['workstation']);
+    expect(needs.map((n) => [n.kind, n.quantity]).sort()).toEqual([
+      ['data', 1],
+      ['electrical', 1],
+    ]);
+  });
+
+  it('twelve desks are twelve of each', () => {
+    const needs = servicesFor(Array<string>(12).fill('workstation'));
+    expect(needs.find((n) => n.kind === 'data')!.quantity).toBe(12);
+    expect(needs.find((n) => n.kind === 'electrical')!.quantity).toBe(12);
+  });
+
+  it('the fuel decides the point: a gas range asks for gas, an induction range for power', () => {
+    expect(servicesFor(['range_gas']).map((n) => n.kind)).toEqual(['gas']);
+    expect(servicesFor(['range_induction']).map((n) => n.kind)).toEqual(['electrical']);
+  });
+
+  it('a combi oven needs water and a drain whichever fuel it burns, and says where that comes from', () => {
+    for (const id of ['oven_combi_electric', 'oven_combi_gas']) {
+      const kinds = servicesFor([id]).map((n) => n.kind);
+      expect(kinds, id).toContain('water_cold');
+      expect(kinds, id).toContain('drain');
+      expect(equipmentById(id)!.sources[0].url, id).toContain('fermag.com');
+    }
+    expect(servicesFor(['oven_combi_gas']).map((n) => n.kind)).toContain('gas');
+  });
+
+  it('a hood is the only thing in the kitchen that asks for a duct', () => {
+    // A cooking appliance does not pull a hood in by itself: whether one is needed is a consultant's
+    // call, so the hood is its own item and the appliance's note says so.
+    const ducts = EQUIPMENT.filter((e) => e.services.some((s) => s.kind === 'ventilation' && (s.form ?? 'point') === 'point')).map((e) => e.id);
+    expect(ducts).toEqual(['extraction_hood']);
+    expect(equipmentById('range_gas')!.noteHe).toContain('קולט אדים');
+  });
+
+  it('refrigeration leaves a clearance, never a ventilation point', () => {
+    for (const id of ['upright_fridge', 'display_fridge', 'prep_counter_refrigerated']) {
+      expect(servicesFor([id]).some((n) => n.kind === 'ventilation'), id).toBe(false);
+      expect(clearancesFor([id]).map((c) => c.kind), id).toEqual(['ventilation']);
+    }
+  });
+
+  it('an item whose water depends on the model says so instead of deciding', () => {
+    for (const id of ['dishwasher_commercial', 'glasswasher', 'kitchenette_dishwasher']) expect(equipmentById(id)!.noteHe, id).toContain('לפי הדגם');
   });
 });

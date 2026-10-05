@@ -23,6 +23,7 @@ export type Trade =
   | 'electrical'
   | 'gas'
   | 'hvac'
+  | 'communications'
   | 'finishes'
   | 'equipment'
   | 'logistics';
@@ -53,6 +54,7 @@ export const TRADE_LABEL: Record<Trade, { he: string; en: string }> = {
   electrical: { he: 'חשמל', en: 'Electrical' },
   gas: { he: 'גז', en: 'Gas' },
   hvac: { he: 'מיזוג ואוורור', en: 'HVAC and ventilation' },
+  communications: { he: 'תקשורת', en: 'Communications' },
   finishes: { he: 'גמרים', en: 'Finishes' },
   equipment: { he: 'ציוד', en: 'Equipment' },
   logistics: { he: 'הובלה והתארגנות', en: 'Logistics and site set-up' },

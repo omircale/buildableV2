@@ -73,6 +73,11 @@ describe('the chapters are the Blue Book’s, not this engine’s', () => {
     for (const [trade, code] of Object.entries(TRADE_CHAPTER)) expect(CHAPTERS[code!], trade).toBeDefined();
   });
 
+  it('a data point is filed under chapter 18, communications infrastructure', () => {
+    expect(numberBill([line('d1', 'communications', 'points', BAR)]).numbered[0].number).toBe('01.18.01.0010');
+    expect(CHAPTERS['18'].he).toBe('תשתיות תקשורת');
+  });
+
   it('a trade with no chapter anyone could cite is filed as unassigned, and the bill says so', () => {
     // No source read so far says where a cooking-gas point belongs. Filing it under plumbing because
     // it is nearby would be exactly the kind of plausible guess this engine does not make.

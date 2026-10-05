@@ -74,7 +74,17 @@ function tracing(points: ConnectionPoint[]): { traced: ConnectionPoint[]; untrac
   };
 }
 
-const WORDING: Record<SupplyStatus, { he: (k: string) => string; en: (k: string) => string }> = {
+/**
+ * Who decides whether a source can take more. For water, power, gas and air that is a licensed trade.
+ * For data nothing read so far says a licence is involved, so the wording names the designer instead
+ * of asserting a legal requirement nobody verified.
+ */
+const WHO: Record<'licensed' | 'designer', { he: string; en: string }> = {
+  licensed: { he: 'בעל מקצוע מוסמך', en: 'a licensed professional' },
+  designer: { he: 'מתכנן התקשורת', en: 'the communications designer' },
+};
+
+const WORDING: Record<SupplyStatus, { he: (k: string, who: string) => string; en: (k: string, who: string) => string }> = {
   no_source: {
     he: (k) => `אין מקור ${k} בחלל — הבאת המקור היא עבודה נפרדת ורחבה מהנקודה עצמה`,
     en: (k) => `No ${k} source reaches this room — bringing one is separate work, far larger than the point itself`,
@@ -84,12 +94,12 @@ const WORDING: Record<SupplyStatus, { he: (k: string) => string; en: (k: string)
     en: (k) => `There are ${k} points but nothing records what feeds them — a new point cannot be quantified without it`,
   },
   capacity_unstated: {
-    he: (k) => `המקור ל${k} מזוהה, אך אף בעל מקצוע מוסמך לא קבע אם יש בו מקום לנקודות נוספות`,
-    en: (k) => `The ${k} source is identified, but no licensed professional has stated whether it has room for more points`,
+    he: (k, who) => `המקור ל${k} מזוהה, אך ${who} לא קבע אם יש בו מקום לנקודות נוספות`,
+    en: (k, who) => `The ${k} source is identified, but ${who} has not stated whether it has room for more points`,
   },
   over_stated_capacity: {
-    he: (k) => `המקום הפנוי שנמסר במקור ה${k} קטן ממספר הנקודות שהפרוייקט מוסיף — נדרשת החלטה של בעל מקצוע מוסמך`,
-    en: (k) => `The spare capacity stated for the ${k} source is less than the points this project adds — a licensed professional has to decide`,
+    he: (k, who) => `המקום הפנוי שנמסר במקור ה${k} קטן ממספר הנקודות שהפרוייקט מוסיף — נדרשת החלטה של ${who}`,
+    en: (k, who) => `The spare capacity stated for the ${k} source is less than the points this project adds — ${who} has to decide`,
   },
   within_stated_capacity: {
     he: (k) => `המקום הפנוי שנמסר במקור ה${k} מכסה את הנקודות שהפרוייקט מוסיף, לפי מה שנמסר בלבד`,
@@ -144,8 +154,8 @@ export function supplyReport(
         untracedPointIds: untraced.map((p) => p.id),
         statedSpareWays,
         nearestSourceMm,
-        he: WORDING[status].he(label.he),
-        en: WORDING[status].en(label.en),
+        he: WORDING[status].he(label.he, WHO[kind === 'data' ? 'designer' : 'licensed'].he),
+        en: WORDING[status].en(label.en, WHO[kind === 'data' ? 'designer' : 'licensed'].en),
       };
     });
 }
@@ -157,6 +167,7 @@ const KIND_LABEL: Record<ServiceKind, { he: string; en: string }> = {
   electrical: { he: 'חשמל', en: 'electrical' },
   gas: { he: 'גז', en: 'gas' },
   ventilation: { he: 'אוורור', en: 'ventilation' },
+  data: { he: 'תקשורת', en: 'data' },
 };
 
 /** The statuses that mean somebody has to go and find something out before a bill can be priced. */
