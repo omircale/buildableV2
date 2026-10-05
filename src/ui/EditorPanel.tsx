@@ -43,7 +43,7 @@ export function EditorPanel({ result }: { result: DesignResult }) {
               aria-controls={`editor-panel-${id}`}
               onClick={() => setTab(id)}
               /* Two signals for the active tab, not one: weight and an underline that meets the border. */
-              className={`-mb-px min-h-11 flex-1 border-b-2 px-3 text-[0.9375rem] transition ${
+              className={`-mb-px min-h-11 flex-1 border-b-2 px-3 text-control transition ${
                 selected ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted hover:text-ink'
               }`}
             >

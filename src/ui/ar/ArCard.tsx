@@ -73,9 +73,9 @@ export function ArCard({ result }: { result: DesignResult }) {
   return (
     <section data-ar-card className="flex flex-col gap-3 rounded-xl bg-panel p-5 ring-1 ring-line">
       <h2 className="text-lg font-semibold">{t.ar.title}</h2>
-      <p className="text-[0.9375rem] leading-relaxed text-muted">{t.ar.intro}</p>
+      <p className="text-control leading-relaxed text-muted">{t.ar.intro}</p>
       {geometryBroken ? (
-        <p className="rounded-lg bg-bad-soft px-3 py-2 text-[0.875rem] text-bad">{t.ar.blocked}</p>
+        <p className="rounded-lg bg-bad-soft px-3 py-2 text-body text-bad">{t.ar.blocked}</p>
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
@@ -90,20 +90,20 @@ export function ArCard({ result }: { result: DesignResult }) {
             <Button variant="secondary" disabled={hosting || busy != null} onClick={() => void viewInRoom()}>
               {hosting ? t.ar.hosting : t.ar.viewInRoom}
             </Button>
-            <p className="text-[0.8125rem] leading-relaxed text-muted">{t.ar.uploadNote}</p>
+            <p className="text-small leading-relaxed text-muted">{t.ar.uploadNote}</p>
           </div>
           {room && (
             <div className="relative">
-              <Suspense fallback={<p className="text-[0.8125rem] text-muted">{t.ar.hosting}</p>}>
+              <Suspense fallback={<p className="text-small text-muted">{t.ar.hosting}</p>}>
                 <RoomViewer glbUrl={room.glb} usdzUrl={room.usdz} alt={projectName} arButtonLabel={t.ar.placeInRoom} onArUnavailable={() => setArUnavailable(true)} />
               </Suspense>
-              {arUnavailable && <p className="mt-2 text-[0.8125rem] text-muted">{t.ar.noArHere}</p>}
+              {arUnavailable && <p className="mt-2 text-small text-muted">{t.ar.noArHere}</p>}
             </div>
           )}
-          {done && <p className="num text-[0.8125rem] text-ok">{done}</p>}
-          {error && <p className="text-[0.8125rem] text-bad">{error}</p>}
-          <p className="text-[0.8125rem] leading-relaxed text-muted">{ios ? t.ar.iosHint : t.ar.androidHint}</p>
-          <p className="text-[0.8125rem] text-muted">{t.ar.scaleNote}</p>
+          {done && <p className="num text-small text-ok">{done}</p>}
+          {error && <p className="text-small text-bad">{error}</p>}
+          <p className="text-small leading-relaxed text-muted">{ios ? t.ar.iosHint : t.ar.androidHint}</p>
+          <p className="text-small text-muted">{t.ar.scaleNote}</p>
         </>
       )}
     </section>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { finishLines, linesFromDesign, mepLines, runDesign, type BoqLine, type DesignResult, type LineLocation } from '../../engine';
-import { useDesign } from '../../state/designStore';
+import { useT } from '../../i18n';
+import { projectLabel, useDesign } from '../../state/designStore';
 import { projectRooms, useSurvey, type Survey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 
@@ -34,11 +35,19 @@ export function useRoomBill(): RoomBill {
   const survey = useSurvey();
   const params = useDesign((s) => s.params);
   const config = useDesign((s) => s.config);
-  const designName = useDesign((s) => s.projectName);
+  const t = useT();
+  const designName = projectLabel(useDesign((s) => s.projectName), t.projects.newProject);
   const locale = useUi((s) => s.locale);
   const he = locale === 'he';
 
   const design = useMemo(() => runDesign(params, config, locale), [params, config, locale]);
+
+  // A room that did not change gives the same lines. Typing in one room of ninety-nine used to rebuild
+  // all ninety-nine on every keystroke; the rooms that are not open keep their identity between
+  // renders, so their lines are remembered against it. Language and engine settings change every line,
+  // so a change in either starts the memory afresh.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the memory is deliberately reset by these
+  const memory = useMemo(() => new WeakMap<Survey, { piece: BoqLine[]; services: BoqLine[] }>(), [locale, config]);
 
   return useMemo(() => {
     const rooms = projectRooms(survey);
@@ -71,13 +80,19 @@ export function useRoomBill(): RoomBill {
       // The same line arises in every room that needs it, so its id carries the room.
       const own = (l: BoqLine): BoqLine => ({ ...l, id: `${id}:${l.id}` });
 
-      const piece = pieceOf(id);
-      if (piece) {
+      // Everything here depends on this room alone, so it is remembered against the room.
+      let kept = memory.get(room);
+      if (!kept) {
+        const piece = pieceOf(id);
         const name = nameOf(id);
-        lines.push(...linesFromDesign({ design: piece.result, location, titleHe: piece.name, titleEn: piece.name, placeHe: name.he, placeEn: name.en }).lines.map(own));
+        kept = {
+          piece: piece ? linesFromDesign({ design: piece.result, location, titleHe: piece.name, titleEn: piece.name, placeHe: name.he, placeEn: name.en }).lines.map(own) : [],
+          services: mepLines({ space: room.space, sources: room.sources, equipmentIds: room.equipmentIds, location }).map(own),
+        };
+        memory.set(room, kept);
       }
-      lines.push(...finishes.filter((l) => l.location.spaceId === id));
-      lines.push(...mepLines({ space: room.space, sources: room.sources, equipmentIds: room.equipmentIds, location }).map(own));
+      // A finish's lines depend on every room it is laid in, so they are worked out for the project.
+      lines.push(...kept.piece, ...finishes.filter((l) => l.location.spaceId === id), ...kept.services);
     }
 
     const open = pieceOf(survey.space.id);
@@ -91,5 +106,5 @@ export function useRoomBill(): RoomBill {
       pieceStale: survey.piece != null && JSON.stringify(survey.piece.params) !== JSON.stringify(params),
       designBlockedBy: open ? linesFromDesign({ design: open.result, location: locationOf(survey.space.id) }).blockedBy : [],
     };
-  }, [survey, design, designName, he, params, config, locale]);
+  }, [survey, design, designName, he, params, config, locale, memory]);
 }

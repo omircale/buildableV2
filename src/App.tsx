@@ -6,14 +6,16 @@ import { useT } from './i18n';
 const DesignerPage = lazy(() => import('./pages/Designer').then((m) => ({ default: m.DesignerPage })));
 const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.AdminPage })));
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
+import { isHome } from './pages/routes';
 import { stepFromRoute, type Step } from './pages/steps';
 import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { HomePage } from './pages/Home';
+import { NotFoundPage } from './pages/NotFound';
 import { LoginPage } from './pages/Login';
 import { ProjectsPage } from './pages/Projects';
 import { SpacePage } from './pages/Space';
 import { DecorsPage } from './pages/Decors';
-import { useDesign } from './state/designStore';
+import { projectLabel, useDesign } from './state/designStore';
 import { useResolvedTheme, useUi } from './state/uiStore';
 import { CommandPalette, useRegisterCommands, type Command } from './ui/CommandPalette';
 import { ErrorBoundary } from './ui/ErrorBoundary';
@@ -117,7 +119,7 @@ export default function App() {
   const setConfig = useDesign((s) => s.setConfig);
   useDocumentPreferences();
   useGlobalCommands();
-  const projectName = useDesign((s) => s.projectName);
+  const projectName = projectLabel(useDesign((s) => s.projectName), t.projects.newProject);
 
   // Each page says what it is. History, tabs and a screen reader all read this.
   const pageTitle = route.startsWith('#/journey')
@@ -134,7 +136,9 @@ export default function App() {
               ? t.header.signIn
               : route.startsWith('#/admin')
                 ? t.header.admin
-                : t.home.title;
+                : isHome(route)
+                  ? t.home.title
+                  : t.notFound.title;
   useEffect(() => {
     document.title = `${pageTitle} · Buildable`;
   }, [pageTitle]);
@@ -178,7 +182,8 @@ export default function App() {
   else if (route.startsWith('#/design')) {
     const step = route.split('/')[2] as Step;
     page = <DesignerPage auth={auth} step={stepFromRoute(step)} />;
-  } else page = <HomePage auth={auth} />;
+  } else if (isHome(route)) page = <HomePage auth={auth} />;
+  else page = <NotFoundPage auth={auth} />;
 
   return (
     <>

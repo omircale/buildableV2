@@ -72,28 +72,28 @@ export function DescribeStage({ onDone }: { onDone: () => void }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-3">
-        <label className="block text-[0.875rem] font-semibold" htmlFor="describe-text">
+        <label className="block text-body font-semibold" htmlFor="describe-text">
           {d.label}
         </label>
         <textarea id="describe-text" rows={5} className={`${inputClass} h-auto py-2.5 leading-relaxed`} placeholder={d.placeholder} value={text} onChange={(e) => reset(e.target.value)} />
         <div className="space-y-1.5">
-          <div className="text-[0.7812rem] text-muted">{d.examplesTitle}</div>
+          <div className="text-small text-muted">{d.examplesTitle}</div>
           <div className="flex flex-col items-start gap-1.5">
             {d.examples.map((ex) => (
-              <button key={ex} type="button" className="rounded-lg border border-line px-3 py-1.5 text-start text-[0.8125rem] hover:bg-sunken" onClick={() => reset(ex)}>
+              <button key={ex} type="button" className="rounded-lg border border-line px-3 py-1.5 text-start text-small hover:bg-sunken" onClick={() => reset(ex)}>
                 {ex}
               </button>
             ))}
           </div>
         </div>
-        <p className="text-[0.7812rem] leading-relaxed text-muted">{d.lexiconNote}</p>
+        <p className="text-small leading-relaxed text-muted">{d.lexiconNote}</p>
       </div>
 
       <div className="space-y-4">
         <section>
-          <h3 className="text-[0.875rem] font-semibold">{d.understood}</h3>
+          <h3 className="text-body font-semibold">{d.understood}</h3>
           {reading.claims.length === 0 ? (
-            <p className="mt-1 text-[0.8125rem] text-muted">{d.nothingYet}</p>
+            <p className="mt-1 text-small text-muted">{d.nothingYet}</p>
           ) : (
             <ul className="mt-2 space-y-2">
               {reading.claims.map((c, i) => (
@@ -105,9 +105,9 @@ export function DescribeStage({ onDone }: { onDone: () => void }) {
                       <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent)]" checked={isOn(i, c)} onChange={() => toggle(i, c)} />
                     )}
                     <span className="min-w-0">
-                      <span className="block text-[0.875rem]">{describeClaim(c)}</span>
-                      <span className="block text-[0.75rem] text-muted">{d.from(c.source)}</span>
-                      {(c.field === 'size' || c.field === 'height') && !c.unitStated && <span className="mt-0.5 block text-[0.75rem] text-warn">{d.unitInferred}</span>}
+                      <span className="block text-body">{describeClaim(c)}</span>
+                      <span className="block text-caption text-muted">{d.from(c.source)}</span>
+                      {(c.field === 'size' || c.field === 'height') && !c.unitStated && <span className="mt-0.5 block text-caption text-warn">{d.unitInferred}</span>}
                     </span>
                   </label>
                 </li>
@@ -118,16 +118,16 @@ export function DescribeStage({ onDone }: { onDone: () => void }) {
 
         {reading.unread.length > 0 && (
           <section className="rounded-xl bg-unknown-soft px-4 py-3">
-            <h3 className="text-[0.8438rem] font-semibold">{d.notUnderstood}</h3>
+            <h3 className="text-small font-semibold">{d.notUnderstood}</h3>
             <ul className="mt-1.5 flex flex-wrap gap-1.5">
               {reading.unread.map((u, i) => (
                 // A person can write the same unknown phrase twice, so the phrase alone is not a key.
-                <li key={`${i}-${u}`} className="rounded-md bg-panel px-2 py-0.5 text-[0.8125rem]">
+                <li key={`${i}-${u}`} className="rounded-md bg-panel px-2 py-0.5 text-small">
                   {u}
                 </li>
               ))}
             </ul>
-            <p className="mt-2 text-[0.7812rem] leading-snug text-muted">{d.notUnderstoodHint}</p>
+            <p className="mt-2 text-small leading-snug text-muted">{d.notUnderstoodHint}</p>
           </section>
         )}
 

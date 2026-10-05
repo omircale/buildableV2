@@ -24,7 +24,7 @@ export function NullableCm({ value, onChange, label, hint }: { value: number | n
             onChange(raw === '' ? null : Math.round(Number(raw) * 10));
           }}
         />
-        <span className="shrink-0 text-[0.8125rem] text-muted">{t.common.cm}</span>
+        <span className="shrink-0 text-small text-muted">{t.common.cm}</span>
       </div>
     </Field>
   );
@@ -34,8 +34,8 @@ function Measure({ label, value, unit }: { label: string; value: number | null; 
   const t = useT();
   return (
     <div className="rounded-lg bg-sunken px-3 py-2">
-      <div className="text-[0.75rem] text-muted">{label}</div>
-      <div className="text-[0.9375rem] font-semibold tabular-nums">{value == null ? <span className="font-normal text-muted">{t.survey.notMeasured}</span> : `${value.toFixed(2)} ${unit}`}</div>
+      <div className="text-caption text-muted">{label}</div>
+      <div className="text-control font-semibold tabular-nums">{value == null ? <span className="font-normal text-muted">{t.survey.notMeasured}</span> : `${value.toFixed(2)} ${unit}`}</div>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function SampleBanner({ onReplace }: { onReplace?: () => void }) {
   const sample = useSurvey((s) => s.sample);
   if (!sample) return null;
   return (
-    <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-warn/50 bg-warn-soft px-4 py-2.5 text-[0.8438rem]">
+    <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-warn/50 bg-warn-soft px-4 py-2.5 text-small">
       <span className="font-semibold">{t.survey.sampleBadge}</span>
       <span className="text-muted">{t.survey.sampleBanner}</span>
       {onReplace && (
@@ -117,10 +117,10 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
 
         {problems.length > 0 && (
           <div role="status" className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2">
-            <div className="text-[0.8125rem] font-semibold">{t.survey.problems}</div>
+            <div className="text-small font-semibold">{t.survey.problems}</div>
             <ul className="mt-1 space-y-0.5">
               {problems.map((p) => (
-                <li key={p.code + p.subject} className="text-[0.7812rem] leading-snug text-muted">
+                <li key={p.code + p.subject} className="text-small leading-snug text-muted">
                   {he ? p.he : p.en}
                 </li>
               ))}
@@ -130,7 +130,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
       </Section>
 
       <Section title={t.survey.equipmentSection} count={survey.equipmentIds.length}>
-        <p className="text-[0.7812rem] text-muted">{t.survey.equipmentHint}</p>
+        <p className="text-small text-muted">{t.survey.equipmentHint}</p>
         <div className="flex flex-wrap gap-2">
           {EQUIPMENT.map((item) => {
             const n = countOf(survey.equipmentIds, item.id);
@@ -157,8 +157,8 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
       </Section>
 
       <Section title={t.survey.designSection}>
-        <p className="text-[0.7812rem] text-muted">{t.survey.designHint}</p>
-        <label className="flex items-center gap-2.5 text-[0.875rem]">
+        <p className="text-small text-muted">{t.survey.designHint}</p>
+        <label className="flex items-center gap-2.5 text-body">
           <input
             type="checkbox"
             className="h-4 w-4 accent-[var(--color-accent)]"
@@ -168,7 +168,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
           {t.survey.includeDesign(survey.piece?.name ?? bill.designName)}
         </label>
         {bill.pieceStale && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-warn-soft px-3 py-2 text-[0.7812rem] leading-snug">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-warn-soft px-3 py-2 text-small leading-snug">
             <span>{t.survey.pieceStale}</span>
             <button type="button" className="font-medium text-accent-ink underline underline-offset-2" onClick={() => survey.setPiece({ name: bill.designName, params: bill.design.model.params })}>
               {t.survey.pieceUpdate(bill.designName)}
@@ -176,7 +176,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
           </div>
         )}
         {survey.piece != null && bill.designBlockedBy.length > 0 && (
-          <div className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2 text-[0.7812rem] leading-snug">
+          <div className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2 text-small leading-snug">
             <div className="font-semibold">{t.survey.designBlocked}</div>
             <ul className="mt-1 text-muted">
               {bill.designBlockedBy.map((b) => (
@@ -185,18 +185,18 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
             </ul>
           </div>
         )}
-        <a href="#/design" className="inline-flex items-center text-[0.8125rem] font-medium text-accent underline underline-offset-2">
+        <a href="#/design" className="inline-flex items-center text-small font-medium text-accent underline underline-offset-2">
           {t.survey.openEditor}
         </a>
       </Section>
 
       <Section title={t.survey.sourcesSection} count={survey.sources.length}>
-        <p className="text-[0.7812rem] text-muted">{t.survey.sourcesHint}</p>
+        <p className="text-small text-muted">{t.survey.sourcesHint}</p>
         {survey.sources.map((source) => (
           <div key={source.id} className="space-y-2 rounded-lg border border-line p-3">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-sunken px-2 py-0.5 text-[0.75rem]">{serviceName(source.kind, he)}</span>
-              <button type="button" className="ms-auto text-[0.7812rem] text-muted underline" onClick={() => survey.removeSource(source.id)}>
+              <span className="rounded-full bg-sunken px-2 py-0.5 text-caption">{serviceName(source.kind, he)}</span>
+              <button type="button" className="ms-auto text-small text-muted underline" onClick={() => survey.removeSource(source.id)}>
                 {t.survey.remove}
               </button>
             </div>
@@ -228,7 +228,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
         ))}
         <div className="flex flex-wrap gap-2">
           {SERVICE_KINDS.map((kind) => (
-            <button key={kind} type="button" className="rounded-full border border-line px-3 py-1 text-[0.7812rem] hover:bg-sunken" onClick={() => survey.addSource(kind)}>
+            <button key={kind} type="button" className="rounded-full border border-line px-3 py-1 text-small hover:bg-sunken" onClick={() => survey.addSource(kind)}>
               + {serviceName(kind, he)}
             </button>
           ))}
@@ -236,14 +236,14 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
       </Section>
 
       <Section title={t.survey.connectionsSection} count={survey.space.connections.length}>
-        <p className="text-[0.7812rem] text-muted">{t.survey.connectionsHint}</p>
+        <p className="text-small text-muted">{t.survey.connectionsHint}</p>
         {survey.space.connections.map((point) => (
           <div key={point.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-line p-3">
-            <span className="rounded-full bg-sunken px-2 py-0.5 text-[0.75rem]">{serviceName(point.kind, he)}</span>
-            <label className="flex items-center gap-1.5 text-[0.7812rem] text-muted">
+            <span className="rounded-full bg-sunken px-2 py-0.5 text-caption">{serviceName(point.kind, he)}</span>
+            <label className="flex items-center gap-1.5 text-small text-muted">
               {t.survey.fedBy}
               <select
-                className="rounded-lg border border-field bg-panel px-2 py-1 text-[0.8125rem]"
+                className="rounded-lg border border-field bg-panel px-2 py-1 text-small"
                 value={point.fedBy ?? ''}
                 onChange={(e) => survey.updateConnection(point.id, { fedBy: e.target.value || undefined })}
               >
@@ -257,14 +257,14 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
                   ))}
               </select>
             </label>
-            <button type="button" className="ms-auto text-[0.7812rem] text-muted underline" onClick={() => survey.removeConnection(point.id)}>
+            <button type="button" className="ms-auto text-small text-muted underline" onClick={() => survey.removeConnection(point.id)}>
               {t.survey.remove}
             </button>
           </div>
         ))}
         <div className="flex flex-wrap gap-2">
           {SERVICE_KINDS.map((kind) => (
-            <button key={kind} type="button" className="rounded-full border border-line px-3 py-1 text-[0.7812rem] hover:bg-sunken" onClick={() => survey.addConnection(kind)}>
+            <button key={kind} type="button" className="rounded-full border border-line px-3 py-1 text-small hover:bg-sunken" onClick={() => survey.addConnection(kind)}>
               + {serviceName(kind, he)}
             </button>
           ))}
@@ -273,7 +273,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
         {feedProblems.length > 0 && (
           <ul role="status" className="space-y-0.5 rounded-lg border border-bad/40 bg-bad-soft px-3 py-2">
             {feedProblems.map((p) => (
-              <li key={p.pointId} className="text-[0.7812rem] leading-snug">
+              <li key={p.pointId} className="text-small leading-snug">
                 {he ? p.he : p.en}
               </li>
             ))}
@@ -283,7 +283,7 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
         {gaps.length > 0 && (
           <ul className="space-y-0.5 pt-1">
             {gaps.map((g) => (
-              <li key={g.field} className="text-[0.7812rem] leading-snug text-muted">
+              <li key={g.field} className="text-small leading-snug text-muted">
                 {he ? g.he : g.en}
               </li>
             ))}

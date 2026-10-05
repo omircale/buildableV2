@@ -34,15 +34,15 @@ export function DecorsPage({ auth }: { auth: AuthState }) {
       <AppHeader auth={auth} />
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-5 px-8 py-9">
         <div className="flex flex-col gap-2">
-          <h1 className="text-[2.25rem] leading-tight font-bold tracking-tight">{t.decors.title}</h1>
+          <h1 className="text-title leading-tight font-bold tracking-tight">{t.decors.title}</h1>
           <p className="max-w-3xl text-lg leading-relaxed text-muted">{t.decors.intro}</p>
-          <p className="max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-[0.875rem] leading-relaxed text-warn">{t.decors.previewOnlyNote}</p>
+          <p className="max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-body leading-relaxed text-warn">{t.decors.previewOnlyNote}</p>
         </div>
 
         <div className="flex flex-col gap-3">
           <SearchField value={query} onChange={setQuery} placeholder={t.decors.search} />
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[0.8125rem] text-muted">{t.decors.family}</span>
+            <span className="text-small text-muted">{t.decors.family}</span>
             <Chip selected={family == null} onClick={() => setFamily(null)}>
               {t.decors.all}
             </Chip>
@@ -53,7 +53,7 @@ export function DecorsPage({ auth }: { auth: AuthState }) {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[0.8125rem] text-muted">{t.decors.material}</span>
+            <span className="text-small text-muted">{t.decors.material}</span>
             <Chip selected={materialType == null} onClick={() => setMaterialType(null)}>
               {t.decors.all}
             </Chip>
@@ -71,26 +71,26 @@ export function DecorsPage({ auth }: { auth: AuthState }) {
             <figure key={d.code} className={`flex flex-col overflow-hidden rounded-xl bg-panel ring-1 ${preview?.code === d.code ? 'ring-2 ring-accent' : 'ring-line'}`}>
               <button type="button" onClick={() => choose(d)} className="group relative block aspect-square overflow-hidden bg-sunken" aria-label={`${t.decors.preview}: ${d.nameHe}`}>
                 <img src={d.image} alt={d.nameHe} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
-                <span className="absolute inset-x-0 bottom-0 bg-ink/70 px-2 py-1 text-[0.75rem] font-semibold text-paper opacity-0 transition group-hover:opacity-100">{t.decors.preview}</span>
+                <span className="absolute inset-x-0 bottom-0 bg-ink/70 px-2 py-1 text-caption font-semibold text-paper opacity-0 transition group-hover:opacity-100">{t.decors.preview}</span>
               </button>
               <figcaption className="flex flex-1 flex-col gap-1 px-3 py-2">
-                <span className="line-clamp-2 text-[0.875rem] font-medium" title={d.nameHe}>
+                <span className="line-clamp-2 text-body font-medium" title={d.nameHe}>
                   {d.nameHe}
                 </span>
-                <span className="num text-[0.75rem] text-muted">{d.code}</span>
-                <span className="text-[0.75rem] text-muted">
+                <span className="num text-caption text-muted">{d.code}</span>
+                <span className="text-caption text-muted">
                   {[d.materialType && (t.decors.materials[d.materialType] ?? d.materialType), d.finish].filter(Boolean).join(' · ')}
                 </span>
-                <a href={d.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-auto text-[0.75rem] text-accent-ink underline underline-offset-2">
+                <a href={d.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-auto text-caption text-accent-ink underline underline-offset-2">
                   {t.decors.atSource}
                 </a>
               </figcaption>
             </figure>
           ))}
         </div>
-        {shown.length === 0 && <p className="rounded-xl bg-panel p-6 text-[0.9375rem] text-muted ring-1 ring-line">{t.decors.noMatches}</p>}
+        {shown.length === 0 && <p className="rounded-xl bg-panel p-6 text-control text-muted ring-1 ring-line">{t.decors.noMatches}</p>}
 
-        <footer className="flex flex-wrap items-center gap-3 rounded-xl bg-sunken p-4 text-[0.8125rem] leading-relaxed text-muted">
+        <footer className="flex flex-wrap items-center gap-3 rounded-xl bg-sunken p-4 text-small leading-relaxed text-muted">
           <span className="flex-1">
             {DECOR_CATALOG.attribution} {t.decors.imported(DECOR_CATALOG.imagesImportedAt, DECOR_CATALOG.count)}
           </span>

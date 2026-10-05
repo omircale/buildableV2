@@ -29,7 +29,7 @@ export function UndoToast() {
   return (
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       {undoable && (
-        <div className="pointer-events-auto flex max-w-full items-center gap-3 rounded-xl bg-ink px-4 py-2.5 text-[0.875rem] text-paper shadow-lg">
+        <div className="pointer-events-auto flex max-w-full items-center gap-3 rounded-xl bg-ink px-4 py-2.5 text-body text-paper shadow-lg">
           <span>{t.survey.undo[undoable.kind]}</span>
           <button type="button" onClick={undo} className="font-semibold underline underline-offset-2">
             {t.survey.undo.action}

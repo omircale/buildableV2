@@ -22,7 +22,7 @@ export function ProjectBackup() {
   const [failed, setFailed] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem]">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-small">
       <span className="text-muted">{b.note}</span>
       <button type="button" className="font-medium text-accent-ink underline underline-offset-2" onClick={() => downloadText('buildable-project.json', exportProject(), 'application/json')}>
         {b.save}

@@ -20,28 +20,28 @@ export function PriceStage({ lines }: { lines: BoqLine[] }) {
 
   return (
     <div className="space-y-6">
-      <p className="rounded-xl border border-line bg-sunken px-4 py-3 text-[0.875rem] font-medium">{p.noNumbers}</p>
+      <p className="rounded-xl border border-line bg-sunken px-4 py-3 text-body font-medium">{p.noNumbers}</p>
 
       <section>
-        <h3 className="text-[0.875rem] font-semibold">{p.sourcesTitle}</h3>
+        <h3 className="text-body font-semibold">{p.sourcesTitle}</h3>
         <div className="mt-2 grid gap-3 md:grid-cols-3">
           {p.sources.map((src) => (
             <div key={src.title} className="flex flex-col rounded-xl border border-line px-4 py-3">
-              <div className="text-[0.875rem] font-semibold">{src.title}</div>
-              <p className="mt-1 flex-1 text-[0.8125rem] leading-snug text-muted">{src.body}</p>
-              <span className="mt-3 self-start rounded-full bg-unknown-soft px-2.5 py-0.5 text-[0.75rem]">{src.status}</span>
+              <div className="text-body font-semibold">{src.title}</div>
+              <p className="mt-1 flex-1 text-small leading-snug text-muted">{src.body}</p>
+              <span className="mt-3 self-start rounded-full bg-unknown-soft px-2.5 py-0.5 text-caption">{src.status}</span>
             </div>
           ))}
         </div>
       </section>
 
       <section>
-        <h3 className="text-[0.875rem] font-semibold">{p.previewTitle}</h3>
+        <h3 className="text-body font-semibold">{p.previewTitle}</h3>
         {preview.length === 0 ? (
-          <p className="mt-1 text-[0.8125rem] text-muted">{p.empty}</p>
+          <p className="mt-1 text-small text-muted">{p.empty}</p>
         ) : (
           <div className="mt-2 overflow-x-auto rounded-xl border border-line">
-            <table className="w-full min-w-[560px] text-[0.8125rem]">
+            <table className="w-full min-w-[560px] text-small">
               <thead className="bg-sunken text-muted">
                 <tr>
                   <th className="px-3 py-2 text-start font-medium">{p.columns.item}</th>
@@ -63,7 +63,7 @@ export function PriceStage({ lines }: { lines: BoqLine[] }) {
                 ))}
               </tbody>
             </table>
-            {lines.length > PREVIEW_ROWS && <div className="border-t border-line px-3 py-2 text-[0.7812rem] text-muted">{p.more(lines.length - PREVIEW_ROWS)}</div>}
+            {lines.length > PREVIEW_ROWS && <div className="border-t border-line px-3 py-2 text-small text-muted">{p.more(lines.length - PREVIEW_ROWS)}</div>}
           </div>
         )}
       </section>

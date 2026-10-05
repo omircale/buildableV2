@@ -134,7 +134,7 @@ function PaletteDialog() {
           <Kbd>Esc</Kbd>
         </div>
         <div ref={listRef} id="command-list" role="listbox" className="max-h-[52vh] overflow-y-auto p-2">
-          {results.length === 0 && <p className="px-3 py-6 text-center text-[0.9375rem] text-muted">{t.command.empty}</p>}
+          {results.length === 0 && <p className="px-3 py-6 text-center text-control text-muted">{t.command.empty}</p>}
           {results.map((c, i) => {
             const header = c.group !== lastGroup ? t.command.groups[c.group] : null;
             lastGroup = c.group;
@@ -152,8 +152,8 @@ function PaletteDialog() {
                   className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 ${i === active ? 'bg-accent-soft' : ''} ${c.disabled ? 'opacity-45' : ''}`}
                 >
                   {c.swatch && <span className="h-4 w-4 shrink-0 rounded-full ring-1 ring-black/25" style={{ background: c.swatch }} />}
-                  <span className="flex-1 text-[0.9375rem]">{c.label}</span>
-                  {c.detail && <span className="text-[0.8125rem] text-muted">{c.detail}</span>}
+                  <span className="flex-1 text-control">{c.label}</span>
+                  {c.detail && <span className="text-small text-muted">{c.detail}</span>}
                 </div>
               </div>
             );

@@ -20,22 +20,22 @@ function LineRow({ item, place }: { item: NumberedLine; place?: string }) {
     <li className="border-b border-line py-2.5 last:border-0">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-2 text-[0.75rem] text-muted">
+          <div className="flex flex-wrap items-baseline gap-x-2 text-caption text-muted">
             <span className="tabular-nums" dir="ltr">
               {number}
             </span>
             {place && <span>· {place}</span>}
           </div>
-          <div className="text-[0.875rem] leading-snug">{he ? line.descriptionHe : line.descriptionEn}</div>
-          {why && <div className="mt-1 text-[0.7812rem] leading-snug text-muted">{why}</div>}
-          {assumption && <div className="mt-1 text-[0.7812rem] leading-snug text-muted">{assumption}</div>}
+          <div className="text-body leading-snug">{he ? line.descriptionHe : line.descriptionEn}</div>
+          {why && <div className="mt-1 text-small leading-snug text-muted">{why}</div>}
+          {assumption && <div className="mt-1 text-small leading-snug text-muted">{assumption}</div>}
         </div>
         <div className="shrink-0 text-end tabular-nums">
           {line.quantity == null ? (
-            <span className="rounded-full bg-unknown-soft px-2 py-0.5 text-[0.75rem] text-muted">—</span>
+            <span className="rounded-full bg-unknown-soft px-2 py-0.5 text-caption text-muted">—</span>
           ) : (
-            <span className="text-[0.9375rem] font-semibold">
-              {line.quantity} <span className="text-[0.75rem] font-normal text-muted">{unit}</span>
+            <span className="text-control font-semibold">
+              {line.quantity} <span className="text-caption font-normal text-muted">{unit}</span>
             </span>
           )}
         </div>
@@ -101,7 +101,7 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-        <h2 className="text-[0.9375rem] font-semibold">{t.survey.billSection}</h2>
+        <h2 className="text-control font-semibold">{t.survey.billSection}</h2>
         <div className="ms-auto flex items-center gap-2">
           <Chip selected={axis === 'room'} onClick={() => setAxis('room')}>
             {t.survey.byLocation}
@@ -113,10 +113,10 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
       </div>
 
       {lines.length === 0 ? (
-        <p className="px-5 py-10 text-center text-[0.875rem] text-muted">{t.survey.noLines}</p>
+        <p className="px-5 py-10 text-center text-body text-muted">{t.survey.noLines}</p>
       ) : (
         <>
-          <div aria-live="polite" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-[0.7812rem] text-muted">
+          <div aria-live="polite" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-small text-muted">
             <span>{t.survey.lines(summary.totals.lines)}</span>
             {structures.length > 1 && <span>{t.survey.roomsCount(structures.length)}</span>}
             {summary.totals.missingQuantity > 0 && <span>{t.survey.unquantified(summary.totals.missingQuantity)}</span>}
@@ -129,7 +129,7 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
           </div>
 
           {(problems.length > 0 || unplaced.length > 0 || integrity.length > 0) && (
-            <ul role="status" className="space-y-0.5 border-b border-line bg-warn-soft px-5 py-2.5 text-[0.7812rem] leading-snug">
+            <ul role="status" className="space-y-0.5 border-b border-line bg-warn-soft px-5 py-2.5 text-small leading-snug">
               {unplaced.map((r) => (
                 <li key={r.space.id}>{t.survey.noLevel((he ? r.space.nameHe : r.space.nameEn) || t.survey.unnamed)}</li>
               ))}
@@ -144,7 +144,7 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
 
           <div className="overflow-y-auto px-5" style={{ maxHeight }}>
             {visible.length === 0 ? (
-              <p className="py-8 text-center text-[0.875rem] text-muted">{t.survey.noMatch}</p>
+              <p className="py-8 text-center text-body text-muted">{t.survey.noMatch}</p>
             ) : (
               visible.map((g, gi) => {
                 const count = g.sections.reduce((a, s) => a + s.items.length, 0);
@@ -163,15 +163,15 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
                     }}
                     className="border-b border-line py-1 last:border-0"
                   >
-                    <summary className="flex cursor-pointer items-baseline gap-2 py-2 text-[0.875rem] font-semibold">
+                    <summary className="flex cursor-pointer items-baseline gap-2 py-2 text-body font-semibold">
                       <span>{g.title}</span>
-                      <span className="text-[0.7812rem] font-normal text-muted">{t.survey.lines(count)}</span>
+                      <span className="text-small font-normal text-muted">{t.survey.lines(count)}</span>
                     </summary>
                     {/* A closed group's lines are not built at all: a hundred rooms folded shut cost nothing. */}
                     {open &&
                       g.sections.map((s) => (
                         <div key={s.key} className="pb-2">
-                          {s.title && <h3 className="mt-1 text-[0.7812rem] font-semibold text-muted">{s.title}</h3>}
+                          {s.title && <h3 className="mt-1 text-small font-semibold text-muted">{s.title}</h3>}
                           <ul>
                             {s.items.map((item) => (
                               <LineRow key={item.line.id} item={item} place={s.showPlace ? roomName(item.line.location) : undefined} />
@@ -186,10 +186,10 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
           </div>
 
           <div className="border-t border-line px-5 py-3">
-            <h3 className="text-[0.8125rem] font-semibold">
+            <h3 className="text-small font-semibold">
               {t.survey.pending} · {summary.pending.length}
             </h3>
-            <p className="mt-0.5 text-[0.7812rem] leading-snug text-muted">{t.survey.pendingHint}</p>
+            <p className="mt-0.5 text-small leading-snug text-muted">{t.survey.pendingHint}</p>
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-line px-5 py-3">

@@ -58,7 +58,7 @@ function Stepper({ step, result }: { step: Step; result: DesignResult }) {
                 >
                   {done ? <IconCheck size={14} strokeWidth={2.6} /> : i + 1}
                 </span>
-                <span className="text-[0.9375rem]">{t.flow.steps[s]}</span>
+                <span className="text-control">{t.flow.steps[s]}</span>
               </a>
             </li>
           );
@@ -89,7 +89,7 @@ function LayersMenu({ roles }: { roles: ComponentRole[] }) {
         <div className="absolute bottom-12 start-0 z-20 w-48 rounded-xl bg-panel p-2 shadow-lg ring-1 ring-line">
           <div className="px-2 pb-1 text-xs font-semibold text-muted">{t.viewport.layers}</div>
           {roles.map((r) => (
-            <label key={r} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-[0.9375rem] hover:bg-sunken">
+            <label key={r} className="flex h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-control hover:bg-sunken">
               <input type="checkbox" className="h-4 w-4" checked={!hidden.includes(r)} onChange={() => toggleRole(r)} />
               {t.viewport.roles[r]}
             </label>
@@ -113,7 +113,7 @@ function Viewport({ result }: { result: DesignResult }) {
   const roles = [...new Set(result.model.components.map((c) => c.role))];
 
   return (
-    <div className="relative min-h-0 min-w-0 flex-1 bg-sunken">
+    <div className="relative order-1 h-[46vh] min-h-[280px] min-w-0 shrink-0 bg-sunken md:order-none md:h-auto md:min-h-0 md:flex-1 md:shrink">
       <Viewport3D result={result} preset={preset} />
       <div className="pointer-events-none absolute inset-x-4 bottom-20 z-10 flex justify-center">
         <AppliedFixToast result={result} />
@@ -130,7 +130,7 @@ function Viewport({ result }: { result: DesignResult }) {
         </Button>
       </div>
       {viewMode === 'structural' && (
-        <div className="absolute end-4 bottom-20 flex flex-col gap-1.5 rounded-xl bg-panel/95 px-3 py-2.5 text-[0.8125rem] shadow-sm ring-1 ring-line">
+        <div className="absolute end-4 bottom-20 flex flex-col gap-1.5 rounded-xl bg-panel/95 px-3 py-2.5 text-small shadow-sm ring-1 ring-line">
           {(['GREEN', 'YELLOW', 'RED', 'GREY'] as Status[]).map((s) => (
             <span key={s} className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm" style={{ background: STATUS_COLOR[s] }} />
@@ -149,7 +149,7 @@ function Viewport({ result }: { result: DesignResult }) {
                 role="radio"
                 aria-checked={viewMode === m}
                 onClick={() => setViewMode(m)}
-                className={`h-10 rounded-lg px-3.5 text-[0.9375rem] ${viewMode === m ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-sunken'}`}
+                className={`h-10 rounded-lg px-3.5 text-control ${viewMode === m ? 'bg-accent-soft font-semibold text-accent-ink' : 'hover:bg-sunken'}`}
               >
                 {t.viewport.modes[m]}
               </button>
@@ -395,7 +395,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
               value={s.projectName}
               onChange={(e) => s.setProjectName(e.target.value)}
               aria-label={t.header.projectName}
-              className="h-10 w-52 min-w-0 rounded-lg border border-transparent bg-transparent px-2 text-base font-semibold hover:border-line focus:border-accent focus:outline-none"
+              className="h-10 w-full max-w-52 min-w-0 rounded-lg border border-transparent bg-transparent px-2 text-base font-semibold hover:border-line focus:border-accent focus:outline-none"
             />
           }
           center={<Stepper step={step} result={result} />}
@@ -416,11 +416,11 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
         />
 
         <h1 className="sr-only">{t.structure.pageTitle(t.furniture[artKindFor(s.params)].name, t.flow.steps[step])}</h1>
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-visible">
           {editing && (
             <>
               {/* Everything that shapes the piece, in one column: size and use, structure, look, components. */}
-              <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden border-e border-line bg-panel" aria-label={t.flow.controls}>
+              <aside className="order-2 flex w-full shrink-0 flex-col border-line bg-panel md:order-none md:w-[380px] md:overflow-hidden md:border-e" aria-label={t.flow.controls}>
                 <EditorPanel result={result} />
               </aside>
               <Viewport result={result} />
@@ -435,7 +435,7 @@ export function DesignerPage({ auth, step }: { auth: AuthState; step: Step }) {
         </div>
 
         {step !== 'review' && (
-          <footer className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-t border-line bg-panel px-6">
+          <footer className="flex min-h-[72px] shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line bg-panel px-3 py-2 sm:px-6">
             <div className="flex items-center gap-4">
             <FixesButton result={result} />
             <div className="flex items-baseline gap-2.5">

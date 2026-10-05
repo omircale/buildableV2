@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; locale: 'he'
     return (
       <div dir={dictFor(this.props.locale).dir} className="flex min-h-screen flex-col items-center justify-center gap-4 bg-paper p-8 text-center">
         <h1 className="text-2xl font-bold">{t.title}</h1>
-        <p className="max-w-xl text-[0.9375rem] leading-relaxed text-muted">{t.text(projects.length)}</p>
+        <p className="max-w-xl text-control leading-relaxed text-muted">{t.text(projects.length)}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <button
             type="button"
@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; locale: 'he'
             {t.reload}
           </button>
         </div>
-        <pre className="max-h-40 max-w-full overflow-auto rounded-lg bg-sunken p-3 text-start text-[0.75rem] text-muted" dir="ltr">
+        <pre className="max-h-40 max-w-full overflow-auto rounded-lg bg-sunken p-3 text-start text-caption text-muted" dir="ltr">
           {error.message}
         </pre>
       </div>

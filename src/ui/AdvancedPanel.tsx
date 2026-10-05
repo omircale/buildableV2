@@ -24,7 +24,7 @@ export function AdvancedPanel({ result }: { result: DesignResult }) {
               role="tab"
               aria-selected={tab === id}
               onClick={() => setTab(id)}
-              className={`h-12 shrink-0 border-b-[3px] px-2.5 text-[0.875rem] whitespace-nowrap ${tab === id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted hover:text-ink'}`}
+              className={`h-12 shrink-0 border-b-[3px] px-2.5 text-body whitespace-nowrap ${tab === id ? 'border-accent font-semibold text-ink' : 'border-transparent text-muted hover:text-ink'}`}
             >
               {t.advanced.tabs[id]}
             </button>

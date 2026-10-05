@@ -20,9 +20,9 @@ function SpaceInput({ label, value, onChange }: { label: string; value: number |
         min={1}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : Math.max(0, Number(e.target.value)))}
-        className="num h-full min-w-0 flex-1 bg-transparent px-2 text-[0.9375rem] outline-none"
+        className="num h-full min-w-0 flex-1 bg-transparent px-2 text-control outline-none"
       />
-      <span className="pe-3 text-[0.8125rem] text-muted">{t.common.cm}</span>
+      <span className="pe-3 text-small text-muted">{t.common.cm}</span>
     </label>
   );
 }
@@ -51,7 +51,7 @@ function FurnitureCard({ type, fits, onOpen }: { type: FurnitureType; fits: bool
         {!fits && <span className="absolute end-3 top-3 rounded-full bg-panel px-2 py-0.5 text-xs font-semibold text-muted ring-1 ring-line">{t.home.doesntFit}</span>}
       </div>
       <div className="flex flex-col gap-1 px-4 pb-4 pt-3">
-        <span className={`text-[1.0625rem] font-semibold ${disabled ? 'text-muted' : ''}`}>{copy.name}</span>
+        <span className={`text-base font-semibold ${disabled ? 'text-muted' : ''}`}>{copy.name}</span>
         <span id={`${type.kind}-desc`} className="text-sm text-muted">
           {copy.blurb}
           {type.isNew && disabled ? ` · ${t.common.soon}` : ''}
@@ -97,7 +97,7 @@ export function HomePage({ auth }: { auth: AuthState }) {
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 py-9">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex max-w-2xl flex-col gap-2">
-            <h1 className="text-[2.5rem] leading-tight font-bold tracking-tight">{t.home.title}</h1>
+            <h1 className="text-display leading-tight font-bold tracking-tight">{t.home.title}</h1>
             <p className="text-lg leading-relaxed text-muted">{t.home.subtitle}</p>
           </div>
         </div>
@@ -106,13 +106,13 @@ export function HomePage({ auth }: { auth: AuthState }) {
         <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-accent-soft px-5 py-4" aria-label={t.home.hotelTitle}>
           <div className="min-w-0 flex-1 basis-72">
             <h2 className="text-base font-semibold">{t.home.hotelTitle}</h2>
-            <p className="mt-0.5 text-[0.875rem] leading-relaxed text-muted">{t.home.hotelBody}</p>
+            <p className="mt-0.5 text-body leading-relaxed text-muted">{t.home.hotelBody}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <a href="#/journey" className={buttonClass('primary')}>
               {t.home.hotelStart}
             </a>
-            <a href="#/space" className="text-[0.875rem] font-medium text-accent-ink underline underline-offset-2">
+            <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
               {t.home.hotelDirect}
             </a>
           </div>
@@ -161,7 +161,7 @@ export function HomePage({ auth }: { auth: AuthState }) {
           ))}
         </div>
 
-        <ol className="flex flex-wrap items-center gap-3 text-[0.9375rem] text-muted">
+        <ol className="flex flex-wrap items-center gap-3 text-control text-muted">
           {t.home.stepsLine.map((s, i) => (
             <li key={s} className="flex items-center gap-3">
               {i > 0 && <IconChevron size={16} className="rtl:rotate-0 ltr:rotate-180" />}

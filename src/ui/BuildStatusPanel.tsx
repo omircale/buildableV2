@@ -42,14 +42,14 @@ function CheckCard({ check }: { check: Check }) {
         }}
       >
         <StatusBadge status={check.status} />
-        <span className="flex-1 text-[0.9375rem] font-medium leading-snug">{check.title}</span>
+        <span className="flex-1 text-control font-medium leading-snug">{check.title}</span>
       </button>
       {open && (
         <div className="space-y-2 border-t border-line px-3 py-2 text-sm leading-relaxed">
           <p>{check.explanation}</p>
           {check.calculation && (
-            <div className="rounded-lg bg-sunken p-2.5 text-[0.8125rem]">
-              <div className="mb-1.5 text-left font-mono text-[0.8125rem] text-muted" dir="ltr">
+            <div className="rounded-lg bg-sunken p-2.5 text-small">
+              <div className="mb-1.5 text-left font-mono text-small text-muted" dir="ltr">
                 {check.calculation.formula}
               </div>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5">
@@ -64,7 +64,7 @@ function CheckCard({ check }: { check: Check }) {
             </div>
           )}
           {check.assumptions.length > 0 && (
-            <details className="text-[0.8125rem]">
+            <details className="text-small">
               <summary className="cursor-pointer py-1 text-muted">{t.checks.assumptions(check.assumptions.length)}</summary>
               <ul className="mt-1 list-disc space-y-0.5 ps-4">
                 {check.assumptions.map((a) => (
@@ -74,7 +74,7 @@ function CheckCard({ check }: { check: Check }) {
             </details>
           )}
           {check.sources.length > 0 && (
-            <details className="text-[0.8125rem]">
+            <details className="text-small">
               <summary className="cursor-pointer py-1 text-muted">{t.checks.sources(check.sources.length)}</summary>
               <ul className="mt-1 space-y-1">
                 {check.sources.map((s) => (
@@ -92,15 +92,15 @@ function CheckCard({ check }: { check: Check }) {
               </ul>
             </details>
           )}
-          {check.requiredVerification && <p className="rounded-lg bg-warn-soft px-2.5 py-1.5 text-[0.8125rem] text-warn">
+          {check.requiredVerification && <p className="rounded-lg bg-warn-soft px-2.5 py-1.5 text-small text-warn">
               {t.checks.verification} {check.requiredVerification}
             </p>}
           {check.fixes.length > 0 && (
             <div>
-              <div className="mb-1.5 text-[0.8125rem] font-semibold">{t.checks.fixes}</div>
+              <div className="mb-1.5 text-small font-semibold">{t.checks.fixes}</div>
               <div className="flex flex-col gap-1">
                 {check.fixes.map((f) => (
-                  <button key={f.change.label} onClick={() => applyChange(f.change)} className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-accent-soft px-3 py-2 text-start text-[0.8125rem] hover:brightness-95">
+                  <button key={f.change.label} onClick={() => applyChange(f.change)} className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-accent-soft px-3 py-2 text-start text-small hover:brightness-95">
                     <span>{f.change.label}</span>
                     <StatusBadge status={f.projectedStatus} label={f.projectedDetail} />
                   </button>
@@ -182,7 +182,7 @@ export function BuildStatusPanel({ result }: { result: DesignResult }) {
               type="button"
               aria-pressed={only === st}
               onClick={() => setOnly(only === st ? null : st)}
-              className={`flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] ring-1 transition ${
+              className={`flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-small ring-1 transition ${
                 only === st ? 'bg-sunken ring-accent' : 'ring-line hover:bg-sunken'
               }`}
             >
@@ -192,7 +192,7 @@ export function BuildStatusPanel({ result }: { result: DesignResult }) {
             </button>
           ))}
         {only && (
-          <button type="button" onClick={() => setOnly(null)} className="min-h-8 px-2 text-[0.8125rem] text-accent-ink underline underline-offset-2">
+          <button type="button" onClick={() => setOnly(null)} className="min-h-8 px-2 text-small text-accent-ink underline underline-offset-2">
             {t.checks.clearFilter}
           </button>
         )}
@@ -203,7 +203,7 @@ export function BuildStatusPanel({ result }: { result: DesignResult }) {
           {t.checks.showPassing}
         </label>
       )}
-      {listed.length > 1 && <p className="text-[0.8125rem] text-muted">{t.checks.stepHint}</p>}
+      {listed.length > 1 && <p className="text-small text-muted">{t.checks.stepHint}</p>}
       {groups.length === 0 && <p className="text-sm text-muted">{t.search.noMatches}</p>}
       <div className="space-y-2">
         {groups.map(({ cat, all, visible }) => {
@@ -218,7 +218,7 @@ export function BuildStatusPanel({ result }: { result: DesignResult }) {
                 className="flex min-h-12 w-full items-center gap-2 px-3 text-start"
               >
                 <IconChevronDown size={16} className={`shrink-0 text-muted transition ${open ? '' : 'rtl:rotate-90 ltr:-rotate-90'}`} />
-                <span className="flex-1 text-[0.9375rem] font-semibold">{t.category[cat]}</span>
+                <span className="flex-1 text-control font-semibold">{t.category[cat]}</span>
                 <span className="text-xs text-muted">{t.search.showing(visible.length, all.length)}</span>
                 <StatusBadge status={report.coverage[cat]} />
               </button>
@@ -233,7 +233,7 @@ export function BuildStatusPanel({ result }: { result: DesignResult }) {
           );
         })}
       </div>
-      <p className="text-[0.8125rem] leading-snug text-muted">{t.checks.kinds}</p>
+      <p className="text-small leading-snug text-muted">{t.checks.kinds}</p>
     </div>
   );
 }

@@ -5,6 +5,17 @@
 /* Every text/background pair below meets WCAG 2.2 AA (≥ 4.5:1) in both themes. */
 @theme {
   --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif;
+  /*
+   * The type scale. Eight steps, each with one job, in rem so a person's own text-size setting is
+   * honoured. Screens use these names; a size written as a raw number is a size nobody decided on.
+   * Print documents (the assembly booklet, the print package) keep their own smaller sizes.
+   */
+  --text-caption: 0.75rem; /* 12 — the smallest text on a screen: counts, hints under a field */
+  --text-small: 0.8125rem; /* 13 — secondary text, explanations */
+  --text-body: 0.875rem; /* 14 — the text people read */
+  --text-control: 0.9375rem; /* 15 — buttons and section titles */
+  --text-title: 2rem; /* 32 — a page's main heading */
+  --text-display: 2.5rem; /* 40 — the home page headline */
   --color-ink: #1c1a17;
   --color-paper: #f6f3ee;
   --color-panel: #ffffff;

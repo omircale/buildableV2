@@ -96,9 +96,9 @@ function useReviewItems(result: DesignResult): { items: Item[]; notChecked: Chec
 
 function PriceRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={`flex items-baseline justify-between gap-3 ${strong ? '' : 'text-[0.9375rem]'}`}>
+    <div className={`flex items-baseline justify-between gap-3 ${strong ? '' : 'text-control'}`}>
       <span className={strong ? 'text-base font-semibold' : 'text-muted'}>{label}</span>
-      <span className={`num ${strong ? 'text-[2rem] font-bold' : ''}`}>{value}</span>
+      <span className={`num ${strong ? 'text-title font-bold' : ''}`}>{value}</span>
     </div>
   );
 }
@@ -128,12 +128,12 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
               <FurnitureArt kind={artKindFor(p)} />
             </div>
             <div className="flex flex-col gap-2">
-              <h1 className="text-[2rem] leading-tight font-bold">{blocked ? t.review.notReady : t.review.ready}</h1>
-              <p className="text-[1.0625rem] text-muted">
+              <h1 className="text-title leading-tight font-bold">{blocked ? t.review.notReady : t.review.ready}</h1>
+              <p className="text-base text-muted">
                 {t.review.summaryLine(cm(result.model.overall.x), cm(result.model.overall.y), cm(result.model.overall.z), (() => { const m = getMaterial(p.materialId); return m ? materialName(m, locale) : ''; })(), p.template === 'open_shelf' ? p.shelfCount : null)}
               </p>
               {result.bom.totalMassKg != null && (
-                <p className="text-[0.9375rem] text-muted" title={t.review.weightHint}>
+                <p className="text-control text-muted" title={t.review.weightHint}>
                   {t.review.weight(result.bom.totalMassKg)}
                 </p>
               )}
@@ -152,7 +152,7 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="text-base font-semibold">{item.title}</span>
-                    {item.text && <span className="text-[0.9375rem] leading-relaxed">{item.text}</span>}
+                    {item.text && <span className="text-control leading-relaxed">{item.text}</span>}
                     {fixes.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-1">
                         {fixes.map((f, i) => (
@@ -165,7 +165,7 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
                     )}
                   </div>
                   {detailCheck && (
-                    <button type="button" onClick={() => goToDetails(detailCheck.id)} className="shrink-0 py-1 text-[0.9375rem] font-medium text-accent-ink underline underline-offset-2">
+                    <button type="button" onClick={() => goToDetails(detailCheck.id)} className="shrink-0 py-1 text-control font-medium text-accent-ink underline underline-offset-2">
                       {detailCheck.calculation ? t.structure.howCalculated : t.structure.whyShown}
                     </button>
                   )}
@@ -178,14 +178,14 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
 
           {notChecked.length > 0 && (
             <details className="group rounded-xl bg-panel ring-1 ring-line">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-5 text-[0.9375rem]">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-5 text-control">
                 <IconChevron size={16} className="transition group-open:-rotate-90 ltr:rotate-180 ltr:group-open:rotate-90" />
                 <span className="font-medium">{t.review.notChecked}</span>
                 <span className="text-muted">({notChecked.length})</span>
               </summary>
               <ul className="space-y-2 px-5 pb-4">
                 {notChecked.map((c) => (
-                  <li key={c.id} className="text-[0.9375rem]">
+                  <li key={c.id} className="text-control">
                     <span className="font-medium">{c.title}</span>
                     <span className="block text-sm text-muted">{c.explanation}</span>
                   </li>
@@ -208,15 +208,15 @@ export function ReviewStep({ result, onCsv, onPrint, pdfBusy, onBooklet, booklet
                 <PriceRow label={t.review.shippingLine} value={t.common.ils(q.shippingIls)} />
                 <div className="h-px bg-line" />
                 <PriceRow label={t.review.total} value={t.common.ils(q.totalIls)} strong />
-                <p className="text-[0.8125rem] leading-relaxed text-muted">{p.template === 'open_shelf' ? t.review.hardwareNote : t.review.hardwareNoteGeneric}</p>
+                <p className="text-small leading-relaxed text-muted">{p.template === 'open_shelf' ? t.review.hardwareNote : t.review.hardwareNoteGeneric}</p>
               </>
             ) : (
-              <p className="text-[0.9375rem] text-muted">{t.flow.noPrice}</p>
+              <p className="text-control text-muted">{t.flow.noPrice}</p>
             )}
             <Button size="lg" variant="primary" disabled={blocked || !q} onClick={() => goToDetails()} className="mt-1 w-full">
               {t.review.order}
             </Button>
-            <p className="text-[0.8125rem] text-muted">{blocked ? t.review.blockedExport : t.review.orderSoon}</p>
+            <p className="text-small text-muted">{blocked ? t.review.blockedExport : t.review.orderSoon}</p>
             <div className="grid grid-cols-2 gap-2">
               <Button onClick={() => goToDetails()} className="w-full">
                 {t.review.partsDetails}

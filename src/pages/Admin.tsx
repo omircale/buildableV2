@@ -292,7 +292,7 @@ function MaterialsTab() {
             </tbody>
           </table>
           {m.thicknessesMm.some((t) => !propertiesFor(m, t)) && m.properties.length > 0 && (
-            <p className="mt-1 text-[0.6875rem] text-warn">עוביים ללא נתוני חוזק (יוצגו כלא ידוע): {m.thicknessesMm.filter((t) => !propertiesFor(m, t)).join(', ')} מ"מ</p>
+            <p className="mt-1 text-caption text-warn">עוביים ללא נתוני חוזק (יוצגו כלא ידוע): {m.thicknessesMm.filter((t) => !propertiesFor(m, t)).join(', ')} מ"מ</p>
           )}
         </div>
       ))}
@@ -318,7 +318,7 @@ function ConfigTab({ userId }: { userId: string }) {
   return (
     <div className="max-w-xl space-y-3 rounded-lg bg-panel p-4 ring-1 ring-line">
       <p className="text-sm text-muted">אלה החלטות מוצר, לא עובדות פיזיקליות. טווח ההמלצה של Eurocode 5 לשקיעה סופית בקורה על שתי סמכות: L/150 עד L/300.</p>
-      <p className="text-[0.6875rem] text-muted" dir="ltr">
+      <p className="text-caption text-muted" dir="ltr">
         {CONFIG_SOURCES.deflection[0].title} — {CONFIG_SOURCES.deflection[0].reference}
       </p>
       <div className="grid grid-cols-2 gap-3">

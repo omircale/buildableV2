@@ -16,10 +16,10 @@ export function SpacePage({ auth }: { auth: AuthState }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-paper text-ink">
-      <AppHeader auth={auth} start={<h1 className="truncate text-[0.9375rem] font-semibold">{t.survey.title}</h1>} />
+      <AppHeader auth={auth} start={<h1 className="truncate text-control font-semibold">{t.survey.title}</h1>} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-4 px-4 py-6">
-        <p className="max-w-2xl text-[0.875rem] leading-relaxed text-muted">{t.survey.intro}</p>
+        <p className="max-w-2xl text-body leading-relaxed text-muted">{t.survey.intro}</p>
         <SampleBanner />
         <RoomSwitcher bill={bill} />
         <ProjectBackup />

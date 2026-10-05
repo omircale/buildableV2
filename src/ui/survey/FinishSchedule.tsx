@@ -67,27 +67,27 @@ export function FinishSchedule({ bill }: { bill: RoomBill }) {
   return (
     <div className="rounded-2xl border border-line bg-panel">
       <div className="border-b border-line px-5 py-3">
-        <h2 className="text-[0.9375rem] font-semibold">
-          {f.title} {survey.finishes.length > 0 && <span className="text-[0.7812rem] font-normal text-muted">· {survey.finishes.length}</span>}
+        <h2 className="text-control font-semibold">
+          {f.title} {survey.finishes.length > 0 && <span className="text-small font-normal text-muted">· {survey.finishes.length}</span>}
         </h2>
-        <p className="mt-0.5 max-w-prose text-[0.7812rem] leading-snug text-muted">{f.hint}</p>
+        <p className="mt-0.5 max-w-prose text-small leading-snug text-muted">{f.hint}</p>
       </div>
 
       <div className="space-y-4 px-5 py-4">
         {survey.finishes.length === 0 ? (
-          <p className="text-[0.8438rem] text-muted">{f.none}</p>
+          <p className="text-small text-muted">{f.none}</p>
         ) : (
           <ul className="space-y-2">
             {survey.finishes.map((spec: FinishScheduleSpec) => (
               <li key={spec.code} className="rounded-lg border border-line px-3 py-2.5">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <span className="text-[0.875rem] font-semibold" dir="ltr">
+                  <span className="text-body font-semibold" dir="ltr">
                     {spec.code}
                   </span>
-                  <span className="text-[0.875rem]">{(he ? spec.itemNameHe : undefined) ?? spec.itemNameEn}</span>
-                  <span className="rounded-full bg-sunken px-2 py-0.5 text-[0.75rem]">{f.surface[spec.surface === 'other' ? 'floor' : spec.surface]}</span>
-                  {spec.pattern && <span className="text-[0.7812rem] text-muted">{spec.pattern}</span>}
-                  <button type="button" className="ms-auto text-[0.7812rem] text-muted underline" onClick={() => survey.removeFinish(spec.code)}>
+                  <span className="text-body">{(he ? spec.itemNameHe : undefined) ?? spec.itemNameEn}</span>
+                  <span className="rounded-full bg-sunken px-2 py-0.5 text-caption">{f.surface[spec.surface === 'other' ? 'floor' : spec.surface]}</span>
+                  {spec.pattern && <span className="text-small text-muted">{spec.pattern}</span>}
+                  <button type="button" className="ms-auto text-small text-muted underline" onClick={() => survey.removeFinish(spec.code)}>
                     {t.survey.remove}
                   </button>
                 </div>
@@ -99,14 +99,14 @@ export function FinishSchedule({ bill }: { bill: RoomBill }) {
                       </Chip>
                     ))
                   ) : (
-                    <span className="text-[0.8125rem]">{f.usedIn(spec.areas.length, rooms.length)}</span>
+                    <span className="text-small">{f.usedIn(spec.areas.length, rooms.length)}</span>
                   )}
                   {rooms.length > 1 && (
                     <>
-                      <button type="button" className="text-[0.7812rem] text-accent underline underline-offset-2" onClick={() => survey.upsertFinish({ ...spec, areas: rooms.map((r) => r.space.id) })}>
+                      <button type="button" className="text-small text-accent underline underline-offset-2" onClick={() => survey.upsertFinish({ ...spec, areas: rooms.map((r) => r.space.id) })}>
                         {f.allRooms}
                       </button>
-                      <button type="button" className="text-[0.7812rem] text-muted underline underline-offset-2" onClick={() => survey.upsertFinish({ ...spec, areas: [] })}>
+                      <button type="button" className="text-small text-muted underline underline-offset-2" onClick={() => survey.upsertFinish({ ...spec, areas: [] })}>
                         {f.noRooms}
                       </button>
                     </>
@@ -118,15 +118,15 @@ export function FinishSchedule({ bill }: { bill: RoomBill }) {
         )}
 
         <div className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_auto_auto] sm:items-end">
-          <label className="block text-[0.7812rem] text-muted">
+          <label className="block text-small text-muted">
             {f.code}
             <input className={`${inputClass} mt-1`} dir="ltr" placeholder="WD-2" value={code} onChange={(e) => setCode(e.target.value)} />
           </label>
-          <label className="block text-[0.7812rem] text-muted">
+          <label className="block text-small text-muted">
             {f.name}
             <input className={`${inputClass} mt-1`} value={name} onChange={(e) => setName(e.target.value)} />
           </label>
-          <select className="h-10 rounded-lg border border-field bg-panel px-2 text-[0.875rem]" value={surface} onChange={(e) => setSurface(e.target.value as FinishSurface)} aria-label={f.surfaceLabel}>
+          <select className="h-10 rounded-lg border border-field bg-panel px-2 text-body" value={surface} onChange={(e) => setSurface(e.target.value as FinishSurface)} aria-label={f.surfaceLabel}>
             {SURFACES.map((s) => (
               <option key={s} value={s}>
                 {f.surface[s as 'floor' | 'wall' | 'ceiling']}
@@ -137,14 +137,14 @@ export function FinishSchedule({ bill }: { bill: RoomBill }) {
             {f.add}
           </Button>
         </div>
-        {normalised !== '' && !category && <p className="text-[0.7812rem] text-warn">{f.unknownPrefix(Object.values(FINISH_CODE_PREFIX).join(', '))}</p>}
-        {exists && <p className="text-[0.7812rem] text-warn">{f.exists(normalised)}</p>}
+        {normalised !== '' && !category && <p className="text-small text-warn">{f.unknownPrefix(Object.values(FINISH_CODE_PREFIX).join(', '))}</p>}
+        {exists && <p className="text-small text-warn">{f.exists(normalised)}</p>}
 
         <details className="rounded-lg border border-line">
-          <summary className="cursor-pointer px-3 py-2 text-[0.8438rem] font-medium">{f.importTitle}</summary>
+          <summary className="cursor-pointer px-3 py-2 text-small font-medium">{f.importTitle}</summary>
           <div className="space-y-2 px-3 pb-3">
-            <p className="text-[0.7812rem] leading-snug text-muted">{f.importHint}</p>
-            <textarea rows={4} dir="ltr" aria-label={f.pasteLabel} className={`${inputClass} h-auto py-2 font-mono text-[0.7812rem]`} placeholder={f.pastePlaceholder} value={pasted} onChange={(e) => setPasted(e.target.value)} />
+            <p className="text-small leading-snug text-muted">{f.importHint}</p>
+            <textarea rows={4} dir="ltr" aria-label={f.pasteLabel} className={`${inputClass} h-auto py-2 font-mono text-small`} placeholder={f.pastePlaceholder} value={pasted} onChange={(e) => setPasted(e.target.value)} />
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="primary" disabled={!pasted.trim()} onClick={() => runImport(pasted)}>
                 {f.importPasted}
@@ -164,12 +164,12 @@ export function FinishSchedule({ bill }: { bill: RoomBill }) {
                   runImport(await file.text());
                 }}
               />
-              <button type="button" className="text-[0.7812rem] text-accent underline underline-offset-2" onClick={() => downloadText('finish-schedule-template.csv', finishTemplate(he), 'text/csv;charset=utf-8')}>
+              <button type="button" className="text-small text-accent underline underline-offset-2" onClick={() => downloadText('finish-schedule-template.csv', finishTemplate(he), 'text/csv;charset=utf-8')}>
                 {f.template}
               </button>
             </div>
             {result && (
-              <div role="status" className="rounded-lg bg-sunken px-3 py-2 text-[0.7812rem] leading-snug">
+              <div role="status" className="rounded-lg bg-sunken px-3 py-2 text-small leading-snug">
                 <div className="font-medium">{f.imported(result.count)}</div>
                 {result.problems.length > 0 && (
                   <ul className="mt-1 space-y-0.5 text-muted">

@@ -149,7 +149,7 @@ export function fieldsFor(p: DesignParams, groups: FieldGroup[]): FieldDef[] {
 }
 
 function Hint({ text }: { text: string }) {
-  return <span className="mt-1 block text-[0.8125rem] leading-snug text-muted">{text}</span>;
+  return <span className="mt-1 block text-small leading-snug text-muted">{text}</span>;
 }
 
 export function TemplateFields({ groups }: { groups: FieldGroup[] }) {
@@ -183,11 +183,11 @@ export function TemplateFields({ groups }: { groups: FieldGroup[] }) {
             );
           case 'boolean':
             return (
-              <label key={f.key} className="flex min-h-10 items-center gap-3 text-[0.9375rem]">
+              <label key={f.key} className="flex min-h-10 items-center gap-3 text-control">
                 <input type="checkbox" checked={values[f.key] === true} onChange={(e) => set(f.key, e.target.checked)} className="h-5 w-5 accent-[var(--color-accent)]" />
                 <span>
                   {L(f.label)}
-                  {hint && <span className="block text-[0.8125rem] text-muted">{hint}</span>}
+                  {hint && <span className="block text-small text-muted">{hint}</span>}
                 </span>
               </label>
             );

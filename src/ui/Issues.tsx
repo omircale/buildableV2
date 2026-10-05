@@ -35,13 +35,13 @@ export function IssueCard({ check, onApplied, muted }: { check: Check; onApplied
           <StatusIcon status={check.status} size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[0.9375rem] leading-snug font-semibold">{check.title}</div>
-          {check.calculation ? <div className="mt-0.5 text-[0.8125rem]">{check.calculation.result}</div> : <div className="mt-0.5 line-clamp-3 text-[0.8125rem]">{check.explanation}</div>}
+          <div className="text-control leading-snug font-semibold">{check.title}</div>
+          {check.calculation ? <div className="mt-0.5 text-small">{check.calculation.result}</div> : <div className="mt-0.5 line-clamp-3 text-small">{check.explanation}</div>}
         </div>
       </div>
       {check.fixes.length > 0 ? (
         <div className="mt-2.5 flex flex-col gap-1.5">
-          <span className="text-[0.8125rem] font-semibold">{t.issues.fixes}</span>
+          <span className="text-small font-semibold">{t.issues.fixes}</span>
           {check.fixes.map((f) => (
             <button
               key={f.change.label}
@@ -50,10 +50,10 @@ export function IssueCard({ check, onApplied, muted }: { check: Check; onApplied
                 applyChange(f.change);
                 onApplied?.();
               }}
-              className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-panel px-3 py-2 text-start text-[0.875rem] ring-1 ring-line hover:ring-accent"
+              className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-panel px-3 py-2 text-start text-body ring-1 ring-line hover:ring-accent"
             >
               <span className="font-medium">{f.change.label}</span>
-              <span className="flex shrink-0 items-center gap-1.5 text-[0.75rem] text-muted">
+              <span className="flex shrink-0 items-center gap-1.5 text-caption text-muted">
                 {t.issues.after}
                 <StatusBadge status={f.projectedStatus} />
               </span>
@@ -61,15 +61,15 @@ export function IssueCard({ check, onApplied, muted }: { check: Check; onApplied
           ))}
         </div>
       ) : (
-        check.status !== 'GREY' && check.requiredVerification && <p className="mt-2 text-[0.8125rem]">{check.requiredVerification}</p>
+        check.status !== 'GREY' && check.requiredVerification && <p className="mt-2 text-small">{check.requiredVerification}</p>
       )}
-      {check.status === 'GREY' && <p className="mt-2 text-[0.8125rem] text-muted">{t.issues.notCheckedHint}</p>}
+      {check.status === 'GREY' && <p className="mt-2 text-small text-muted">{t.issues.notCheckedHint}</p>}
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-        <button type="button" onClick={() => openAdvanced('checks', check.id)} className="text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">
+        <button type="button" onClick={() => openAdvanced('checks', check.id)} className="text-small font-medium text-accent-ink underline underline-offset-2">
           {check.calculation ? t.structure.howCalculated : t.structure.whyShown}
         </button>
         {check.componentIds[0] && (
-          <button type="button" onClick={() => select(check.componentIds[0])} className="text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">
+          <button type="button" onClick={() => select(check.componentIds[0])} className="text-small font-medium text-accent-ink underline underline-offset-2">
             {t.issues.showPart}
           </button>
         )}
@@ -79,7 +79,7 @@ export function IssueCard({ check, onApplied, muted }: { check: Check; onApplied
 }
 
 export function IssuesList({ checks, empty, muted }: { checks: Check[]; empty?: string; muted?: boolean }) {
-  if (!checks.length) return empty ? <p className="text-[0.9375rem] text-muted">{empty}</p> : null;
+  if (!checks.length) return empty ? <p className="text-control text-muted">{empty}</p> : null;
   return (
     <div className="flex flex-col gap-2">
       {checks.map((c) => (
@@ -100,8 +100,8 @@ export function NotesOnlySummary({ checks }: { checks: Check[] }) {
         <span className="text-muted">
           <StatusIcon status="GREY" size={18} />
         </span>
-        <span className="flex-1 text-[0.9375rem]">{t.issues.notesOnlySummary}</span>
-        <span className="text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2">{expanded ? t.common.close : t.issues.showDetails}</span>
+        <span className="flex-1 text-control">{t.issues.notesOnlySummary}</span>
+        <span className="text-small font-medium text-accent-ink underline underline-offset-2">{expanded ? t.common.close : t.issues.showDetails}</span>
       </button>
       {expanded && (
         <div className="mt-3">
@@ -147,7 +147,7 @@ export function BuildPill({ result }: { result: DesignResult }) {
         <span className={blocked ? 'text-bad' : 'text-ok'}>
           <StatusIcon status={blocked ? 'RED' : 'GREEN'} size={18} />
         </span>
-        <span className="text-[0.9375rem] font-semibold">{blocked ? t.viewport.cannotBuild : t.viewport.canBuild}</span>
+        <span className="text-control font-semibold">{blocked ? t.viewport.cannotBuild : t.viewport.canBuild}</span>
         {actionable.length > 0 && (
           <>
             <span className="h-5 w-px bg-line-strong" aria-hidden />
@@ -165,14 +165,14 @@ export function BuildPill({ result }: { result: DesignResult }) {
                 setOpen(false);
                 openAdvanced('checks');
               }}
-              className="text-[0.8125rem] font-medium text-accent-ink underline underline-offset-2"
+              className="text-small font-medium text-accent-ink underline underline-offset-2"
             >
               {t.issues.allDetails}
             </button>
           </div>
           <div className="overflow-y-auto p-3">
             {issues.length === 0 ? (
-              <p className="text-[0.9375rem] text-muted">{t.issues.none}</p>
+              <p className="text-control text-muted">{t.issues.none}</p>
             ) : reds > 0 ? (
               <IssuesList checks={issues} />
             ) : (
@@ -210,7 +210,7 @@ export function FixesButton({ result }: { result: DesignResult }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-[0.9375rem] font-semibold ring-1 ${reds.length ? 'bg-bad-soft text-bad ring-bad/40 hover:bg-bad-soft/80' : 'bg-panel text-ink ring-line hover:bg-sunken'}`}
+        className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-control font-semibold ring-1 ${reds.length ? 'bg-bad-soft text-bad ring-bad/40 hover:bg-bad-soft/80' : 'bg-panel text-ink ring-line hover:bg-sunken'}`}
       >
         <StatusIcon status={reds.length ? 'RED' : 'YELLOW'} size={16} />
         {reds.length ? t.issues.fixButton(reds.length) : t.issues.notesButton(notes.length)}
@@ -222,28 +222,28 @@ export function FixesButton({ result }: { result: DesignResult }) {
             <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
               <div>
                 <h2 className="text-lg font-bold">{t.issues.drawerTitle}</h2>
-                <p className="text-[0.8125rem] text-muted">{t.issues.drawerIntro}</p>
+                <p className="text-small text-muted">{t.issues.drawerIntro}</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="h-9 rounded-lg px-3 text-[0.9375rem] text-accent-ink hover:bg-sunken">
+              <button type="button" onClick={() => setOpen(false)} className="h-9 rounded-lg px-3 text-control text-accent-ink hover:bg-sunken">
                 {t.common.close}
               </button>
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto p-4">
               {reds.length > 0 ? (
                 <section className="flex flex-col gap-2">
-                  <h3 className="text-[0.8125rem] font-semibold text-bad">{t.issues.blockingTitle}</h3>
+                  <h3 className="text-small font-semibold text-bad">{t.issues.blockingTitle}</h3>
                   <IssuesList checks={reds} />
                 </section>
               ) : (
-                <p className="rounded-xl bg-ok-soft p-3 text-[0.9375rem] text-ok">{t.issues.allClear}</p>
+                <p className="rounded-xl bg-ok-soft p-3 text-control text-ok">{t.issues.allClear}</p>
               )}
               {notes.length > 0 && (
                 <section className="flex flex-col gap-2">
-                  <h3 className="text-[0.8125rem] font-semibold text-muted">{t.issues.notesTitle}</h3>
+                  <h3 className="text-small font-semibold text-muted">{t.issues.notesTitle}</h3>
                   <IssuesList checks={notes} muted />
                 </section>
               )}
-              {others.length > 0 && <p className="text-[0.8125rem] text-muted">{t.issues.notCheckedHint} ({others.length})</p>}
+              {others.length > 0 && <p className="text-small text-muted">{t.issues.notCheckedHint} ({others.length})</p>}
             </div>
           </div>
         </div>
@@ -279,7 +279,7 @@ export function AppliedFixToast({ result }: { result: DesignResult }) {
       <span className="mt-0.5 shrink-0 text-ok">
         <StatusIcon status="GREEN" size={18} />
       </span>
-      <div className="min-w-0 flex-1 text-[0.875rem]">
+      <div className="min-w-0 flex-1 text-body">
         <div className="font-semibold">{t.issues.applied(applied.label)}</div>
         {before != null && after != null && Math.round(before) !== Math.round(after) && (
           <div className="num opacity-80">{t.issues.appliedPrice(t.common.ils(before), t.common.ils(after))}</div>
@@ -291,7 +291,7 @@ export function AppliedFixToast({ result }: { result: DesignResult }) {
           undo();
           clear();
         }}
-        className="shrink-0 rounded-lg px-2 py-1 text-[0.8125rem] font-semibold underline underline-offset-2 hover:bg-white/10"
+        className="shrink-0 rounded-lg px-2 py-1 text-small font-semibold underline underline-offset-2 hover:bg-white/10"
       >
         {t.issues.undoApplied}
       </button>

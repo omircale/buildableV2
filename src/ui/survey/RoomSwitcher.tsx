@@ -26,7 +26,7 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line bg-panel px-4 py-3">
-      <span className="text-[0.8438rem] font-semibold">{t.survey.rooms}</span>
+      <span className="text-small font-semibold">{t.survey.rooms}</span>
 
       {rooms.length <= CHIPS_UP_TO ? (
         <div className="flex flex-wrap gap-1.5">
@@ -37,7 +37,7 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
           ))}
         </div>
       ) : (
-        <select className="h-9 rounded-lg border border-field bg-panel px-2 text-[0.875rem]" value={survey.space.id} onChange={(e) => survey.openRoom(e.target.value)} aria-label={t.survey.rooms}>
+        <select className="h-9 rounded-lg border border-field bg-panel px-2 text-body" value={survey.space.id} onChange={(e) => survey.openRoom(e.target.value)} aria-label={t.survey.rooms}>
           {rooms.map((r) => (
             <option key={r.space.id} value={r.space.id}>
               {nameOf(r)}
@@ -46,8 +46,8 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
         </select>
       )}
 
-      {rooms.length > 1 && <span className="text-[0.7812rem] text-muted">{t.survey.roomsCount(rooms.length)}</span>}
-      {left < 10 && <span className="text-[0.7812rem] text-warn">{left < 1 ? t.survey.roomsFull(MAX_ROOMS) : t.survey.roomsLeft(left)}</span>}
+      {rooms.length > 1 && <span className="text-small text-muted">{t.survey.roomsCount(rooms.length)}</span>}
+      {left < 10 && <span className="text-small text-warn">{left < 1 ? t.survey.roomsFull(MAX_ROOMS) : t.survey.roomsLeft(left)}</span>}
 
       <div className="ms-auto flex flex-wrap items-center gap-2">
         <Button size="sm" disabled={left < 1} onClick={survey.addRoom}>
@@ -57,7 +57,7 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
           <Button size="sm" variant="ghost" disabled={left < 1} onClick={() => survey.duplicateRoom(copies)} title={t.survey.duplicateHint}>
             {t.survey.duplicate}
           </Button>
-          <span className="text-[0.8125rem] text-muted">×</span>
+          <span className="text-small text-muted">×</span>
           <input
             type="number"
             min={1}
@@ -66,7 +66,7 @@ export function RoomSwitcher({ bill }: { bill: RoomBill }) {
             value={Math.min(copies, Math.max(1, left))}
             onChange={(e) => setCopies(Math.max(1, Math.min(Math.max(1, left), Number(e.target.value) || 1)))}
             aria-label={t.survey.copies}
-            className="h-9 w-14 rounded-e-lg bg-transparent px-1 text-center text-[0.875rem] tabular-nums outline-none"
+            className="h-9 w-14 rounded-e-lg bg-transparent px-1 text-center text-body tabular-nums outline-none"
           />
         </span>
         {rooms.length > 1 && (

@@ -529,6 +529,11 @@ const he = {
     },
     hint: 'חצים לבחירה · Enter לביצוע · Esc לסגירה',
   },
+  notFound: {
+    title: 'הדף הזה לא קיים',
+    body: 'ייתכן שהקישור ישן, או שהוקלד לא נכון. שום דבר ממה ששמרתם לא נפגע.',
+    home: 'לדף הבית',
+  },
   survey: {
     title: 'כתב כמויות לחלל',
     intro: 'מודדים חדר, מסמנים מה נכנס בו, ומקבלים כמויות. כל מה שעדיין לא ידוע נשאר ריק עם הסבר — ולא מנוחש.',
@@ -1353,6 +1358,11 @@ const en: Dict = {
       newDesign: 'New design',
     },
     hint: 'Arrows to move · Enter to run · Esc to close',
+  },
+  notFound: {
+    title: 'This page does not exist',
+    body: 'The link may be old, or mistyped. Nothing you saved has been affected.',
+    home: 'Go to the home page',
   },
   survey: {
     title: 'Bill of quantities for a space',

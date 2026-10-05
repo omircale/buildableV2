@@ -17,7 +17,7 @@ function answerLabel(r: { askOnSite: string; none: string; notStated: string; op
 
 function Bubble({ from, children }: { from: 'system' | 'fact'; children: ReactNode }) {
   return (
-    <div className={`max-w-[46ch] rounded-2xl px-4 py-2.5 text-[0.875rem] leading-relaxed ${from === 'system' ? 'rounded-ss-sm bg-accent-soft' : 'ms-auto rounded-se-sm bg-sunken text-muted'}`}>
+    <div className={`max-w-[46ch] rounded-2xl px-4 py-2.5 text-body leading-relaxed ${from === 'system' ? 'rounded-ss-sm bg-accent-soft' : 'ms-auto rounded-se-sm bg-sunken text-muted'}`}>
       {children}
     </div>
   );
@@ -199,21 +199,21 @@ export function RefineStage() {
         {current ? (
           <>
             <QuestionForm key={current.id} q={current} />
-            {questions.length > 1 && <p className="text-[0.7812rem] text-muted">{r.remaining(questions.length - 1)}</p>}
+            {questions.length > 1 && <p className="text-small text-muted">{r.remaining(questions.length - 1)}</p>}
           </>
         ) : (
           <div className="rounded-xl bg-ok-soft px-4 py-3">
-            <div className="text-[0.875rem] font-semibold">{r.doneTitle}</div>
-            <p className="mt-1 text-[0.8125rem] text-muted">{r.doneBody(deferred)}</p>
+            <div className="text-body font-semibold">{r.doneTitle}</div>
+            <p className="mt-1 text-small text-muted">{r.doneBody(deferred)}</p>
           </div>
         )}
-        <p className="max-w-prose text-[0.7812rem] leading-relaxed text-muted">{r.note}</p>
+        <p className="max-w-prose text-small leading-relaxed text-muted">{r.note}</p>
       </div>
 
       <aside className="space-y-2">
-        <h3 className="text-[0.8438rem] font-semibold">{r.settled}</h3>
+        <h3 className="text-small font-semibold">{r.settled}</h3>
         {facts.length === 0 ? (
-          <p className="text-[0.8125rem] text-muted">{r.nothingSettled}</p>
+          <p className="text-small text-muted">{r.nothingSettled}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {facts.map((f, i) => (

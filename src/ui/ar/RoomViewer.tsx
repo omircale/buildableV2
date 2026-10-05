@@ -62,7 +62,7 @@ export function RoomViewer({ glbUrl, usdzUrl, alt, arButtonLabel, onArUnavailabl
       exposure="1"
       className="block h-[420px] w-full rounded-xl bg-sunken"
     >
-      <button slot="ar-button" className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-lg bg-accent px-5 py-2.5 text-[0.9375rem] font-semibold text-on-accent shadow-lg">
+      <button slot="ar-button" className="absolute inset-x-0 bottom-4 mx-auto w-fit rounded-lg bg-accent px-5 py-2.5 text-control font-semibold text-on-accent shadow-lg">
         {arButtonLabel}
       </button>
     </model-viewer>

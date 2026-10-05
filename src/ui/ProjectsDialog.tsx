@@ -182,7 +182,7 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
                     <li key={p.id} className={`flex items-center justify-between rounded-md px-2 py-1.5 text-sm ring-1 ${activeId === p.id ? 'bg-accent-soft ring-accent/40' : 'bg-panel ring-line'}`}>
                       <button className="flex-1 text-start" onClick={() => setActiveId(p.id)}>
                         {p.name}
-                        <span className="block text-[0.6875rem] text-muted">{new Date(p.updated_at).toLocaleString(dateLocale)}</span>
+                        <span className="block text-caption text-muted">{new Date(p.updated_at).toLocaleString(dateLocale)}</span>
                       </button>
                       <Button
                         variant="ghost"
@@ -215,7 +215,7 @@ export function ProjectsDialog({ open, onClose, result, signedIn, isMember }: { 
                       <span className="font-mono font-bold">v{v.version_no}</span>
                       <span className="flex-1">
                         {v.label ?? <span className="text-muted">{c.noLabel}</span>}
-                        <span className="block text-[0.6875rem] text-muted">
+                        <span className="block text-caption text-muted">
                           {new Date(v.created_at).toLocaleString(dateLocale)} · {versionSize(v.params, t.common.cm)}
                         </span>
                       </span>

@@ -42,7 +42,7 @@ function Label({ children, he, tone = 'muted' }: { children: React.ReactNode; he
   return (
     <div
       dir={he ? 'rtl' : 'ltr'}
-      className={`pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[0.7188rem] leading-tight shadow-sm ${tone === 'accent' ? 'bg-accent text-on-accent' : 'bg-panel/95 text-ink'}`}
+      className={`pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-caption leading-tight shadow-sm ${tone === 'accent' ? 'bg-accent text-on-accent' : 'bg-panel/95 text-ink'}`}
     >
       {children}
     </div>
@@ -218,16 +218,16 @@ export function RoomScene({ space, equipmentIds, design, designName, he, labels 
       <div className="absolute bottom-3 start-3 end-3 flex flex-wrap items-center gap-2">
         {vrSupported ? (
           inVr ? (
-            <button type="button" className="rounded-lg bg-panel px-3 py-2 text-[0.8125rem] font-medium shadow" onClick={() => glRef.current?.xr.getSession()?.end()}>
+            <button type="button" className="rounded-lg bg-panel px-3 py-2 text-small font-medium shadow" onClick={() => glRef.current?.xr.getSession()?.end()}>
               {labels.exitVr}
             </button>
           ) : (
-            <button type="button" className="rounded-lg bg-accent px-3 py-2 text-[0.8125rem] font-medium text-on-accent shadow" onClick={() => void enterVr()}>
+            <button type="button" className="rounded-lg bg-accent px-3 py-2 text-small font-medium text-on-accent shadow" onClick={() => void enterVr()}>
               {labels.enterVr}
             </button>
           )
         ) : (
-          vrSupported === false && <span className="rounded-lg bg-panel/90 px-3 py-2 text-[0.7812rem] text-muted shadow-sm">{labels.vrUnavailable}</span>
+          vrSupported === false && <span className="rounded-lg bg-panel/90 px-3 py-2 text-small text-muted shadow-sm">{labels.vrUnavailable}</span>
         )}
       </div>
     </div>

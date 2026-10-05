@@ -148,7 +148,7 @@ function DimensionLine({ from, to, label, offset }: { from: THREE.Vector3; to: T
         <lineBasicMaterial color="#c0763d" />
       </lineSegments>
       <Html position={mid} center zIndexRange={[10, 0]}>
-        <div className="num whitespace-nowrap rounded-md bg-panel/95 px-2 py-0.5 text-[0.8125rem] font-semibold text-accent-ink shadow ring-1 ring-accent/30">{label}</div>
+        <div className="num whitespace-nowrap rounded-md bg-panel/95 px-2 py-0.5 text-small font-semibold text-accent-ink shadow ring-1 ring-accent/30">{label}</div>
       </Html>
     </group>
   );
@@ -217,7 +217,7 @@ function PartMeasurements({ result, c }: { result: DesignResult; c: Component })
       {labels.cut && (
         <Html position={new THREE.Vector3(0, hy + 0.12, 0)} center zIndexRange={[10, 0]}>
           {/* Words follow the interface direction; the part code and the measurements stay LTR beside them. */}
-          <div className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-ink/90 px-2 py-0.5 text-[0.8125rem] font-semibold text-paper shadow">
+          <div className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-ink/90 px-2 py-0.5 text-small font-semibold text-paper shadow">
             <span className="num">{labels.cutParts?.id}</span>
             <span>·</span>
             <span>{labels.cutParts?.label}:</span>

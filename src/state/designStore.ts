@@ -9,6 +9,15 @@ const HISTORY_LIMIT = 100;
 const COALESCE_MS = 600;
 const DEFAULT_NAME = 'פרויקט חדש';
 
+/**
+ * A project's name as it should be shown. A project nobody has named carries the Hebrew default in
+ * storage, which is right for a Hebrew screen and wrong on an English one; a name somebody typed is
+ * theirs and is shown as typed.
+ */
+export function projectLabel(name: string, untitled: string): string {
+  return name === DEFAULT_NAME ? untitled : name;
+}
+
 /** A design kept on this device. The active one mirrors the editor state; the others wait to be reopened. */
 export interface LocalProject {
   id: string;
