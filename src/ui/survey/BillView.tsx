@@ -4,6 +4,7 @@ import { useT } from '../../i18n';
 import { useSurvey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 import { Button, Chip, downloadText, inputClass, matchesQuery } from '../common';
+import { SiteList } from './SiteList';
 import type { RoomBill } from './useRoomBill';
 
 /** Groups are opened by default only while there are few of them; forty open rooms is a wall of text. */
@@ -185,11 +186,8 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
             )}
           </div>
 
-          <div className="border-t border-line px-5 py-3">
-            <h3 className="text-small font-semibold">
-              {t.survey.pending} · {summary.pending.length}
-            </h3>
-            <p className="mt-0.5 text-small leading-snug text-muted">{t.survey.pendingHint}</p>
+          <div className="border-t border-line px-5 py-4">
+            <SiteList rooms={rooms} />
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-line px-5 py-3">

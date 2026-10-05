@@ -1,9 +1,16 @@
 import { useMemo } from 'react';
-import { finishLines, linesFromDesign, mepLines, runDesign, type BoqLine, type DesignResult, type LineLocation } from '../../engine';
+import { finishLines, linesFromDesign, mepLines, runDesign, type BoqLine, type DesignResult, type LineLocation, type ServiceKind } from '../../engine';
 import { useT } from '../../i18n';
 import { projectLabel, useDesign } from '../../state/designStore';
 import { projectRooms, useSurvey, type Survey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
+
+/** The services a person looked for in the room and said are not there. */
+export function absentServices(answers: Record<string, string>): ServiceKind[] {
+  return Object.entries(answers)
+    .filter(([id, code]) => id.startsWith('supply:') && code === 'none')
+    .map(([id]) => id.slice('supply:'.length) as ServiceKind);
+}
 
 export interface RoomBill {
   /** Every line of the project, room after room, in bill order. */
@@ -87,7 +94,7 @@ export function useRoomBill(): RoomBill {
         const name = nameOf(id);
         kept = {
           piece: piece ? linesFromDesign({ design: piece.result, location, titleHe: piece.name, titleEn: piece.name, placeHe: name.he, placeEn: name.en }).lines.map(own) : [],
-          services: mepLines({ space: room.space, sources: room.sources, equipmentIds: room.equipmentIds, location }).map(own),
+          services: mepLines({ space: room.space, sources: room.sources, equipmentIds: room.equipmentIds, location, confirmedAbsent: absentServices(room.answers) }).map(own),
         };
         memory.set(room, kept);
       }

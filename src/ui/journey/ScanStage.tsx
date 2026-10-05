@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useT } from '../../i18n';
 import { useSurvey } from '../../state/spaceStore';
-import { Button } from '../common';
+import { SECTORS } from '../../engine';
+import { Button, Chip } from '../common';
 import { IconCheck, IconX } from '../icons';
 import { NullableCm } from '../survey/SurveyEditor';
 
@@ -105,6 +106,45 @@ export function ScanStage({ onDone }: { onDone: () => void }) {
   };
 
   return (
+    <div className="space-y-8">
+      {/* What a person can do today comes first; the scan that will one day do it for them comes after. */}
+      <div className="space-y-4">
+          <div className="space-y-3">
+            <h3 className="text-body font-semibold">{s.ownTitle}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-small text-muted">{t.survey.sectorLabel}</span>
+              {(['all', ...SECTORS] as const).map((k) => (
+                <Chip key={k} selected={survey.sector === k} onClick={() => survey.setSector(k)}>
+                  {t.survey.sectors[k]}
+                </Chip>
+              ))}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <NullableCm label={t.survey.width} value={survey.sample ? null : survey.widthMm} onChange={(v) => own((st) => st.setRectangle(v, st.depthMm))} />
+              <NullableCm label={t.survey.depth} value={survey.sample ? null : survey.depthMm} onChange={(v) => own((st) => st.setRectangle(st.widthMm, v))} />
+              <NullableCm label={t.survey.height} value={survey.sample ? null : survey.space.heightMm} onChange={(v) => own((st) => st.setHeight(v))} />
+            </div>
+            <Button variant="primary" disabled={survey.sample || survey.widthMm == null || survey.depthMm == null} onClick={onDone}>
+              {s.useOwn}
+            </Button>
+          </div>
+        <div className="flex flex-wrap items-center gap-3 text-small text-muted">
+          {s.or}
+          <div>
+            <Button
+                            onClick={() => {
+                survey.loadSample();
+                onDone();
+              }}
+            >
+              {s.useSample}
+            </Button>
+          </div>
+
+        </div>
+      </div>
+
+      <h3 className="border-t border-line pt-6 text-body font-semibold">{s.scanTitle}</h3>
     <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
       <div className="space-y-3 text-center">
         <ScanAnimation play={play} />
@@ -154,38 +194,8 @@ export function ScanStage({ onDone }: { onDone: () => void }) {
           </ul>
         </section>
 
-        <div className="flex flex-col gap-4 border-t border-line pt-5">
-          <div>
-            <Button
-              variant="primary"
-              onClick={() => {
-                survey.loadSample();
-                onDone();
-              }}
-            >
-              {s.useSample}
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-3 text-small text-muted">
-            <span className="h-px flex-1 bg-line" />
-            {s.or}
-            <span className="h-px flex-1 bg-line" />
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-small font-semibold">{s.ownTitle}</h3>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <NullableCm label={t.survey.width} value={survey.sample ? null : survey.widthMm} onChange={(v) => own((st) => st.setRectangle(v, st.depthMm))} />
-              <NullableCm label={t.survey.depth} value={survey.sample ? null : survey.depthMm} onChange={(v) => own((st) => st.setRectangle(st.widthMm, v))} />
-              <NullableCm label={t.survey.height} value={survey.sample ? null : survey.space.heightMm} onChange={(v) => own((st) => st.setHeight(v))} />
-            </div>
-            <Button disabled={survey.sample || survey.widthMm == null || survey.depthMm == null} onClick={onDone}>
-              {s.useOwn}
-            </Button>
-          </div>
-        </div>
       </div>
+    </div>
     </div>
   );
 }

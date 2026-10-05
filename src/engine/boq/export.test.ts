@@ -62,7 +62,7 @@ describe('the bill as a file', () => {
     const csv = billCsv(wholeRoom());
     const row = csv.split('\r\n').find((r) => r.includes('הבאת אספקת מים חמים'))!;
     expect(row).toBeTruthy();
-    expect(row).toContain('אין מקור');
+    expect(row).toContain('לא נרשם מקור');
     expect(row).not.toMatch(/,0,/);
   });
 
@@ -102,7 +102,7 @@ describe('what the bill is waiting on', () => {
   it('distinguishes a missing quantity from a missing price', () => {
     const summary = billSummary(wholeRoom());
     expect(summary.pending.some((p) => p.en.includes('waiting on a quote'))).toBe(true);
-    expect(summary.pending.some((p) => p.en.includes('source reaches this room'))).toBe(true);
+    expect(summary.pending.some((p) => p.en.includes('source is recorded in this room'))).toBe(true);
   });
 
   it('reports the same money on both axes', () => {

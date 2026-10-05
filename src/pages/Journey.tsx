@@ -5,6 +5,7 @@ import { useSurvey } from '../state/spaceStore';
 import { useUi } from '../state/uiStore';
 import { AppHeader } from '../ui/AppHeader';
 import { Button } from '../ui/common';
+import { IconCheck } from '../ui/icons';
 import { ArStage } from '../ui/journey/ArStage';
 import { DescribeStage } from '../ui/journey/DescribeStage';
 import { PriceStage } from '../ui/journey/PriceStage';
@@ -14,6 +15,7 @@ import { TenderStage } from '../ui/journey/TenderStage';
 import { BillView } from '../ui/survey/BillView';
 import { FinishSchedule } from '../ui/survey/FinishSchedule';
 import { ProjectBackup } from '../ui/survey/ProjectBackup';
+import { siteQuestions } from '../ui/survey/siteQuestions';
 import { RoomSwitcher } from '../ui/survey/RoomSwitcher';
 import { SampleBanner, SurveyEditor } from '../ui/survey/SurveyEditor';
 import { UndoToast } from '../ui/survey/UndoToast';
@@ -33,7 +35,7 @@ const RoomScene = lazy(() => import('../ui/survey/RoomScene'));
  */
 type Mode = 'live' | 'prototype' | 'partial';
 const MODE: Record<Stage, Mode> = {
-  scan: 'prototype',
+  scan: 'partial',
   describe: 'live',
   refine: 'live',
   edit: 'live',
@@ -66,22 +68,37 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
   };
   const mode = MODE[stage];
 
+  // What the model already holds, said on the steps themselves — so a person coming back sees where they stopped.
+  // A question that was only put off is still open: the step is done when the site list is empty.
+  const openQuestions = siteQuestions(survey).length;
+  const sized = survey.widthMm != null && survey.depthMm != null;
+  const done: Partial<Record<Stage, boolean>> = {
+    scan: sized,
+    describe: survey.equipmentIds.length > 0,
+    refine: (sized || survey.equipmentIds.length > 0) && openQuestions === 0,
+    bill: bill.lines.length > 0 && bill.lines.every((l) => l.quantity != null),
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-paper text-ink">
       <AppHeader auth={auth} start={<h1 className="truncate text-control font-semibold">{j.title}</h1>} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-6">
-        <div className="space-y-3">
-          <p className="max-w-3xl text-body leading-relaxed text-muted">{j.intro}</p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-small text-muted">
-            {(['live', 'prototype', 'partial'] as const).map((m) => (
-              <li key={m} className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${MODE_STYLE[m].dot}`} aria-hidden />
-                <span className="font-medium text-ink">{j.modes[m]}</span> — {j.modeHints[m]}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Said in full once, at the door. After that it is one line that opens, so the step itself is what the screen shows. */}
+        <details open={index === 0} key={index === 0 ? 'open' : 'closed'} className="text-small text-muted">
+          <summary className="cursor-pointer">{j.about}</summary>
+          <div className="mt-2 space-y-3">
+            <p className="max-w-3xl text-body leading-relaxed">{j.intro}</p>
+            <ul className="flex flex-wrap gap-x-5 gap-y-1">
+              {(['live', 'prototype', 'partial'] as const).map((m) => (
+                <li key={m} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${MODE_STYLE[m].dot}`} aria-hidden />
+                  <span className="font-medium text-ink">{j.modes[m]}</span> — {j.modeHints[m]}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
 
         {/* The steps are a real sequence, so they are numbered. */}
         <nav aria-label={j.title} className="-mx-4 overflow-x-auto px-4">
@@ -97,6 +114,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                   <span className="tabular-nums opacity-70">{i + 1}</span>
                   <span className={`h-1.5 w-1.5 rounded-full ${MODE_STYLE[MODE[s]].dot}`} aria-hidden />
                   {j.stages[s].name}
+                  {done[s] && <IconCheck size={14} className={s === stage ? '' : 'text-ok'} aria-label={j.stageDone} />}
                 </button>
               </li>
             ))}

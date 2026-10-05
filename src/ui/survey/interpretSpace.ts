@@ -11,11 +11,14 @@
  * and a model-driven reader would have to produce these same claims for the same confirmation step.
  */
 
+import type { Sector } from '../../engine';
+
 export type SpaceClaim =
   | { field: 'equipment'; equipmentId: string; count: number; source: string }
   | { field: 'size'; widthMm: number; depthMm: number; unitStated: boolean; source: string }
   | { field: 'height'; heightMm: number; unitStated: boolean; source: string }
   | { field: 'name'; name: string; source: string }
+  | { field: 'sector'; sector: Sector; source: string }
   | { field: 'open'; source: string };
 
 export interface SpaceReading {
@@ -85,6 +88,29 @@ export const EQUIPMENT_TERMS: Record<string, string[][]> = {
 };
 
 const ROOM_TERMS: string[][] = [['בר', 'בריכה'], ['pool', 'bar'], ['חדר', 'ישיבות'], ['meeting', 'room'], ['מטבחון'], ['kitchenette'], ['מטבח'], ['kitchen'], ['מסעדה'], ['restaurant'], ['משרד'], ['office'], ['חנות'], ['shop'], ['store'], ['ספא'], ['spa'], ['לובי'], ['lobby'], ['בר']];
+
+/**
+ * Words that say what kind of place this is. "Kitchen" is not among them: an office has one too.
+ * A word here can also be the room's name — "משרד" is both a kind of place and what the room is called.
+ */
+const SECTOR_TERMS: [Sector, string[]][] = [
+  ['office', ['משרד']],
+  ['office', ['משרדים']],
+  ['office', ['office']],
+  ['restaurant', ['מסעדה']],
+  ['restaurant', ['מסעדת']],
+  ['restaurant', ['בית', 'קפה']],
+  ['restaurant', ['restaurant']],
+  ['restaurant', ['cafe']],
+  ['restaurant', ['café']],
+  ['shop', ['חנות']],
+  ['shop', ['shop']],
+  ['shop', ['store']],
+  ['bar', ['בר']],
+  ['bar', ['פאב']],
+  ['bar', ['bar']],
+  ['bar', ['pub']],
+];
 
 const OPEN_TERMS: string[][] = [['פתוח', 'לבריכה'], ['פתוח', 'לדק'], ['פתוח'], ['פתוחה'], ['open', 'to'], ['open']];
 
@@ -233,6 +259,7 @@ export function interpretSpace(text: string): SpaceReading {
   const used = new Set<number>();
   const counts = new Map<string, { count: number; sources: string[] }>();
   let named = false;
+  let sectorSaid = false;
 
   for (let i = 0; i < tokens.length; i++) {
     if (used.has(i)) continue;
@@ -257,6 +284,18 @@ export function interpretSpace(text: string): SpaceReading {
     }
 
     const room = ROOM_TERMS.find((term) => matchesAt(tokens, i, term));
+    const kind = sectorSaid ? undefined : SECTOR_TERMS.find(([, term]) => matchesAt(tokens, i, term));
+    if (kind) {
+      const [sector, term] = kind;
+      claims.push({ field: 'sector', sector, source: tokens.slice(i, i + term.length).join(' ') });
+      sectorSaid = true;
+      // The word is spoken for even when the room already has a name: "מטבח מסעדה" is a kitchen, in a restaurant.
+      for (let k = i; k < i + term.length; k++) used.add(k);
+      if (!room || named) {
+        i += term.length - 1;
+        continue;
+      }
+    }
     if (room && !named) {
       for (let k = i; k < i + room.length; k++) used.add(k);
       const source = tokens.slice(i, i + room.length).join(' ');

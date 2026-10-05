@@ -46,6 +46,8 @@ export function DescribeStage({ onDone }: { onDone: () => void }) {
         return d.heightClaim(metres(c.heightMm));
       case 'name':
         return d.nameClaim(c.name);
+      case 'sector':
+        return d.sectorClaim(t.survey.sectors[c.sector]);
       case 'open':
         return d.openClaim;
     }
@@ -59,6 +61,7 @@ export function DescribeStage({ onDone }: { onDone: () => void }) {
       if (c.field === 'size') st.setRectangle(c.widthMm, c.depthMm);
       if (c.field === 'height') st.setHeight(c.heightMm);
       if (c.field === 'name') st.setName(c.name);
+      if (c.field === 'sector') st.setSector(c.sector);
     });
     onDone();
   };

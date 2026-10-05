@@ -7,6 +7,8 @@ import { Button, Chip, inputClass } from '../common';
 import { NullableCm } from '../survey/SurveyEditor';
 import { serviceName } from '../survey/services';
 import { refinementQuestions, type Question } from '../survey/questions';
+import { SiteList } from '../survey/SiteList';
+import { askedBy, equipmentNames } from '../survey/siteQuestions';
 
 const metres = (mm: number) => (mm / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -165,10 +167,11 @@ export function RefineStage() {
   const he = useUi((s) => s.locale) === 'he';
   const survey = useSurvey();
   const questions = refinementQuestions(survey);
-  const current = questions[0];
 
   // What is settled is read back out of the model, so it can never disagree with it.
   const facts: string[] = [];
+  const equipment = equipmentNames(survey.equipmentIds, he);
+  if (equipment) facts.push(r.equipmentFact(equipment));
   if (survey.widthMm != null && survey.depthMm != null) facts.push(r.facts.size(metres(survey.widthMm), metres(survey.depthMm), survey.sample));
   if (survey.space.heightMm != null) facts.push(r.facts.height(metres(survey.space.heightMm)));
   const openWalls = wallsOf(survey.space)
@@ -193,19 +196,56 @@ export function RefineStage() {
   // Counted by what was answered, not by the words it was answered in.
   const deferred = Object.values(survey.answers).filter((code) => code === 'ask_on_site' || code === 'not_stated').length;
 
+  const deferAll = () => {
+    const st = useSurvey.getState();
+    for (const q of questions) st.answer(q.id, q.type === 'capacity' ? 'not_stated' : 'ask_on_site');
+  };
+
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <div className="space-y-5">
-        {current ? (
+        {questions.length > 0 ? (
           <>
-            <QuestionForm key={current.id} q={current} />
-            {questions.length > 1 && <p className="text-small text-muted">{r.remaining(questions.length - 1)}</p>}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="text-small text-muted">{r.remaining(questions.length)}</p>
+              {questions.length > 1 && (
+                <button type="button" className="text-small text-muted underline underline-offset-2" onClick={deferAll}>
+                  {r.deferAll}
+                </button>
+              )}
+            </div>
+            {/* Every open question at once: somebody standing in the room answers what they can see, in the order they see it. */}
+            <ol className="space-y-4">
+              {questions.map((q) => (
+                <li key={q.id} className="rounded-xl border border-line px-4 py-4">
+                  <QuestionForm q={q} />
+                  {(q.type === 'supply' || q.type === 'capacity') && askedBy(survey.equipmentIds, q.service, he) && (
+                    <p className="mt-2 text-small text-muted">{t.survey.siteFor(askedBy(survey.equipmentIds, q.service, he))}</p>
+                  )}
+                </li>
+              ))}
+            </ol>
           </>
         ) : (
           <div className="rounded-xl bg-ok-soft px-4 py-3">
             <div className="text-body font-semibold">{r.doneTitle}</div>
             <p className="mt-1 text-small text-muted">{r.doneBody(deferred)}</p>
           </div>
+        )}
+        {questions.length === 0 && deferred > 0 && (
+          <>
+            <SiteList rooms={[survey]} />
+            {/* Back from the site with answers: the questions that were put off are asked again. */}
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const st = useSurvey.getState();
+                for (const [id, code] of Object.entries(st.answers)) if (code === 'ask_on_site' || code === 'not_stated') st.clearAnswer(id);
+              }}
+            >
+              {r.reopen}
+            </Button>
+          </>
         )}
         <p className="max-w-prose text-small leading-relaxed text-muted">{r.note}</p>
       </div>

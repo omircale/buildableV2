@@ -169,3 +169,36 @@ describe('an office, a restaurant and a shop, described in words', () => {
     ]);
   });
 });
+
+describe('the kind of place', () => {
+  const sectorOf = (text: string) => {
+    const claim = interpretSpace(text).claims.find((c) => c.field === 'sector');
+    return claim?.field === 'sector' ? claim.sector : null;
+  };
+
+  it('is taken from the word that names it', () => {
+    expect(sectorOf('משרד 8 על 6 מטר עם 12 עמדות עבודה')).toBe('office');
+    expect(sectorOf('חנות עם שתי קופות')).toBe('shop');
+    expect(sectorOf('בר בריכה עם כיור')).toBe('bar');
+    expect(sectorOf('a restaurant kitchen with a gas range')).toBe('restaurant');
+  });
+
+  it('a restaurant kitchen is a kitchen, in a restaurant — and nothing is left unread', () => {
+    const reading = interpretSpace('מטבח מסעדה עם כיריים גז');
+    expect(reading.claims.find((c) => c.field === 'name')).toMatchObject({ name: 'מטבח' });
+    expect(sectorOf('מטבח מסעדה עם כיריים גז')).toBe('restaurant');
+    expect(reading.unread).toEqual([]);
+  });
+
+  it('a bar sink does not make the place a bar', () => {
+    expect(sectorOf('מטבח עם כיור בר')).toBeNull();
+  });
+
+  it('a kitchen alone says nothing about the kind of place', () => {
+    expect(sectorOf('מטבח עם מדיח')).toBeNull();
+  });
+
+  it('the word still names the room when nothing else does', () => {
+    expect(interpretSpace('משרד עם מדפסת').claims.find((c) => c.field === 'name')).toMatchObject({ name: 'משרד' });
+  });
+});

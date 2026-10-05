@@ -58,6 +58,19 @@ const DESIGNED_NOTE = {
 
 const noteFor = (trade: Trade) => (LICENSED_TRADES.has(trade) ? LICENSED_NOTE : DESIGNED_NOTE);
 
+/** The items behind a line, by name. Two of the same item are one name with a count, not the name twice. */
+function namesOf(ids: string[], locale: 'he' | 'en'): string {
+  const perItem = new Map<string, number>();
+  for (const id of ids) perItem.set(id, (perItem.get(id) ?? 0) + 1);
+  return [...perItem]
+    .map(([id, n]) => {
+      const item = equipmentById(id);
+      const name = item ? (locale === 'he' ? item.nameHe : item.nameEn) : id;
+      return n > 1 ? `${name} ×${n}` : name;
+    })
+    .join(', ');
+}
+
 export interface MepLinesInput {
   space: Space;
   sources: ServiceSource[];
@@ -65,6 +78,12 @@ export interface MepLinesInput {
   location: LineLocation;
   /** Where the equipment is going, when it has been placed. Used only to report real distances. */
   atMm?: Vec3;
+  /**
+   * Services somebody looked for in the room and said are not there. A service nobody recorded is not
+   * the same thing: "no source was written down" and "there is no source" lead to different work, and
+   * only a person who checked can turn the first into the second.
+   */
+  confirmedAbsent?: ServiceKind[];
 }
 
 /**
@@ -78,8 +97,9 @@ export interface MepLinesInput {
  *    water supply into a room is a job whose extent nobody can state from a survey of that room alone.
  * 3. **A clearance** — space the joinery has to leave around an item, filed with the joinery.
  */
-export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLinesInput): BoqLine[] {
-  const needs = matchServices(space, servicesFor(equipmentIds), atMm);
+export function mepLines({ space, sources, equipmentIds, location, atMm, confirmedAbsent = [] }: MepLinesInput): BoqLine[] {
+  const asked = servicesFor(equipmentIds);
+  const needs = matchServices(space, asked, atMm);
   const supply = supplyReport(
     space,
     sources,
@@ -93,6 +113,7 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
     const trade = SERVICE_TRADE[need.kind];
     const label = KIND_LABEL[need.kind];
     const here = supply.find((s) => s.kind === need.kind);
+    const askedBy = asked.find((a) => a.kind === need.kind)?.from ?? [];
 
     const distanceHe = here?.nearestSourceMm != null ? `המקור הקרוב ביותר שנמדד נמצא במרחק אווירי של ${(here.nearestSourceMm / 1000).toFixed(1)} מ'. מרחק אווירי אינו אורך צינור.` : undefined;
     const distanceEn = here?.nearestSourceMm != null ? `The nearest measured source is ${(here.nearestSourceMm / 1000).toFixed(1)} m away in a straight line. A straight-line distance is not a length of pipe.` : undefined;
@@ -105,8 +126,9 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
       descriptionEn: `New ${label.en} point, including the run that feeds it from its source. ${noteFor(trade).en}.`,
       unit: 'point',
       quantity: need.toCreate,
-      assumptionHe: distanceHe,
-      assumptionEn: distanceEn,
+      // Who asked for the points: a contractor pricing "3 points" wants to know what stands on them.
+      assumptionHe: [`עבור: ${namesOf(askedBy, 'he')}.`, distanceHe].filter(Boolean).join(' '),
+      assumptionEn: [`For: ${namesOf(askedBy, 'en')}.`, distanceEn].filter(Boolean).join(' '),
       location,
       origin: { kind: 'service_point', ref: need.kind },
       unitPriceIls: null,
@@ -118,19 +140,8 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
   // Left out of the bill, the box gets built tight and the condenser cooks.
   for (const clearance of clearancesFor(equipmentIds)) {
     const label = KIND_LABEL[clearance.kind];
-    // Two of the same item are one name with a count, not the name written twice.
-    const perItem = new Map<string, number>();
-    for (const id of clearance.from) perItem.set(id, (perItem.get(id) ?? 0) + 1);
-    const named = (locale: 'he' | 'en') =>
-      [...perItem]
-        .map(([id, n]) => {
-          const item = equipmentById(id);
-          const name = item ? (locale === 'he' ? item.nameHe : item.nameEn) : id;
-          return n > 1 ? `${name} ×${n}` : name;
-        })
-        .join(', ');
-    const namesHe = named('he');
-    const namesEn = named('en');
+    const namesHe = namesOf(clearance.from, 'he');
+    const namesEn = namesOf(clearance.from, 'en');
     lines.push({
       id: `clearance_${clearance.kind}`,
       trade: 'joinery',
@@ -152,16 +163,21 @@ export function mepLines({ space, sources, equipmentIds, location, atMm }: MepLi
     if (s.status !== 'no_source') continue;
     const trade = SERVICE_TRADE[s.kind];
     const label = KIND_LABEL[s.kind];
+    const checked = confirmedAbsent.includes(s.kind);
     lines.push({
       id: `mep_${s.kind}_bring_supply`,
       trade,
       section: 'supply',
-      descriptionHe: `הבאת אספקת ${label.he} אל החלל. ${noteFor(trade).he}.`,
-      descriptionEn: `Bring a ${label.en} supply to the room. ${noteFor(trade).en}.`,
+      descriptionHe: checked ? `הבאת אספקת ${label.he} אל החלל. ${noteFor(trade).he}.` : `הבאת אספקת ${label.he} אל החלל — אם יתברר שאין בו מקור. ${noteFor(trade).he}.`,
+      descriptionEn: checked ? `Bring a ${label.en} supply to the room. ${noteFor(trade).en}.` : `Bring a ${label.en} supply to the room — if it turns out to have none. ${noteFor(trade).en}.`,
       unit: 'lump',
       quantity: null,
-      unknownReasonHe: `אין מקור ${label.he} בחלל. היקף העבודה נקבע לפי מאיפה יימשך המקור, ולא ניתן לקבוע זאת מסקר החדר בלבד.`,
-      unknownReasonEn: `No ${label.en} source reaches this room. The extent of the work depends on where the supply would be drawn from, which a survey of this room alone cannot establish.`,
+      unknownReasonHe: checked
+        ? `אין מקור ${label.he} בחלל. היקף העבודה נקבע לפי מאיפה יימשך המקור, ולא ניתן לקבוע זאת מסקר החדר בלבד.`
+        : `לא נרשם מקור ${label.he} בחלל, ואיש עוד לא אישר שאין. לבדוק בשטח: אם יש מקור — השורה יורדת; אם אין — היקף העבודה נקבע לפי מאיפה יימשך.`,
+      unknownReasonEn: checked
+        ? `No ${label.en} source reaches this room. The extent of the work depends on where the supply would be drawn from, which a survey of this room alone cannot establish.`
+        : `No ${label.en} source is recorded in this room, and nobody has confirmed there is none. Check on site: if there is one this line drops out; if not, the extent depends on where the supply would be drawn from.`,
       location,
       origin: { kind: 'service_point', ref: s.kind },
       unitPriceIls: null,

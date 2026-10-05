@@ -140,13 +140,19 @@ describe('a point includes its own feed, the way an Israeli bill prices one', ()
   it('omits the distance rather than guessing when the source was never located', () => {
     const unlocated = SOURCES.map((s) => ({ ...s, atMm: null }));
     const drain = mepLines({ space: poolBar(), sources: unlocated, equipmentIds: BAR_EQUIPMENT, location: AT, atMm: { x: 0, y: 0, z: 0 } }).find((l) => l.id === 'mep_drain_points')!;
-    expect(drain.assumptionHe).toBeUndefined();
+    expect(drain.assumptionHe).not.toContain('מרחק');
     expect(drain.quantity).toBeGreaterThan(0);
+  });
+
+  it('says which equipment the points are for', () => {
+    const drain = lines().find((l) => l.id === 'mep_drain_points')!;
+    expect(drain.assumptionHe).toContain('עבור: כיור בר חד-תא, מכונת קרח');
+    expect(drain.assumptionEn).toContain('For: ');
   });
 
   it('omits the distance when nobody has placed the equipment yet', () => {
     const drain = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: BAR_EQUIPMENT, location: AT }).find((l) => l.id === 'mep_drain_points')!;
-    expect(drain.assumptionEn).toBeUndefined();
+    expect(drain.assumptionEn).not.toContain('straight line');
   });
 });
 
@@ -156,8 +162,22 @@ describe('a service the room does not have at all', () => {
     const bring = lines().find((l) => l.id === 'mep_water_hot_bring_supply')!;
     expect(bring.unit).toBe('lump');
     expect(bring.quantity).toBeNull();
+  });
+
+  it('does not say there is none until somebody has looked', () => {
+    // Nobody wrote a source down. That is not the same as there being none, and the line says which.
+    const bring = lines().find((l) => l.id === 'mep_water_hot_bring_supply')!;
+    expect(bring.unknownReasonHe).toContain('לא נרשם מקור');
+    expect(bring.unknownReasonHe).toContain('לבדוק בשטח');
+    expect(bring.unknownReasonEn).toContain('nobody has confirmed');
+    expect(bring.descriptionHe).toContain('אם יתברר');
+  });
+
+  it('says there is none once a person who checked has said so', () => {
+    const bring = mepLines({ space: poolBar(), sources: SOURCES, equipmentIds: BAR_EQUIPMENT, location: AT, confirmedAbsent: ['water_hot'] }).find((l) => l.id === 'mep_water_hot_bring_supply')!;
     expect(bring.unknownReasonHe).toContain('אין מקור');
     expect(bring.unknownReasonEn).toContain('cannot establish');
+    expect(bring.descriptionHe).not.toContain('אם יתברר');
   });
 
   it('is never raised for a service the room demonstrably has, even untraced', () => {
