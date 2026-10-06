@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase, type AuthState } from '../cloud/supabase';
 import { useT, type Dict } from '../i18n';
 import { AppHeader } from '../ui/AppHeader';
@@ -39,6 +39,20 @@ function PasswordField({ label, value, onChange, autoComplete, hint }: { label: 
   );
 }
 
+/** How long a person waits before the screen offers to send the e-mail again. */
+export const RESEND_AFTER_S = 30;
+
+/** Counts down to zero from the moment `startedAt` changes. */
+function useCountdown(startedAt: number | null, seconds: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (startedAt == null) return;
+    const timer = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [startedAt]);
+  return startedAt == null ? 0 : Math.max(0, Math.ceil(seconds - (now - startedAt) / 1000));
+}
+
 export function LoginPage({ auth }: { auth: AuthState }) {
   const a = useT().account;
   const [mode, setMode] = useState<Mode>('signin');
@@ -46,6 +60,10 @@ export function LoginPage({ auth }: { auth: AuthState }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Which e-mail the screen is waiting on, and since when — so it can offer to send it again.
+  const [sent, setSent] = useState<{ kind: 'signup' | 'reset'; at: number } | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const wait = useCountdown(sent?.at ?? null, RESEND_AFTER_S);
 
   const client = supabase;
   const shell = (children: React.ReactNode) => (
@@ -72,7 +90,11 @@ export function LoginPage({ auth }: { auth: AuthState }) {
       error = { message: e instanceof Error ? e.message : 'failed to fetch' };
     }
     setBusy(false);
-    if (error) return setMessage({ kind: 'error', text: a.errors[authErrorKey(error)] });
+    if (error) {
+      setUnconfirmed(authErrorKey(error) === 'unconfirmed');
+      return setMessage({ kind: 'error', text: a.errors[authErrorKey(error)] });
+    }
+    setUnconfirmed(false);
     if (ok) setMessage({ kind: 'ok', text: ok });
     then?.();
   };
@@ -149,11 +171,14 @@ export function LoginPage({ auth }: { auth: AuthState }) {
       void run(
         () => client.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } }),
         a.confirmSent,
-        () => setPassword(''),
+        () => {
+          setPassword('');
+          setSent({ kind: 'signup', at: Date.now() });
+        },
       );
     } else {
       // The same answer whether or not the address exists, so the form cannot be used to find out who has an account.
-      void run(() => client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin }), a.resetSent);
+      void run(() => client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin }), a.resetSent, () => setSent({ kind: 'reset', at: Date.now() }));
     }
   };
 
@@ -161,7 +186,47 @@ export function LoginPage({ auth }: { auth: AuthState }) {
   const go = (next: Mode) => {
     setMode(next);
     setMessage(null);
+    setSent(null);
   };
+
+  // An e-mail is on its way. Nothing else on the form matters until it arrives, so the form steps
+  // aside: where it went, a clock, and — once the clock runs out — a way to send it again.
+  if (sent) {
+    const again = () =>
+      void run(
+        () => (sent.kind === 'signup' ? client.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } }) : client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })),
+        a.resent,
+        () => setSent({ kind: sent.kind, at: Date.now() }),
+      );
+    return shell(
+      <section className="space-y-4 rounded-2xl border border-line bg-panel p-6">
+        <h1 className="text-xl font-semibold">{sent.kind === 'signup' ? a.signUpTitle : a.resetTitle}</h1>
+        <p className="text-body leading-relaxed">{sent.kind === 'signup' ? a.confirmSent : a.resetSent}</p>
+        <p className="text-small leading-relaxed text-muted">{a.sentTo(email)}</p>
+        {note}
+        {wait > 0 ? (
+          <p role="timer" className="text-small text-muted tabular-nums">
+            {a.resendIn(wait)}
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-small">{a.notReceived}</span>
+            <Button variant="primary" disabled={busy} onClick={again}>
+              {a.resend}
+            </Button>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line pt-3 text-small">
+          <button type="button" className="text-accent-ink underline underline-offset-2" onClick={() => go('signin')}>
+            {a.toSignIn}
+          </button>
+          <button type="button" className="text-accent-ink underline underline-offset-2" onClick={() => go(sent.kind === 'signup' ? 'signup' : 'reset')}>
+            {a.changeEmail}
+          </button>
+        </div>
+      </section>,
+    );
+  }
 
   return shell(
     <form onSubmit={submit} className="space-y-4 rounded-2xl border border-line bg-panel p-6">
@@ -174,6 +239,11 @@ export function LoginPage({ auth }: { auth: AuthState }) {
         <PasswordField label={a.password} hint={mode === 'signup' ? a.passwordHint : undefined} value={password} onChange={setPassword} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} />
       )}
       {note}
+      {unconfirmed && mode === 'signin' && (
+        <Button disabled={busy} onClick={() => void run(() => client.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } }), a.resent, () => setSent({ kind: 'signup', at: Date.now() }))}>
+          {a.resend}
+        </Button>
+      )}
       <Button variant="primary" type="submit" disabled={busy} className="w-full">
         {mode === 'signin' ? a.signIn : mode === 'signup' ? a.signUp : a.sendReset}
       </Button>
