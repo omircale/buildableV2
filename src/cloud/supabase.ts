@@ -8,6 +8,23 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 export const cloudConfigured = Boolean(url && key);
 export const supabase = cloudConfigured ? createClient(url!, key!) : null;
 
+/**
+ * Which sign-in providers the project has switched on, read from the auth service itself.
+ *
+ * A "continue with Google" button that leads to an error page is worse than no button, so the screen
+ * asks before it offers one. Anything but a clear yes counts as no.
+ */
+export async function enabledProviders(): Promise<{ google: boolean }> {
+  if (!url || !key) return { google: false };
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+    const body = (await res.json()) as { external?: Record<string, unknown> };
+    return { google: body.external?.google === true };
+  } catch {
+    return { google: false };
+  }
+}
+
 export type Role = 'admin' | 'member' | null;
 
 export interface AuthState {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, type AuthState } from '../cloud/supabase';
+import { enabledProviders, supabase, type AuthState } from '../cloud/supabase';
 import { useT, type Dict } from '../i18n';
 import { AppHeader } from '../ui/AppHeader';
 import { Button, Field, buttonClass, inputClass } from '../ui/common';
@@ -22,6 +22,17 @@ export function authErrorKey(error: { message?: string; status?: number; code?: 
   if (/weak_password|password should|password is too/.test(text)) return 'weak';
   if (/failed to fetch|network|load failed/.test(text)) return 'network';
   return 'other';
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden>
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z" />
+      <path fill="#FBBC05" d="M3.96 10.71a5.41 5.41 0 0 1 0-3.42V4.96H.96a9 9 0 0 0 0 8.08l3-2.33z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
+    </svg>
+  );
 }
 
 function PasswordField({ label, value, onChange, autoComplete, hint }: { label: string; value: string; onChange: (v: string) => void; autoComplete: string; hint?: string }) {
@@ -63,6 +74,14 @@ export function LoginPage({ auth }: { auth: AuthState }) {
   // Which e-mail the screen is waiting on, and since when — so it can offer to send it again.
   const [sent, setSent] = useState<{ kind: 'signup' | 'reset'; at: number } | null>(null);
   const [unconfirmed, setUnconfirmed] = useState(false);
+  const [google, setGoogle] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void enabledProviders().then((p) => active && setGoogle(p.google));
+    return () => {
+      active = false;
+    };
+  }, []);
   const wait = useCountdown(sent?.at ?? null, RESEND_AFTER_S);
 
   const client = supabase;
@@ -232,6 +251,20 @@ export function LoginPage({ auth }: { auth: AuthState }) {
     <form onSubmit={submit} className="space-y-4 rounded-2xl border border-line bg-panel p-6">
       <h1 className="text-xl font-semibold">{title}</h1>
       <p className="text-small leading-relaxed text-muted">{a.gateNote}</p>
+      {google && mode !== 'reset' && (
+        <>
+          {/* Google has already checked the address is theirs, so there is no e-mail to wait for. */}
+          <Button className="w-full" disabled={busy} onClick={() => void run(() => client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }))}>
+            <GoogleMark />
+            {a.google}
+          </Button>
+          <div className="flex items-center gap-3 text-small text-muted">
+            <span className="h-px flex-1 bg-line" />
+            {a.orEmail}
+            <span className="h-px flex-1 bg-line" />
+          </div>
+        </>
+      )}
       <Field label={a.email}>
         <input className={inputClass} type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
       </Field>
