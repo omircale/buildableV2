@@ -88,7 +88,17 @@ export function LoginPage({ auth }: { auth: AuthState }) {
   const shell = (children: React.ReactNode) => (
     <div className="flex min-h-screen flex-col bg-paper text-ink">
       <AppHeader auth={auth} />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">{children}</main>
+      <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+        {children}
+        <p className="mt-4 flex justify-center gap-4 text-small text-muted">
+          <a href="/privacy" className="underline underline-offset-2">
+            {a.privacy}
+          </a>
+          <a href="/terms" className="underline underline-offset-2">
+            {a.terms}
+          </a>
+        </p>
+      </main>
     </div>
   );
   const note = message && (
