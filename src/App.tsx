@@ -138,7 +138,7 @@ export default function App() {
               : route.startsWith('#/admin')
                 ? t.header.admin
                 : isHome(route)
-                  ? t.home.title
+                  ? t.home.hotelTitle
                   : t.notFound.title;
   useEffect(() => {
     document.title = `${pageTitle} · Buildable`;

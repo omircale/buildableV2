@@ -7,7 +7,6 @@ import { CloudSave } from '../ui/account/Bills';
 import { AppHeader } from '../ui/AppHeader';
 import { Button } from '../ui/common';
 import { IconCheck } from '../ui/icons';
-import { ArStage } from '../ui/journey/ArStage';
 import { DescribeStage } from '../ui/journey/DescribeStage';
 import { PriceStage } from '../ui/journey/PriceStage';
 import { RefineStage } from '../ui/journey/RefineStage';
@@ -44,7 +43,6 @@ const MODE: Record<Stage, Mode> = {
   bill: 'live',
   price: 'prototype',
   tender: 'partial',
-  ar: 'partial',
 };
 
 const MODE_STYLE: Record<Mode, { dot: string; pill: string }> = {
@@ -165,29 +163,19 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                       <RoomScene
                         space={survey.space}
                         equipmentIds={survey.equipmentIds}
-                        design={bill.pieceOf(survey.space.id)?.result ?? null}
-                        designName={survey.piece?.name ?? bill.designName}
+                        design={null}
+                        designName=""
                         he={he}
                         labels={j.walk.labels}
                       />
                     </Suspense>
                   </div>
                   <aside className="space-y-4 text-small">
-                    <label className="flex items-start gap-2.5 rounded-lg border border-line px-3 py-2">
-                      <input
-                        type="checkbox"
-                        className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
-                        checked={survey.piece != null}
-                        onChange={(e) => survey.setPiece(e.target.checked ? { name: bill.designName, params: bill.design.model.params } : null)}
-                      />
-                      {j.walk.includePiece(survey.piece?.name ?? bill.designName)}
-                    </label>
                     <section>
                       <h3 className="font-semibold">{j.walk.legendTitle}</h3>
                       <ul className="mt-1.5 space-y-1.5 leading-snug text-muted">
                         <li>{j.walk.legendPins}</li>
                         <li>{j.walk.legendOpen}</li>
-                        <li>{j.walk.legendPiece}</li>
                       </ul>
                     </section>
                     <section>
@@ -201,7 +189,6 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
             {stage === 'bill' && <BillView bill={bill} maxHeight="none" />}
             {stage === 'price' && <PriceStage lines={bill.lines} />}
             {stage === 'tender' && <TenderStage bill={bill} />}
-            {stage === 'ar' && <ArStage design={bill.design} modeLabels={j.modes} />}
           </div>
 
           <footer className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3">

@@ -453,10 +453,91 @@ describe('a bill cannot hold more rooms than it can number', () => {
     expect(projectRooms(useSurvey.getState() as never)).toHaveLength(MAX_ROOMS);
   });
 
-  it('a request for more copies than there is room for is cut to what fits', () => {
+  it('a request for more copies than there is room for is refused whole, and says so', () => {
+    // It used to be cut to what fitted. Fifty asked for and eight made is a survey changed behind the person's back.
     useSurvey.getState().duplicateRoom(90);
     useSurvey.getState().duplicateRoom(50);
+    expect(projectRooms(useSurvey.getState() as never)).toHaveLength(91);
+    expect(useSurvey.getState().refusal).toEqual({ code: 'rooms_copies', asked: 50, left: 8 });
+  });
+
+  it('adding a room past the limit is refused out loud', () => {
+    useSurvey.getState().duplicateRoom(98);
+    useSurvey.getState().addRoom();
     expect(projectRooms(useSurvey.getState() as never)).toHaveLength(MAX_ROOMS);
+    expect(useSurvey.getState().refusal).toEqual({ code: 'rooms_full', limit: MAX_ROOMS });
+  });
+});
+
+describe('a number a person gives is never shortened', () => {
+  it('a hundred and twenty desks are a hundred and twenty desks', () => {
+    // Found by review: 120 became 20 with no word said.
+    useSurvey.getState().setEquipmentCount('workstation', 120);
+    expect(countOf(useSurvey.getState().equipmentIds, 'workstation')).toBe(120);
+    expect(useSurvey.getState().refusal).toBeNull();
+  });
+
+  it('a number past the limit is not entered at all, and the refusal names both numbers', () => {
+    useSurvey.getState().setEquipmentCount('workstation', 12);
+    useSurvey.getState().setEquipmentCount('workstation', 60000);
+    expect(countOf(useSurvey.getState().equipmentIds, 'workstation')).toBe(12);
+    expect(useSurvey.getState().refusal).toMatchObject({ code: 'item_count', asked: 60000 });
+  });
+
+  it('the next accepted entry clears the refusal', () => {
+    useSurvey.getState().setEquipmentCount('workstation', 60000);
+    useSurvey.getState().setEquipmentCount('workstation', 30);
+    expect(useSurvey.getState().refusal).toBeNull();
+  });
+});
+
+describe('one room standing for many', () => {
+  it('starts as one, is kept with the room, and survives a refresh', async () => {
+    expect(useSurvey.getState().count).toBe(1);
+    useSurvey.getState().setRoomCount(40);
+    useSurvey.getState().addRoom();
+    expect(useSurvey.getState().count).toBe(1);
+    useSurvey.getState().openRoom('room_1');
+    expect(useSurvey.getState().count).toBe(40);
+    vi.resetModules();
+    const again = (await import('./spaceStore')).useSurvey;
+    expect(again.getState().count).toBe(40);
+  });
+
+  it('refuses a count that is not a whole room or is past the limit', () => {
+    useSurvey.getState().setRoomCount(40);
+    useSurvey.getState().setRoomCount(0);
+    expect(useSurvey.getState().count).toBe(40);
+    useSurvey.getState().setRoomCount(1_000_000);
+    expect(useSurvey.getState().count).toBe(40);
+    expect(useSurvey.getState().refusal).toMatchObject({ code: 'room_count', asked: 1_000_000 });
+  });
+});
+
+describe('a price entered by hand', () => {
+  it('is kept only with its source', () => {
+    useSurvey.getState().setPrice('room_1:mep_gas_points', { unitPriceIls: 850, source: '' });
+    expect(useSurvey.getState().prices).toEqual({});
+    useSurvey.getState().setPrice('room_1:mep_gas_points', { unitPriceIls: 850, source: '  הצעת מחיר, קבלן גז, 2026-10-01 ' });
+    expect(useSurvey.getState().prices['room_1:mep_gas_points']).toMatchObject({ unitPriceIls: 850, source: 'הצעת מחיר, קבלן גז, 2026-10-01' });
+    expect(useSurvey.getState().prices['room_1:mep_gas_points'].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('refuses a price that is not a number', () => {
+    useSurvey.getState().setPrice('x', { unitPriceIls: Number.NaN, source: 'quote' });
+    useSurvey.getState().setPrice('y', { unitPriceIls: -5, source: 'quote' });
+    expect(useSurvey.getState().prices).toEqual({});
+  });
+
+  it('can be taken off, travels in a backup, and a backup cannot smuggle in one without a source', () => {
+    useSurvey.getState().setPrice('a', { unitPriceIls: 10, source: 'מחירון, סעיף 08.01' });
+    const backup = JSON.parse(useSurvey.getState().exportProject());
+    expect(backup.prices.a.unitPriceIls).toBe(10);
+    backup.prices.b = { unitPriceIls: 99, source: '' };
+    useSurvey.getState().setPrice('a', null);
+    expect(useSurvey.getState().prices).toEqual({});
+    useSurvey.getState().restoreProject(JSON.stringify(backup));
+    expect(Object.keys(useSurvey.getState().prices)).toEqual(['a']);
   });
 });
 

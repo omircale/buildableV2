@@ -1,3 +1,4 @@
+import { DRAFT_NOTICE } from './project';
 import { csvCell } from '../csv';
 import { LICENSED_TRADES } from '../equipment/catalog';
 import { TRADE_LABEL, UNIT_LABEL, byLocation, byTrade, totals, type BoqLine, type Totals, type Trade } from './line';
@@ -168,7 +169,7 @@ export interface BillDocumentOptions {
  * A total is written only where every line under it is priced. A partial sum in the total column would
  * be read as the total, so an incomplete group leaves the cell empty and says how far it got.
  */
-export function billDocumentCsv(lines: BoqLine[], options: BillDocumentOptions = {}): string {
+export function billDocumentRows(lines: BoqLine[], options: BillDocumentOptions = {}): (string | number)[][] {
   const locale = options.locale ?? 'he';
   const he = locale === 'he';
   const roomName = options.roomName ?? ((l) => l.spaceId);
@@ -221,5 +222,12 @@ export function billDocumentCsv(lines: BoqLine[], options: BillDocumentOptions =
   }
   closing(he ? 'כתב הכמויות' : 'the bill', all);
 
+  return out;
+}
+
+/** The same document as a CSV file. The last row says what the document is, where an import will not trip on it. */
+export function billDocumentCsv(lines: BoqLine[], options: BillDocumentOptions = {}): string {
+  const he = (options.locale ?? 'he') === 'he';
+  const out = [...billDocumentRows(lines, options), [], ['', '', he ? DRAFT_NOTICE.he : DRAFT_NOTICE.en]];
   return BOM + out.map((r) => r.map(csvCell).join(',')).join('\r\n');
 }

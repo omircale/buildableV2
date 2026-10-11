@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EQUIPMENT, SECTORS, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
 import { useT } from '../../i18n';
 import { countOf, useSurvey } from '../../state/spaceStore';
+import { CountInput } from './CountInput';
 import { useUi } from '../../state/uiStore';
 import { Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
 import { IconMinus, IconPlus } from '../icons';
@@ -161,6 +162,8 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
                     <button type="button" aria-label={t.survey.fewer} className="h-7 w-7 rounded-full text-muted hover:bg-sunken" onClick={() => survey.setEquipmentCount(item.id, n - 1)}>
                       <IconMinus size={14} className="mx-auto" />
                     </button>
+                    {/* A hundred and twenty desks are typed, not clicked a hundred and twenty times. */}
+                    <CountInput value={n} onCommit={(v) => survey.setEquipmentCount(item.id, v)} label={t.survey.itemCount(he ? item.nameHe : item.nameEn)} min={0} />
                     <button type="button" aria-label={t.survey.more} className="h-7 w-7 rounded-full text-muted hover:bg-sunken" onClick={() => survey.setEquipmentCount(item.id, n + 1)}>
                       <IconPlus size={14} className="mx-auto" />
                     </button>
@@ -172,39 +175,42 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
         </div>
       </Section>
 
-      <Section title={t.survey.designSection}>
-        <p className="text-small text-muted">{t.survey.designHint}</p>
-        <label className="flex items-center gap-2.5 text-body">
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-[var(--color-accent)]"
-            checked={survey.piece != null}
-            onChange={(e) => survey.setPiece(e.target.checked ? { name: bill.designName, params: bill.design.model.params } : null)}
-          />
-          {t.survey.includeDesign(survey.piece?.name ?? bill.designName)}
-        </label>
-        {bill.pieceStale && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-warn-soft px-3 py-2 text-small leading-snug">
-            <span>{t.survey.pieceStale}</span>
-            <button type="button" className="font-medium text-accent-ink underline underline-offset-2" onClick={() => survey.setPiece({ name: bill.designName, params: bill.design.model.params })}>
-              {t.survey.pieceUpdate(bill.designName)}
-            </button>
-          </div>
-        )}
-        {survey.piece != null && bill.designBlockedBy.length > 0 && (
-          <div className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2 text-small leading-snug">
-            <div className="font-semibold">{t.survey.designBlocked}</div>
-            <ul className="mt-1 text-muted">
-              {bill.designBlockedBy.map((b) => (
-                <li key={b.id}>{b.title}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <a href="#/design" className="inline-flex items-center text-small font-medium text-accent underline underline-offset-2">
-          {t.survey.openEditor}
-        </a>
-      </Section>
+      {/* Furniture is a separate tool. The section shows only for a room that already holds a piece, so it can be seen and taken out. */}
+      {survey.piece != null && (
+        <Section title={t.survey.designSection}>
+          <p className="text-small text-muted">{t.survey.designHint}</p>
+          <label className="flex items-center gap-2.5 text-body">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--color-accent)]"
+              checked={survey.piece != null}
+              onChange={(e) => survey.setPiece(e.target.checked ? { name: bill.designName, params: bill.design.model.params } : null)}
+            />
+            {t.survey.includeDesign(survey.piece?.name ?? bill.designName)}
+          </label>
+          {bill.pieceStale && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-warn-soft px-3 py-2 text-small leading-snug">
+              <span>{t.survey.pieceStale}</span>
+              <button type="button" className="font-medium text-accent-ink underline underline-offset-2" onClick={() => survey.setPiece({ name: bill.designName, params: bill.design.model.params })}>
+                {t.survey.pieceUpdate(bill.designName)}
+              </button>
+            </div>
+          )}
+          {survey.piece != null && bill.designBlockedBy.length > 0 && (
+            <div className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2 text-small leading-snug">
+              <div className="font-semibold">{t.survey.designBlocked}</div>
+              <ul className="mt-1 text-muted">
+                {bill.designBlockedBy.map((b) => (
+                  <li key={b.id}>{b.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <a href="#/design" className="inline-flex items-center text-small font-medium text-accent underline underline-offset-2">
+            {t.survey.openEditor}
+          </a>
+        </Section>
+      )}
 
       <Section title={t.survey.sourcesSection} count={survey.sources.length}>
         <p className="text-small text-muted">{t.survey.sourcesHint}</p>

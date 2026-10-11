@@ -65,6 +65,12 @@ export interface Survey {
    * act: put the piece in again.
    */
   piece: IncludedPiece | null;
+  /**
+   * How many rooms this one stands for. Forty identical guest rooms are one room, surveyed once, with
+   * a count of forty: one entry in the bill whose quantities are multiplied, not forty entries to keep
+   * in step by hand. A room that differs in anything is a separate room.
+   */
+  count: number;
   updatedAt: number | null;
 }
 
@@ -114,7 +120,36 @@ export interface ProjectExtras {
   finishes: FinishScheduleSpec[];
   /** What was last written in the describe step, kept so leaving the step does not erase it. */
   describeText: string;
+  /**
+   * Unit prices a person typed in, by line id. A price is kept only together with where it came from:
+   * a number with no source is exactly what this bill refuses to carry.
+   */
+  prices: Record<string, ManualPrice>;
 }
+
+export interface ManualPrice {
+  unitPriceIls: number;
+  /** Where the price came from — a quote, a price book and its item, a past invoice. Never empty. */
+  source: string;
+  /** The day it was entered, as YYYY-MM-DD: a price is a fact about a date. */
+  date: string;
+}
+
+/**
+ * Something the person asked for that was refused, and why. Nothing in a survey is ever shortened to
+ * fit a limit without saying so: a hundred and twenty desks written down as twenty is a wrong bill
+ * that looks like a right one.
+ */
+export type Refusal =
+  | { code: 'item_count'; asked: number; limit: number }
+  | { code: 'rooms_full'; limit: number }
+  | { code: 'rooms_copies'; asked: number; left: number }
+  | { code: 'room_count'; asked: number; limit: number };
+
+/** The most of one item a single room can hold. Far above any real room; beyond it the entry is refused, not cut. */
+export const MAX_ITEM_COUNT = 5000;
+/** The most identical rooms one surveyed room can stand for. */
+export const MAX_ROOM_COUNT = 9999;
 
 /** The example room: a pool bar, open to the deck along its long side. Dimensions are invented. */
 export const SAMPLE_ROOM = { widthMm: 7200, depthMm: 3600, heightMm: 2700, openEdges: [0], nameHe: 'בר בריכה (חדר לדוגמה)', nameEn: 'Pool bar (example room)' } as const;
@@ -132,13 +167,14 @@ function blank(): Survey {
     sources: [],
     answers: {},
     piece: null,
+    count: 1,
     updatedAt: null,
   };
 }
 
 function blankProject(): Survey & ProjectExtras {
   const room = blank();
-  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '' };
+  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {} };
 }
 
 /** A saved room read back into today's shape, whatever version wrote it. */
@@ -160,8 +196,21 @@ function reviveRoom(saved: Partial<Survey>): Survey {
     // An older save only recorded *that* a piece was included, not which. It cannot be reconstructed,
     // so the room comes back without one rather than with whatever the editor happens to hold.
     piece: saved.piece ?? null,
+    count: Number.isInteger(saved.count) && (saved.count as number) >= 1 ? (saved.count as number) : 1,
     updatedAt: saved.updatedAt ?? null,
   };
+}
+
+/** Saved prices read back. One with no source, or no real number, is dropped: it was never a price. */
+function revivePrices(saved: unknown): Record<string, ManualPrice> {
+  const out: Record<string, ManualPrice> = {};
+  if (!saved || typeof saved !== 'object') return out;
+  for (const [id, p] of Object.entries(saved as Record<string, Partial<ManualPrice>>)) {
+    if (!p || typeof p.unitPriceIls !== 'number' || !Number.isFinite(p.unitPriceIls) || p.unitPriceIls < 0) continue;
+    if (typeof p.source !== 'string' || !p.source.trim()) continue;
+    out[id] = { unitPriceIls: p.unitPriceIls, source: p.source.trim(), date: typeof p.date === 'string' ? p.date : '' };
+  }
+  return out;
 }
 
 /** A whole saved project read back, or null when the text is not one. */
@@ -179,13 +228,14 @@ function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
     order: [...order, ...ids.filter((id) => !order.includes(id))],
     finishes: Array.isArray(saved.finishes) ? saved.finishes : [],
     describeText: typeof saved.describeText === 'string' ? saved.describeText : '',
+    prices: revivePrices(saved.prices),
   };
 }
 
 /** The per-room fields of the store, taken as a snapshot that can be parked in `others`. */
 function snapshot(s: Survey): Survey {
-  const { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, updatedAt } = s;
-  return { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, updatedAt };
+  const { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, updatedAt } = s;
+  return { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, updatedAt };
 }
 
 /** Every room of the project, the open one included, in bill order. */
@@ -240,6 +290,13 @@ export interface SurveyState extends Survey, ProjectExtras {
   /** Adds one of an item, or takes every one of it out if it is already there. */
   toggleEquipment: (id: string) => void;
   setEquipmentCount: (id: string, count: number) => void;
+  /** How many identical rooms the open room stands for. */
+  setRoomCount: (count: number) => void;
+  /** A price for one line of the bill, with its source — or null to take the price off. */
+  setPrice: (lineId: string, price: { unitPriceIls: number; source: string } | null) => void;
+  /** The last thing that was refused, shown until dismissed. Not saved. */
+  refusal: Refusal | null;
+  dismissRefusal: () => void;
   /** Returns the new point's id. */
   addConnection: (kind: ServiceKind, patch?: Partial<ConnectionPoint>) => string;
   updateConnection: (id: string, patch: Partial<ConnectionPoint>) => void;
@@ -287,8 +344,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
     const updatedAt = Date.now();
     set({ updatedAt });
-    const { others, order, finishes, describeText } = get();
-    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText };
+    const { others, order, finishes, describeText, prices } = get();
+    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices };
     try {
       localStorage.setItem(storageKey(), JSON.stringify(next));
     } catch {
@@ -298,8 +355,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
   /** The project as it stands, taken before an action that destroys something, so it can be put back. */
   const remember = (kind: UndoKind) => {
-    const { others, order, finishes, describeText } = get();
-    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText }) } });
+    const { others, order, finishes, describeText, prices } = get();
+    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText, prices }) } });
   };
 
   const patchSpace = (patch: Partial<Space>) => {
@@ -310,6 +367,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
   return {
     ...load(),
     undoable: null,
+    refusal: null,
 
     undo: () => {
       const last = get().undoable;
@@ -322,8 +380,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
     dismissUndo: () => set({ undoable: null }),
 
     exportProject: () => {
-      const { others, order, finishes, describeText } = get();
-      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText }, null, 2);
+      const { others, order, finishes, describeText, prices } = get();
+      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText, prices }, null, 2);
     },
 
     restoreProject: (text) => {
@@ -385,10 +443,30 @@ export const useSurvey = create<SurveyState>((set, get) => {
     },
 
     setEquipmentCount: (id, count) => {
-      const n = Math.max(0, Math.min(20, Math.round(count)));
-      set({ equipmentIds: [...get().equipmentIds.filter((x) => x !== id), ...Array<string>(n).fill(id)] });
+      const n = Math.max(0, Math.round(count));
+      // Refused whole rather than cut: the number the person gave is either in the bill or it is not.
+      if (n > MAX_ITEM_COUNT) return set({ refusal: { code: 'item_count', asked: n, limit: MAX_ITEM_COUNT } });
+      set({ refusal: null, equipmentIds: [...get().equipmentIds.filter((x) => x !== id), ...Array<string>(n).fill(id)] });
       persist();
     },
+
+    setRoomCount: (count) => {
+      const n = Math.round(count);
+      if (!Number.isFinite(n) || n < 1) return;
+      if (n > MAX_ROOM_COUNT) return set({ refusal: { code: 'room_count', asked: n, limit: MAX_ROOM_COUNT } });
+      set({ count: n, refusal: null });
+      persist();
+    },
+
+    setPrice: (lineId, price) => {
+      const { [lineId]: _old, ...rest } = get().prices;
+      // No source, no price: the entry is not kept half-made.
+      const ok = price && Number.isFinite(price.unitPriceIls) && price.unitPriceIls >= 0 && price.source.trim() !== '';
+      set({ prices: ok ? { ...rest, [lineId]: { unitPriceIls: price.unitPriceIls, source: price.source.trim(), date: new Date().toISOString().slice(0, 10) } } : rest });
+      persist();
+    },
+
+    dismissRefusal: () => set({ refusal: null }),
 
     addConnection: (kind, patch) => {
       const point: ConnectionPoint = { id: nextId('pt'), kind, atMm: null, existing: true, ...patch };
@@ -445,7 +523,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     addRoom: () => {
       const st = get();
       const ids = projectRooms(st).map((r) => r.space.id);
-      if (ids.length >= MAX_ROOMS) return;
+      if (ids.length >= MAX_ROOMS) return set({ refusal: { code: 'rooms_full', limit: MAX_ROOMS } });
       const n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0)) + 1;
       const room = blank();
       room.space = { ...room.space, id: `room_${n}`, nameHe: `חלל ${n}`, nameEn: `Space ${n}` };
@@ -461,9 +539,10 @@ export const useSurvey = create<SurveyState>((set, get) => {
     duplicateRoom: (copies) => {
       const st = get();
       const ids = projectRooms(st).map((r) => r.space.id);
-      // Never past what a bill can number: the copies are cut to the room that is left.
-      const count = Math.min(Math.max(1, Math.round(copies)), MAX_ROOMS - ids.length);
-      if (count < 1) return;
+      // Never past what a bill can number — and never fewer than were asked for without saying so.
+      const count = Math.max(1, Math.round(copies));
+      const left = MAX_ROOMS - ids.length;
+      if (count > left) return set({ refusal: { code: 'rooms_copies', asked: count, left } });
       remember('rooms_duplicated');
       let n = Math.max(0, ...ids.map((id) => Number(id.replace(/\D+/g, '')) || 0));
       const source = snapshot(st);

@@ -196,6 +196,10 @@ export { CHAPTERS, TRADE_CHAPTER, UNASSIGNED_CHAPTER, chapterLabel, chapterOf } 
 export type { Chapter } from './boq/chapters';
 export { SKN_LIMITS, SECTION_LABEL, chapterSummary, numberBill, sectionLabel, structureKey } from './boq/numbering';
 export type { BillStructure, NumberedLine, NumberingProblem } from './boq/numbering';
-export { billDocumentCsv } from './boq/export';
+export { billDocumentCsv, billDocumentRows } from './boq/export';
+export { billWorkbook, sheetName } from './boq/workbook';
+export type { Sheet } from './boq/workbook';
+export { DRAFT_NOTICE, timesRooms, unknownEquipment, withPrices } from './boq/project';
+export type { EnteredPrice } from './boq/project';
 export type { BillDocumentOptions } from './boq/export';
 export { timberWasteRate } from './boq/finishes';

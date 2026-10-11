@@ -94,29 +94,31 @@ export function HomePage({ auth }: { auth: AuthState }) {
   return (
     <div className="flex min-h-full flex-col bg-paper">
       <AppHeader auth={auth} />
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 py-9">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div className="flex max-w-2xl flex-col gap-2">
-            <h1 className="text-display leading-tight font-bold tracking-tight">{t.home.title}</h1>
-            <p className="text-lg leading-relaxed text-muted">{t.home.subtitle}</p>
-          </div>
-        </div>
-
-        {/* The hotel flow is a different job from designing one piece, so it gets its own way in. */}
-        <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-accent-soft px-5 py-4" aria-label={t.home.hotelTitle}>
-          <div className="min-w-0 flex-1 basis-72">
-            <h2 className="text-base font-semibold">{t.home.hotelTitle}</h2>
-            <p className="mt-0.5 text-body leading-relaxed text-muted">{t.home.hotelBody}</p>
+      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-4 py-6 sm:px-8 sm:py-9">
+        {/* The bill is the product. Designing a single piece of furniture is a separate tool, further down. */}
+        <section className="flex flex-col gap-4" aria-label={t.home.hotelTitle}>
+          <div className="flex max-w-3xl flex-col gap-2">
+            <h1 className="text-display leading-tight font-bold tracking-tight text-balance">{t.home.hotelTitle}</h1>
+            <p className="text-lg leading-relaxed text-muted">{t.home.hotelBody}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <a href="#/journey" className={buttonClass('primary')}>
+            <a href="#/journey" className={buttonClass('primary', 'lg')}>
               {t.home.hotelStart}
             </a>
-            <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
+            <a href="#/space" className={buttonClass('secondary', 'lg')}>
               {t.home.hotelDirect}
             </a>
+            <a href="#/projects" className="text-body font-medium text-accent-ink underline underline-offset-2">
+              {t.header.projects}
+            </a>
           </div>
+          <p className="max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-small leading-relaxed">{t.home.draftNote}</p>
         </section>
+
+        <div className="flex max-w-2xl flex-col gap-1 border-t border-line pt-6">
+          <h2 className="text-xl font-semibold">{t.home.title}</h2>
+          <p className="text-body leading-relaxed text-muted">{t.home.subtitle}</p>
+        </div>
 
         {/* Say what you want and go straight to the editor; the gallery below is for picking instead. */}
         <DescribePanel onStart={openDescribed} />

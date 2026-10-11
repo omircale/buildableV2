@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { finishLines, linesFromDesign, mepLines, runDesign, type BoqLine, type DesignResult, type LineLocation, type ServiceKind } from '../../engine';
+import { finishLines, linesFromDesign, mepLines, runDesign, timesRooms, withPrices, type BoqLine, type DesignResult, type LineLocation, type ServiceKind } from '../../engine';
 import { useT } from '../../i18n';
 import { projectLabel, useDesign } from '../../state/designStore';
 import { projectRooms, useSurvey, type Survey } from '../../state/spaceStore';
@@ -99,14 +99,20 @@ export function useRoomBill(): RoomBill {
         memory.set(room, kept);
       }
       // A finish's lines depend on every room it is laid in, so they are worked out for the project.
-      lines.push(...kept.piece, ...finishes.filter((l) => l.location.spaceId === id), ...kept.services);
+      // A room that stands for forty identical rooms is one entry, with its quantities multiplied.
+      lines.push(...timesRooms([...kept.piece, ...finishes.filter((l) => l.location.spaceId === id), ...kept.services], room.count));
     }
 
     const open = pieceOf(survey.space.id);
     return {
-      lines,
+      // Prices a person entered ride on the finished lines, each with its source.
+      lines: withPrices(lines, survey.prices),
       rooms,
-      roomName: (location) => (he ? nameOf(location.spaceId).he : nameOf(location.spaceId).en),
+      // A room that stands for several says so wherever it is named — on screen and in every file.
+      roomName: (location) => {
+        const n = byId.get(location.spaceId)?.count ?? 1;
+        return (he ? nameOf(location.spaceId).he : nameOf(location.spaceId).en) + (n > 1 ? ` ×${n}` : '');
+      },
       design,
       designName,
       pieceOf,
