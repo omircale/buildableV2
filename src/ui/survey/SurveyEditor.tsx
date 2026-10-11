@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { EQUIPMENT, SECTORS, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
+import { EQUIPMENT, SECTORS, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, unknownEquipment, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
 import { useT } from '../../i18n';
 import { countOf, useSurvey } from '../../state/spaceStore';
 import { CountInput } from './CountInput';
 import { useUi } from '../../state/uiStore';
 import { Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
-import { IconMinus, IconPlus } from '../icons';
+import { IconMinus, IconPlus, IconX } from '../icons';
 import { SERVICE_KINDS, serviceName } from './services';
 import type { RoomBill } from './useRoomBill';
 
@@ -71,6 +71,8 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
   const [equipmentQuery, setEquipmentQuery] = useState('');
   const walls = wallsOf(survey.space);
   const problems = spaceProblems(survey.space);
+  // Ids nothing in the catalogue answers to — from an older version or a hand-edited backup. They count for nothing, so they are shown and can be taken out.
+  const unknownIds = unknownEquipment(survey.equipmentIds);
   const gaps = whatIsMissing(survey.space);
   // A survey that contradicts itself: a point fed from a source that is gone, or from the wrong kind.
   const feedProblems = [...danglingFeeds(survey.space, survey.sources), ...mismatchedFeeds(survey.space, survey.sources)];
@@ -147,6 +149,19 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
           ))}
         </div>
         <input type="search" className={inputClass} placeholder={t.survey.equipmentSearch} aria-label={t.survey.equipmentSearch} value={equipmentQuery} onChange={(e) => setEquipmentQuery(e.target.value)} />
+        {unknownIds.length > 0 && (
+          <div role="alert" className="space-y-1.5 rounded-lg bg-bad-soft px-3 py-2 text-small">
+            <div className="text-bad">{t.survey.unknownItems}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {unknownIds.map((id) => (
+                <button key={id} type="button" aria-label={t.survey.removeItem(id)} className="inline-flex items-center gap-1 rounded-full bg-panel px-2.5 py-1 ring-1 ring-line hover:bg-sunken" onClick={() => survey.removeEquipment(id)}>
+                  <span dir="ltr">{id}</span>
+                  <IconX size={14} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {offered.length === 0 && <p className="text-small text-muted">{t.survey.equipmentNone}</p>}
         <div className="flex flex-wrap gap-2">
           {offered.map((item) => {

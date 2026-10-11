@@ -297,6 +297,10 @@ export interface SurveyState extends Survey, ProjectExtras {
   /** The last thing that was refused, shown until dismissed. Not saved. */
   refusal: Refusal | null;
   dismissRefusal: () => void;
+  /** True while the browser is refusing to store the project. Shown until a save goes through. */
+  saveFailed: boolean;
+  /** Takes equipment the catalogue does not know out of the open room. */
+  removeEquipment: (id: string) => void;
   /** Returns the new point's id. */
   addConnection: (kind: ServiceKind, patch?: Partial<ConnectionPoint>) => string;
   updateConnection: (id: string, patch: Partial<ConnectionPoint>) => void;
@@ -348,8 +352,11 @@ export const useSurvey = create<SurveyState>((set, get) => {
     const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices };
     try {
       localStorage.setItem(storageKey(), JSON.stringify(next));
+      if (get().saveFailed) set({ saveFailed: false });
     } catch {
-      // Storage may be full or disabled; the survey stays in memory for this session.
+      // Storage is full or disabled. The survey is still on screen, but a refresh would lose it — and
+      // a screen that goes on looking saved while nothing is being saved is the worst thing it can do.
+      set({ saveFailed: true });
     }
   };
 
@@ -368,6 +375,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
     ...load(),
     undoable: null,
     refusal: null,
+    saveFailed: false,
 
     undo: () => {
       const last = get().undoable;
@@ -447,6 +455,11 @@ export const useSurvey = create<SurveyState>((set, get) => {
       // Refused whole rather than cut: the number the person gave is either in the bill or it is not.
       if (n > MAX_ITEM_COUNT) return set({ refusal: { code: 'item_count', asked: n, limit: MAX_ITEM_COUNT } });
       set({ refusal: null, equipmentIds: [...get().equipmentIds.filter((x) => x !== id), ...Array<string>(n).fill(id)] });
+      persist();
+    },
+
+    removeEquipment: (id) => {
+      set({ equipmentIds: get().equipmentIds.filter((x) => x !== id) });
       persist();
     },
 
@@ -642,4 +655,4 @@ export const useSurvey = create<SurveyState>((set, get) => {
 });
 
 // Another person signed in, or the last one signed out: the screen shows their work, not the last person's.
-onOwnerChange(() => useSurvey.setState({ ...load(), undoable: null }));
+onOwnerChange(() => useSurvey.setState({ ...load(), undoable: null, refusal: null, saveFailed: false }));

@@ -201,4 +201,11 @@ describe('the kind of place', () => {
   it('the word still names the room when nothing else does', () => {
     expect(interpretSpace('משרד עם מדפסת').claims.find((c) => c.field === 'name')).toMatchObject({ name: 'משרד' });
   });
+
+  it('in English the room comes after the kind of place, and is still the room', () => {
+    const reading = interpretSpace('restaurant kitchen with a gas range');
+    expect(reading.claims.find((c) => c.field === 'name')).toMatchObject({ name: 'kitchen' });
+    expect(sectorOf('restaurant kitchen with a gas range')).toBe('restaurant');
+    expect(reading.unread).toEqual([]);
+  });
 });

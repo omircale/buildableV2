@@ -675,3 +675,29 @@ describe('the kind of place a room is', () => {
     expect(useSurvey.getState().equipmentIds).toEqual(['bar_sink_single']);
   });
 });
+
+describe('a browser that will not store the work', () => {
+  it('says so instead of going on looking saved, and stops saying so once a save goes through', () => {
+    // Found by load test: with storage full, an edit showed on screen and was gone on refresh, in silence.
+    const real = localStorage.setItem.bind(localStorage);
+    let full = true;
+    vi.stubGlobal('localStorage', { ...localStorage, getItem: localStorage.getItem.bind(localStorage), removeItem: localStorage.removeItem.bind(localStorage), setItem: (k: string, v: string) => (full ? (() => { throw new Error('QuotaExceededError'); })() : real(k, v)) });
+    useSurvey.getState().setName('חדר שלא נשמר');
+    expect(useSurvey.getState().saveFailed).toBe(true);
+    expect(useSurvey.getState().space.nameHe).toBe('חדר שלא נשמר');
+    full = false;
+    useSurvey.getState().setName('חדר שנשמר');
+    expect(useSurvey.getState().saveFailed).toBe(false);
+  });
+});
+
+describe('equipment the catalogue does not know', () => {
+  it('can be taken out of the room', async () => {
+    localStorage.setItem('buildable.survey.v1', JSON.stringify({ ...JSON.parse(useSurvey.getState().exportProject()), equipmentIds: ['workstation', 'pizza_oven', 'pizza_oven'] }));
+    vi.resetModules();
+    const again = (await import('./spaceStore')).useSurvey;
+    expect(again.getState().equipmentIds).toContain('pizza_oven');
+    again.getState().removeEquipment('pizza_oven');
+    expect(again.getState().equipmentIds).toEqual(['workstation']);
+  });
+});

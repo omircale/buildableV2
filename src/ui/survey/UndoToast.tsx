@@ -22,6 +22,7 @@ export function UndoToast() {
   const refusal = useSurvey((s) => s.refusal);
   const dismissRefusal = useSurvey((s) => s.dismissRefusal);
   const r = t.survey.refusal;
+  const saveFailed = useSurvey((s) => s.saveFailed);
 
   useEffect(() => {
     if (!undoable) return;
@@ -31,6 +32,12 @@ export function UndoToast() {
 
   return (
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex flex-col items-center gap-2 px-4">
+      {/* Not dismissible: it goes when a save goes through, and not before. */}
+      {saveFailed && (
+        <div role="alert" className="pointer-events-auto max-w-xl rounded-xl bg-bad px-4 py-3 text-body leading-snug text-white shadow-lg">
+          {t.survey.saveFailed}
+        </div>
+      )}
       {/* Something asked for and not done. It stays until read: a refusal that fades is a silent one. */}
       {refusal && (
         <div role="alert" className="pointer-events-auto flex max-w-xl items-start gap-3 rounded-xl bg-bad px-4 py-3 text-body leading-snug text-white shadow-lg">

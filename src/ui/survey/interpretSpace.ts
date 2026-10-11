@@ -260,6 +260,8 @@ export function interpretSpace(text: string): SpaceReading {
   const counts = new Map<string, { count: number; sources: string[] }>();
   let named = false;
   let sectorSaid = false;
+  // The claim that named the room, when the only word for it so far was the kind of place.
+  let nameFromSector: number | null = null;
 
   for (let i = 0; i < tokens.length; i++) {
     if (used.has(i)) continue;
@@ -295,6 +297,15 @@ export function interpretSpace(text: string): SpaceReading {
         i += term.length - 1;
         continue;
       }
+      nameFromSector = claims.length;
+    } else if (room && named && nameFromSector != null) {
+      // "restaurant kitchen": the room is the kitchen; "restaurant" said what kind of place it is in.
+      const source = tokens.slice(i, i + room.length).join(' ');
+      claims[nameFromSector] = { field: 'name', name: source, source };
+      nameFromSector = null;
+      for (let k = i; k < i + room.length; k++) used.add(k);
+      i += room.length - 1;
+      continue;
     }
     if (room && !named) {
       for (let k = i; k < i + room.length; k++) used.add(k);

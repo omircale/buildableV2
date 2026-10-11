@@ -11,6 +11,9 @@ import type { RoomBill } from './useRoomBill';
 /** Groups are opened by default only while there are few of them; forty open rooms is a wall of text. */
 const OPEN_BY_DEFAULT = 3;
 
+/** The most lines a search draws at once. */
+const SEARCH_ROWS = 300;
+
 const money = (v: number, he: boolean) => new Intl.NumberFormat(he ? 'he-IL' : 'en-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 2 }).format(v);
 
 /**
@@ -187,9 +190,28 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
     });
   }, [axis, structures, numbered, roomName, he]);
 
-  const visible = groups
+  const matched = groups
     .map((g) => ({ ...g, sections: g.sections.map((s) => ({ ...s, items: s.items.filter(matches) })).filter((s) => s.items.length) }))
     .filter((g) => g.sections.length);
+  const matchedCount = matched.reduce((a, g) => a + g.sections.reduce((b, s) => b + s.items.length, 0), 0);
+
+  // A search opens every group it found something in. On a large bill a loose word matches a thousand
+  // lines, and drawing them all freezes the screen for seconds — so a search shows the first few
+  // hundred and says how many it is holding back, rather than hanging or hiding them unannounced.
+  let budget = searching ? SEARCH_ROWS : Infinity;
+  const visible = matched
+    .map((g) => ({
+      ...g,
+      sections: g.sections
+        .map((s) => {
+          const items = s.items.slice(0, Math.max(0, budget));
+          budget -= items.length;
+          return { ...s, items };
+        })
+        .filter((s) => s.items.length),
+    }))
+    .filter((g) => g.sections.length);
+  const shownCount = Math.min(matchedCount, SEARCH_ROWS);
 
   return (
     <div>
@@ -245,13 +267,22 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
               {[...new Set(integrity)].map((code) => (
                 <li key={code}>{t.survey.integrity(code)}</li>
               ))}
-              {problems.map((p) => (
-                <li key={p.code + (p.lineId ?? '')}>{he ? p.he : p.en}</li>
+              {/* The same finding in ninety-nine rooms is said once, with how many times — not ninety-nine times. */}
+              {[...problems.reduce((m, p) => m.set(he ? p.he : p.en, (m.get(he ? p.he : p.en) ?? 0) + 1), new Map<string, number>())].map(([text, n]) => (
+                <li key={text}>
+                  {text}
+                  {n > 1 && <span className="text-muted"> · {t.survey.inRooms(n)}</span>}
+                </li>
               ))}
             </ul>
           )}
 
           <div className="overflow-y-auto px-5" style={{ maxHeight }}>
+            {searching && matchedCount > shownCount && (
+              <p role="status" className="my-2 rounded-lg bg-warn-soft px-3 py-2 text-small leading-snug">
+                {t.survey.searchCapped(shownCount, matchedCount)}
+              </p>
+            )}
             {visible.length === 0 ? (
               <p className="py-8 text-center text-body text-muted">{t.survey.noMatch}</p>
             ) : (
@@ -268,6 +299,10 @@ export function BillView({ bill, showReset = false, maxHeight = '60vh' }: { bill
                     onToggle={(e) => {
                       // Read now: the event is released before a state updater would get to it.
                       const now = e.currentTarget.open;
+                      // The event also fires when the screen itself opens or closes a group — a search
+                      // does that to every group at once. Only a change the person made is remembered,
+                      // or one search would leave ninety-nine rooms open for good.
+                      if (now === open) return;
                       setToggled((was) => (was[id] === now ? was : { ...was, [id]: now }));
                     }}
                     className="border-b border-line py-1 last:border-0"
