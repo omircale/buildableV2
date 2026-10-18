@@ -102,10 +102,14 @@ export function HomePage({ auth }: { auth: AuthState }) {
             <p className="text-lg leading-relaxed text-muted">{t.home.hotelBody}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <a href="#/journey" className={buttonClass('primary', 'lg')}>
+            {/* The first question a construction manager has about a property: will it take the branch. */}
+            <a href="#/check/start" className={buttonClass('primary', 'lg')}>
+              {t.home.checkStart}
+            </a>
+            <a href="#/journey" className={buttonClass('secondary', 'lg')}>
               {t.home.hotelStart}
             </a>
-            <a href="#/space" className={buttonClass('secondary', 'lg')}>
+            <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
               {t.home.hotelDirect}
             </a>
             <a href="#/projects" className="text-body font-medium text-accent-ink underline underline-offset-2">

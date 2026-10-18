@@ -173,8 +173,9 @@ export function CloudSave({ auth }: { auth: AuthState }) {
   );
 }
 
-function BillItem({ bill, places, current, onChanged, onOpen }: { bill: BillRow; places: PlaceRow[]; current: boolean; onChanged: () => void; onOpen: () => void }) {
-  const b = useT().account.bills;
+function BillItem({ bill, places, current, onChanged, onOpen, selected, onSelect }: { bill: BillRow; places: PlaceRow[]; current: boolean; onChanged: () => void; onOpen: () => void; selected: boolean; onSelect: (on: boolean) => void }) {
+  const t = useT();
+  const b = t.account.bills;
   const locale = useUi((s) => s.locale);
   const account = useAccount();
   const [editing, setEditing] = useState(false);
@@ -190,6 +191,10 @@ function BillItem({ bill, places, current, onChanged, onOpen }: { bill: BillRow;
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-2.5 last:border-0">
+      <label className="flex items-center gap-1.5 text-small text-muted">
+        <input type="checkbox" className="h-5 w-5 accent-[var(--color-accent)]" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
+        <span className="sr-only sm:not-sr-only">{t.compare.select}</span>
+      </label>
       <div className="min-w-0 flex-1 basis-48">
         {editing ? (
           <input
@@ -270,6 +275,8 @@ export function BillsSection({ auth }: { auth: AuthState }) {
   const [error, setError] = useState<string | null>(null);
   const [newPlace, setNewPlace] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
+  // Two properties picked for comparison, in the order they were picked.
+  const [picked, setPicked] = useState<string[]>([]);
 
   const member = gate == null;
   const refresh = useCallback(() => {
@@ -337,6 +344,9 @@ export function BillsSection({ auth }: { auth: AuthState }) {
           <a href="#/space" className={buttonClass('secondary', 'md')}>
             {b.toSpace}
           </a>
+          <Button variant="primary" disabled={picked.length !== 2} onClick={() => window.location.assign(`#/compare/${picked[0]}/${picked[1]}`)}>
+            {t.compare.compareButton(picked.length)}
+          </Button>
           <Button
             onClick={() => {
               useSurvey.getState().reset();
@@ -441,7 +451,16 @@ export function BillsSection({ auth }: { auth: AuthState }) {
                 ) : (
                   <ul>
                     {items.map((bill) => (
-                      <BillItem key={bill.id} bill={bill} places={places} current={account.current?.id === bill.id} onChanged={refresh} onOpen={guard(() => open(bill), b.openFailed)} />
+                      <BillItem
+                        key={bill.id}
+                        bill={bill}
+                        places={places}
+                        current={account.current?.id === bill.id}
+                        onChanged={refresh}
+                        onOpen={guard(() => open(bill), b.openFailed)}
+                        selected={picked.includes(bill.id)}
+                        onSelect={(on) => setPicked((p) => (on ? [...p.filter((x) => x !== bill.id), bill.id].slice(-2) : p.filter((x) => x !== bill.id)))}
+                      />
                     ))}
                   </ul>
                 )}

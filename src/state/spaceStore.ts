@@ -1,3 +1,4 @@
+import { OWNERS, type CheckAnswer, type CheckState, type Owner } from '../engine';
 import { onOwnerChange, ownedKey } from './owner';
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
@@ -103,7 +104,7 @@ function answerCode(questionId: string, saved: unknown): AnswerCode {
 export const MAX_ROOMS = 99;
 
 /** What the last undoable action was, so the screen can say what "undo" will bring back. */
-export type UndoKind = 'room_removed' | 'finish_removed' | 'source_removed' | 'point_removed' | 'rooms_duplicated' | 'project_reset' | 'backup_restored' | 'finishes_imported';
+export type UndoKind = 'template_started' | 'room_removed' | 'finish_removed' | 'source_removed' | 'point_removed' | 'rooms_duplicated' | 'project_reset' | 'backup_restored' | 'finishes_imported';
 
 /**
  * A project is several rooms and one finish schedule.
@@ -125,6 +126,10 @@ export interface ProjectExtras {
    * a number with no source is exactly what this bill refuses to carry.
    */
   prices: Record<string, ManualPrice>;
+  /** What the property is called — the address or the name the chain uses for the site. */
+  propertyName: string;
+  /** What was found on the walk-through, by check id. */
+  siteChecks: Record<string, CheckState>;
 }
 
 export interface ManualPrice {
@@ -174,7 +179,7 @@ function blank(): Survey {
 
 function blankProject(): Survey & ProjectExtras {
   const room = blank();
-  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {} };
+  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {}, propertyName: '', siteChecks: {} };
 }
 
 /** A saved room read back into today's shape, whatever version wrote it. */
@@ -213,8 +218,19 @@ function revivePrices(saved: unknown): Record<string, ManualPrice> {
   return out;
 }
 
+/** Saved walk-through answers read back. Anything that is not an answer this app gives is dropped. */
+function reviveChecks(saved: unknown): Record<string, CheckState> {
+  const out: Record<string, CheckState> = {};
+  if (!saved || typeof saved !== 'object') return out;
+  for (const [id, c] of Object.entries(saved as Record<string, Partial<CheckState>>)) {
+    if (!c || !['yes', 'no', 'unknown'].includes(c.answer as string)) continue;
+    out[id] = { answer: c.answer as CheckAnswer, note: typeof c.note === 'string' ? c.note : '', ...(OWNERS.includes(c.owner as Owner) ? { owner: c.owner as Owner } : {}) };
+  }
+  return out;
+}
+
 /** A whole saved project read back, or null when the text is not one. */
-function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
+export function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
   if (!parsed || typeof parsed !== 'object') return null;
   const saved = parsed as Partial<Survey & ProjectExtras>;
   if (!saved.space || typeof saved.space !== 'object' || !Array.isArray(saved.space.footprintMm)) return null;
@@ -229,6 +245,8 @@ function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null {
     finishes: Array.isArray(saved.finishes) ? saved.finishes : [],
     describeText: typeof saved.describeText === 'string' ? saved.describeText : '',
     prices: revivePrices(saved.prices),
+    propertyName: typeof saved.propertyName === 'string' ? saved.propertyName : '',
+    siteChecks: reviveChecks(saved.siteChecks),
   };
 }
 
@@ -292,6 +310,14 @@ export interface SurveyState extends Survey, ProjectExtras {
   setEquipmentCount: (id: string, count: number) => void;
   /** How many identical rooms the open room stands for. */
   setRoomCount: (count: number) => void;
+  setPropertyName: (name: string) => void;
+  /** Records what was found for one walk-through check. */
+  setCheck: (id: string, patch: Partial<CheckState>) => void;
+  /**
+   * Starts a new property from a branch template: one room of the template's kind, holding its
+   * equipment, and nothing else carried over from whatever was open before.
+   */
+  startFromTemplate: (template: { sector: Sector | 'all'; equipmentIds: string[]; roomName: string }, propertyName: string) => void;
   /** A price for one line of the bill, with its source — or null to take the price off. */
   setPrice: (lineId: string, price: { unitPriceIls: number; source: string } | null) => void;
   /** The last thing that was refused, shown until dismissed. Not saved. */
@@ -348,8 +374,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
     const updatedAt = Date.now();
     set({ updatedAt });
-    const { others, order, finishes, describeText, prices } = get();
-    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices };
+    const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
+    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices, propertyName, siteChecks };
     try {
       localStorage.setItem(storageKey(), JSON.stringify(next));
       if (get().saveFailed) set({ saveFailed: false });
@@ -362,8 +388,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
   /** The project as it stands, taken before an action that destroys something, so it can be put back. */
   const remember = (kind: UndoKind) => {
-    const { others, order, finishes, describeText, prices } = get();
-    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText, prices }) } });
+    const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
+    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks }) } });
   };
 
   const patchSpace = (patch: Partial<Space>) => {
@@ -388,8 +414,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
     dismissUndo: () => set({ undoable: null }),
 
     exportProject: () => {
-      const { others, order, finishes, describeText, prices } = get();
-      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText, prices }, null, 2);
+      const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
+      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks }, null, 2);
     },
 
     restoreProject: (text) => {
@@ -460,6 +486,27 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
     removeEquipment: (id) => {
       set({ equipmentIds: get().equipmentIds.filter((x) => x !== id) });
+      persist();
+    },
+
+    setPropertyName: (propertyName) => {
+      set({ propertyName });
+      persist();
+    },
+
+    setCheck: (id, patch) => {
+      const was = get().siteChecks[id] ?? { answer: 'unknown' as CheckAnswer, note: '' };
+      set({ siteChecks: { ...get().siteChecks, [id]: { ...was, ...patch } } });
+      persist();
+    },
+
+    startFromTemplate: (template, propertyName) => {
+      // Offer to take it back only when something was there to lose.
+      const st = get();
+      if (st.equipmentIds.length || st.others.length || st.finishes.length || Object.keys(st.siteChecks).length) remember('template_started');
+      const fresh = blankProject();
+      fresh.space = { ...fresh.space, nameHe: template.roomName, nameEn: template.roomName };
+      set({ ...fresh, sector: template.sector, equipmentIds: [...template.equipmentIds], propertyName, refusal: null });
       persist();
     },
 

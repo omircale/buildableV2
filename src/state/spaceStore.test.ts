@@ -701,3 +701,48 @@ describe('equipment the catalogue does not know', () => {
     expect(again.getState().equipmentIds).toEqual(['workstation']);
   });
 });
+
+describe('a property started from a branch template', () => {
+  it('opens one room holding the template’s equipment and kind of place, and nothing from before', () => {
+    useSurvey.getState().setName('ישן');
+    useSurvey.getState().addRoom();
+    useSurvey.getState().setPrice('x', { unitPriceIls: 1, source: 'q' });
+    useSurvey.getState().startFromTemplate({ sector: 'restaurant', equipmentIds: ['range_gas', 'extraction_hood'], roomName: 'מטבח' }, 'דיזנגוף 100');
+    const s = useSurvey.getState();
+    expect(projectRooms(s as never)).toHaveLength(1);
+    expect(s.equipmentIds).toEqual(['range_gas', 'extraction_hood']);
+    expect(s.sector).toBe('restaurant');
+    expect(s.space.nameHe).toBe('מטבח');
+    expect(s.propertyName).toBe('דיזנגוף 100');
+    expect(s.prices).toEqual({});
+    expect(s.siteChecks).toEqual({});
+  });
+
+  it('can be undone', () => {
+    useSurvey.getState().setName('ישן');
+    useSurvey.getState().toggleEquipment('workstation');
+    useSurvey.getState().startFromTemplate({ sector: 'office', equipmentIds: [], roomName: 'משרד' }, '');
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().space.nameHe).toBe('ישן');
+  });
+});
+
+describe('what was found on the walk-through', () => {
+  it('is kept with the project, survives a refresh, and travels in a backup', async () => {
+    useSurvey.getState().setCheck('gas_supply', { answer: 'no' });
+    useSurvey.getState().setCheck('gas_supply', { note: 'אין צנרת' });
+    useSurvey.getState().setCheck('electrical_supply', { answer: 'unknown', owner: 'consultant' });
+    expect(useSurvey.getState().siteChecks.gas_supply).toEqual({ answer: 'no', note: 'אין צנרת' });
+    vi.resetModules();
+    const again = (await import('./spaceStore')).useSurvey;
+    expect(again.getState().siteChecks.electrical_supply).toEqual({ answer: 'unknown', note: '', owner: 'consultant' });
+    expect(JSON.parse(again.getState().exportProject()).siteChecks.gas_supply.note).toBe('אין צנרת');
+  });
+
+  it('a backup cannot smuggle in an answer or an owner the app does not give', () => {
+    const backup = JSON.parse(useSurvey.getState().exportProject());
+    backup.siteChecks = { a: { answer: 'maybe', note: '' }, b: { answer: 'yes', note: 'x', owner: 'mayor' }, c: { answer: 'no', note: 1 } };
+    useSurvey.getState().restoreProject(JSON.stringify(backup));
+    expect(useSurvey.getState().siteChecks).toEqual({ b: { answer: 'yes', note: 'x' }, c: { answer: 'no', note: '' } });
+  });
+});
