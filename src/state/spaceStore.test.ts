@@ -746,3 +746,40 @@ describe('what was found on the walk-through', () => {
     expect(useSurvey.getState().siteChecks).toEqual({ b: { answer: 'yes', note: 'x' }, c: { answer: 'no', note: '' } });
   });
 });
+
+describe('rooms from a surveyor’s drawing', () => {
+  const L = [{ x: 0, y: 0 }, { x: 8000, y: 0 }, { x: 8000, y: 6000 }, { x: 3000, y: 6000 }, { x: 3000, y: 4000 }, { x: 0, y: 4000 }];
+  const R = [{ x: 0, y: 0 }, { x: 3000, y: 0 }, { x: 3000, y: 2500 }, { x: 0, y: 2500 }];
+
+  it('replace the property’s rooms, and the template’s equipment goes into the room chosen for it', () => {
+    useSurvey.getState().setSector('restaurant');
+    useSurvey.getState().toggleEquipment('range_gas');
+    useSurvey.getState().setPrice('room_1:x', { unitPriceIls: 1, source: 'q' });
+    useSurvey.getState().importSurvey([{ name: 'מחסן', footprintMm: R }, { name: 'מטבח', footprintMm: L }], { equipmentRoom: 1, fileName: 'survey.dxf' });
+    const rooms = projectRooms(useSurvey.getState() as never);
+    expect(rooms.map((r) => r.space.nameHe)).toEqual(['מחסן', 'מטבח']);
+    expect(rooms[1].equipmentIds).toEqual(['range_gas']);
+    expect(rooms[0].equipmentIds).toEqual([]);
+    expect(rooms.every((r) => r.surveyFile === 'survey.dxf' && r.sector === 'restaurant')).toBe(true);
+    expect(useSurvey.getState().prices).toEqual({});
+  });
+
+  it('a surveyed room is measured: no size question, and its true area', async () => {
+    useSurvey.getState().importSurvey([{ name: 'מטבח', footprintMm: L }], { equipmentRoom: 0, fileName: 'survey.dxf' });
+    const { refinementQuestions } = await import('../ui/survey/questions');
+    const st = useSurvey.getState();
+    expect(refinementQuestions(st).map((q) => q.id)).not.toContain('size');
+    expect(floorAreaM2(st.space)).toBeCloseTo(42, 6);
+  });
+
+  it('can be undone, and the outline can be given up for typed dimensions', () => {
+    useSurvey.getState().setName('לפני');
+    useSurvey.getState().importSurvey([{ name: 'מטבח', footprintMm: L }], { equipmentRoom: 0, fileName: 'survey.dxf' });
+    useSurvey.getState().dropSurveyOutline();
+    expect(useSurvey.getState().surveyFile).toBeNull();
+    expect(useSurvey.getState().space.footprintMm).toEqual([]);
+    // Undo takes back the import itself, the step that replaced the rooms.
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().space.nameHe).toBe('לפני');
+  });
+});

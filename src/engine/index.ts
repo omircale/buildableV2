@@ -208,3 +208,5 @@ export { OWNERS, SITE_CHECKS, branchNeed, evaluateChecks, propertySummary } from
 export type { BranchNeed, CheckAnswer, CheckState, CheckStatus, EvaluatedCheck, Owner, PropertySummary, SiteCheck } from './site/checks';
 export { landlordRequirements, openQuestions } from './site/documents';
 export type { DocumentOptions } from './site/documents';
+export { MIN_ROOM_M2, MM_PER, cleanText, decodeDxf, dxfEncoding, layerSummary, likelyUnit, parseDxf, roomsFromDrawing } from './survey/dxf';
+export type { DxfDrawing, DxfPolyline, DxfText, DxfUnit, FoundRoom, LayerSummary } from './survey/dxf';

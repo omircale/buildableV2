@@ -5,6 +5,7 @@ import { SECTORS } from '../../engine';
 import { Button, Chip } from '../common';
 import { IconCheck, IconX } from '../icons';
 import { NullableCm } from '../survey/SurveyEditor';
+import { SurveyorImport } from '../survey/SurveyorImport';
 
 /**
  * What a scan will feel like, drawn rather than performed.
@@ -108,6 +109,8 @@ export function ScanStage({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-8">
       {/* What a person can do today comes first; the scan that will one day do it for them comes after. */}
+      <SurveyorImport onImported={onDone} />
+
       <div className="space-y-4">
           <div className="space-y-3">
             <h3 className="text-body font-semibold">{s.ownTitle}</h3>

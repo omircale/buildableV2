@@ -92,10 +92,22 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
           <input className={inputClass} value={he ? survey.space.nameHe : survey.space.nameEn} onChange={(e) => survey.setName(e.target.value)} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <NullableCm label={t.survey.width} value={survey.widthMm} onChange={(v) => survey.setRectangle(v, survey.depthMm)} />
-          <NullableCm label={t.survey.depth} value={survey.depthMm} onChange={(v) => survey.setRectangle(survey.widthMm, v)} />
-        </div>
+        {survey.surveyFile ? (
+          // The surveyor's outline is the measurement. Typing a width over it would quietly turn an
+          // L-shaped room into a rectangle, so changing it is a deliberate step of its own.
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-sunken px-3 py-2 text-small">
+            <span>{t.surveyor.fromFile(survey.surveyFile)}</span>
+            <span className="text-muted">{t.surveyor.outlineFacts(survey.space.footprintMm.length, (floorAreaM2(survey.space) ?? 0).toLocaleString(he ? 'he-IL' : 'en-GB', { maximumFractionDigits: 1 }))}</span>
+            <button type="button" className="ms-auto text-accent-ink underline underline-offset-2" onClick={survey.dropSurveyOutline}>
+              {t.surveyor.dropOutline}
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <NullableCm label={t.survey.width} value={survey.widthMm} onChange={(v) => survey.setRectangle(v, survey.depthMm)} />
+            <NullableCm label={t.survey.depth} value={survey.depthMm} onChange={(v) => survey.setRectangle(survey.widthMm, v)} />
+          </div>
+        )}
         <NullableCm label={t.survey.height} value={survey.space.heightMm} onChange={survey.setHeight} />
 
         <div className="grid gap-3 sm:grid-cols-2">

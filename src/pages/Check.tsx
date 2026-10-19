@@ -10,6 +10,7 @@ import { AppHeader } from '../ui/AppHeader';
 import { Button, buttonClass, downloadText, inputClass } from '../ui/common';
 import { IconCheck } from '../ui/icons';
 import { NullableCm } from '../ui/survey/SurveyEditor';
+import { SurveyorImport } from '../ui/survey/SurveyorImport';
 import { siteQuestions, questionText } from '../ui/survey/siteQuestions';
 import { UndoToast } from '../ui/survey/UndoToast';
 import { useRoomBill } from '../ui/survey/useRoomBill';
@@ -115,7 +116,9 @@ function StartStep({ onStarted }: { onStarted: () => void }) {
         </ul>
       </section>
 
-      {hasWork && (
+      {hasWork && <SurveyorImport />}
+
+      {hasWork && !survey.surveyFile && (
         <div className="max-w-xl">
           <h3 className="text-body font-semibold">{t.survey.roomSection}</h3>
           <div className="mt-2 grid grid-cols-3 gap-3">

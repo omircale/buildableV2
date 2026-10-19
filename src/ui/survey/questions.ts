@@ -33,7 +33,8 @@ export function refinementQuestions({ space, sources, equipmentIds, widthMm, dep
   const open: Question[] = [];
   const unanswered = (id: string) => answers[id] == null;
 
-  if ((widthMm == null || depthMm == null) && unanswered('size')) open.push({ id: 'size', type: 'size' });
+  // A room whose outline came from a drawing is measured, though it has no single width and depth.
+  if (space.footprintMm.length < 3 && (widthMm == null || depthMm == null) && unanswered('size')) open.push({ id: 'size', type: 'size' });
   if (space.heightMm == null && unanswered('height')) open.push({ id: 'height', type: 'height' });
   // Asked once, only when there are walls to ask about. "All walls are built" is an answer too.
   if (space.footprintMm.length >= 3 && unanswered('open_sides')) open.push({ id: 'open_sides', type: 'open_sides' });

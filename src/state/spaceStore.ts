@@ -72,6 +72,11 @@ export interface Survey {
    * in step by hand. A room that differs in anything is a separate room.
    */
   count: number;
+  /**
+   * The surveyor's file the outline was read from, when it was. Such a room is measured — its outline
+   * is the surveyor's, corner for corner — even though it has no single width and depth to type in.
+   */
+  surveyFile: string | null;
   updatedAt: number | null;
 }
 
@@ -104,7 +109,7 @@ function answerCode(questionId: string, saved: unknown): AnswerCode {
 export const MAX_ROOMS = 99;
 
 /** What the last undoable action was, so the screen can say what "undo" will bring back. */
-export type UndoKind = 'template_started' | 'room_removed' | 'finish_removed' | 'source_removed' | 'point_removed' | 'rooms_duplicated' | 'project_reset' | 'backup_restored' | 'finishes_imported';
+export type UndoKind = 'survey_imported' | 'template_started' | 'room_removed' | 'finish_removed' | 'source_removed' | 'point_removed' | 'rooms_duplicated' | 'project_reset' | 'backup_restored' | 'finishes_imported';
 
 /**
  * A project is several rooms and one finish schedule.
@@ -173,6 +178,7 @@ function blank(): Survey {
     answers: {},
     piece: null,
     count: 1,
+    surveyFile: null,
     updatedAt: null,
   };
 }
@@ -201,6 +207,7 @@ function reviveRoom(saved: Partial<Survey>): Survey {
     // An older save only recorded *that* a piece was included, not which. It cannot be reconstructed,
     // so the room comes back without one rather than with whatever the editor happens to hold.
     piece: saved.piece ?? null,
+    surveyFile: typeof saved.surveyFile === 'string' ? saved.surveyFile : null,
     count: Number.isInteger(saved.count) && (saved.count as number) >= 1 ? (saved.count as number) : 1,
     updatedAt: saved.updatedAt ?? null,
   };
@@ -252,8 +259,8 @@ export function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null 
 
 /** The per-room fields of the store, taken as a snapshot that can be parked in `others`. */
 function snapshot(s: Survey): Survey {
-  const { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, updatedAt } = s;
-  return { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, updatedAt };
+  const { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, surveyFile, updatedAt } = s;
+  return { space, widthMm, depthMm, sample, buildingId, levelId, sector, equipmentIds, sources, answers, piece, count, surveyFile, updatedAt };
 }
 
 /** Every room of the project, the open one included, in bill order. */
@@ -311,6 +318,13 @@ export interface SurveyState extends Survey, ProjectExtras {
   /** How many identical rooms the open room stands for. */
   setRoomCount: (count: number) => void;
   setPropertyName: (name: string) => void;
+  /**
+   * Replaces the property's rooms with the outlines read from a surveyor's file. The equipment of the
+   * open room — usually a branch template — goes into the room chosen for it.
+   */
+  importSurvey: (rooms: { name: string; footprintMm: { x: number; y: number }[] }[], options: { equipmentRoom: number; fileName: string }) => void;
+  /** Puts the open room back to typed-in dimensions, leaving the surveyor's outline. */
+  dropSurveyOutline: () => void;
   /** Records what was found for one walk-through check. */
   setCheck: (id: string, patch: Partial<CheckState>) => void;
   /**
@@ -487,6 +501,32 @@ export const useSurvey = create<SurveyState>((set, get) => {
     removeEquipment: (id) => {
       set({ equipmentIds: get().equipmentIds.filter((x) => x !== id) });
       persist();
+    },
+
+    importSurvey: (rooms, { equipmentRoom, fileName }) => {
+      if (!rooms.length) return;
+      remember('survey_imported');
+      const st = get();
+      const made: Survey[] = rooms.slice(0, MAX_ROOMS).map((r, i) => {
+        const room = blank();
+        room.space = { ...room.space, id: `room_${i + 1}`, nameHe: r.name, nameEn: r.name, footprintMm: r.footprintMm, heightMm: null };
+        room.sector = st.sector;
+        room.buildingId = st.buildingId;
+        room.levelId = st.levelId;
+        room.surveyFile = fileName;
+        if (i === equipmentRoom) room.equipmentIds = [...st.equipmentIds];
+        return room;
+      });
+      const [open, ...others] = made;
+      // Line ids and room ids start again, so prices and finish areas that named the old rooms would
+      // land on the wrong ones. The finishes are kept; the rooms they are laid in are chosen again.
+      set({ ...open, others, order: made.map((m) => m.space.id), prices: {}, finishes: st.finishes.map((f) => ({ ...f, areas: [] })) });
+      persist();
+    },
+
+    dropSurveyOutline: () => {
+      set({ surveyFile: null, widthMm: null, depthMm: null });
+      patchSpace({ footprintMm: [], openEdges: [] });
     },
 
     setPropertyName: (propertyName) => {

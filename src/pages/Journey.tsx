@@ -70,7 +70,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
   // What the model already holds, said on the steps themselves — so a person coming back sees where they stopped.
   // A question that was only put off is still open: the step is done when the site list is empty.
   const openQuestions = siteQuestions(survey).length;
-  const sized = survey.widthMm != null && survey.depthMm != null;
+  const sized = survey.space.footprintMm.length >= 3;
   const done: Partial<Record<Stage, boolean>> = {
     scan: sized,
     describe: survey.equipmentIds.length > 0,
