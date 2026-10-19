@@ -145,7 +145,7 @@ export function JourneyPage({ auth, stage }: { auth: AuthState; stage: Stage }) 
                 <CloudSave auth={auth} />
                 <ProjectBackup />
                 <div className="rounded-2xl border border-line">
-                  <SurveyEditor bill={bill} />
+                  <SurveyEditor />
                 </div>
                 <FinishSchedule bill={bill} />
               </div>

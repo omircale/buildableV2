@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import { finishLines, linesFromDesign, mepLines, runDesign, timesRooms, withPrices, type BoqLine, type DesignResult, type LineLocation, type ServiceKind } from '../../engine';
-import { useT } from '../../i18n';
-import { projectLabel, useDesign } from '../../state/designStore';
+import { DEFAULT_CONFIG, finishLines, linesFromDesign, mepLines, runDesign, timesRooms, withPrices, type BoqLine, type DesignResult, type LineLocation, type ServiceKind } from '../../engine';
 import { projectRooms, useSurvey, type Survey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 
@@ -19,15 +17,8 @@ export interface RoomBill {
   rooms: Survey[];
   /** What a room is called by the people who use it, in the current language. */
   roomName: (location: LineLocation) => string;
-  /** The piece open in the design editor right now — what "put in the room" would put there. */
-  design: DesignResult;
-  designName: string;
   /** The piece that was put in a room, as it was when it was put there. Null when the room has none. */
   pieceOf: (spaceId: string) => { name: string; result: DesignResult } | null;
-  /** True when the open room holds a piece and the editor has since moved on from it. */
-  pieceStale: boolean;
-  /** Blocking failures on the open room's piece. A bill with a piece that does not stand up must say so. */
-  designBlockedBy: { id: string; title: string; explanation: string }[];
 }
 
 /**
@@ -40,21 +31,16 @@ export interface RoomBill {
  */
 export function useRoomBill(): RoomBill {
   const survey = useSurvey();
-  const params = useDesign((s) => s.params);
-  const config = useDesign((s) => s.config);
-  const t = useT();
-  const designName = projectLabel(useDesign((s) => s.projectName), t.projects.newProject);
   const locale = useUi((s) => s.locale);
   const he = locale === 'he';
 
-  const design = useMemo(() => runDesign(params, config, locale), [params, config, locale]);
 
   // A room that did not change gives the same lines. Typing in one room of ninety-nine used to rebuild
   // all ninety-nine on every keystroke; the rooms that are not open keep their identity between
   // renders, so their lines are remembered against it. Language and engine settings change every line,
   // so a change in either starts the memory afresh.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the memory is deliberately reset by these
-  const memory = useMemo(() => new WeakMap<Survey, { piece: BoqLine[]; services: BoqLine[] }>(), [locale, config]);
+  const memory = useMemo(() => new WeakMap<Survey, { piece: BoqLine[]; services: BoqLine[] }>(), [locale]);
 
   return useMemo(() => {
     const rooms = projectRooms(survey);
@@ -77,7 +63,7 @@ export function useRoomBill(): RoomBill {
       const piece = byId.get(spaceId)?.piece;
       if (!piece) return null;
       const key = JSON.stringify(piece.params);
-      if (!results.has(key)) results.set(key, runDesign(piece.params, config, locale));
+      if (!results.has(key)) results.set(key, runDesign(piece.params, DEFAULT_CONFIG, locale));
       return { name: piece.name, result: results.get(key)! };
     };
 
@@ -103,7 +89,6 @@ export function useRoomBill(): RoomBill {
       lines.push(...timesRooms([...kept.piece, ...finishes.filter((l) => l.location.spaceId === id), ...kept.services], room.count));
     }
 
-    const open = pieceOf(survey.space.id);
     return {
       // Prices a person entered ride on the finished lines, each with its source.
       lines: withPrices(lines, survey.prices),
@@ -113,11 +98,7 @@ export function useRoomBill(): RoomBill {
         const n = byId.get(location.spaceId)?.count ?? 1;
         return (he ? nameOf(location.spaceId).he : nameOf(location.spaceId).en) + (n > 1 ? ` ×${n}` : '');
       },
-      design,
-      designName,
       pieceOf,
-      pieceStale: survey.piece != null && JSON.stringify(survey.piece.params) !== JSON.stringify(params),
-      designBlockedBy: open ? linesFromDesign({ design: open.result, location: locationOf(survey.space.id) }).blockedBy : [],
     };
-  }, [survey, design, designName, he, params, config, locale, memory]);
+  }, [survey, he, locale, memory]);
 }

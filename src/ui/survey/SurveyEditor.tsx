@@ -7,7 +7,6 @@ import { useUi } from '../../state/uiStore';
 import { Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
 import { IconMinus, IconPlus, IconX } from '../icons';
 import { SERVICE_KINDS, serviceName } from './services';
-import type { RoomBill } from './useRoomBill';
 
 /** An input that is empty when the value is unknown, because unknown is a real state here. */
 export function NullableCm({ value, onChange, label, hint }: { value: number | null; onChange: (v: number | null) => void; label: string; hint?: string }) {
@@ -63,7 +62,7 @@ export function SampleBanner({ onReplace }: { onReplace?: () => void }) {
   );
 }
 
-export function SurveyEditor({ bill }: { bill: RoomBill }) {
+export function SurveyEditor() {
   const t = useT();
   const locale = useUi((s) => s.locale);
   const he = locale === 'he';
@@ -202,40 +201,16 @@ export function SurveyEditor({ bill }: { bill: RoomBill }) {
         </div>
       </Section>
 
-      {/* Furniture is a separate tool. The section shows only for a room that already holds a piece, so it can be seen and taken out. */}
+      {/* A piece put in a room by an earlier version, when the product still designed furniture. It is
+          kept in the bill as it was, and can be taken out; nothing new can be put in. */}
       {survey.piece != null && (
         <Section title={t.survey.designSection}>
-          <p className="text-small text-muted">{t.survey.designHint}</p>
-          <label className="flex items-center gap-2.5 text-body">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-[var(--color-accent)]"
-              checked={survey.piece != null}
-              onChange={(e) => survey.setPiece(e.target.checked ? { name: bill.designName, params: bill.design.model.params } : null)}
-            />
-            {t.survey.includeDesign(survey.piece?.name ?? bill.designName)}
-          </label>
-          {bill.pieceStale && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-warn-soft px-3 py-2 text-small leading-snug">
-              <span>{t.survey.pieceStale}</span>
-              <button type="button" className="font-medium text-accent-ink underline underline-offset-2" onClick={() => survey.setPiece({ name: bill.designName, params: bill.design.model.params })}>
-                {t.survey.pieceUpdate(bill.designName)}
-              </button>
-            </div>
-          )}
-          {survey.piece != null && bill.designBlockedBy.length > 0 && (
-            <div className="rounded-lg border border-bad/40 bg-bad-soft px-3 py-2 text-small leading-snug">
-              <div className="font-semibold">{t.survey.designBlocked}</div>
-              <ul className="mt-1 text-muted">
-                {bill.designBlockedBy.map((b) => (
-                  <li key={b.id}>{b.title}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <a href="#/design" className="inline-flex items-center text-small font-medium text-accent underline underline-offset-2">
-            {t.survey.openEditor}
-          </a>
+          <div className="flex flex-wrap items-center gap-3 text-body">
+            <span>{survey.piece.name}</span>
+            <button type="button" className="text-small text-accent-ink underline underline-offset-2" onClick={() => survey.setPiece(null)}>
+              {t.survey.remove}
+            </button>
+          </div>
         </Section>
       )}
 

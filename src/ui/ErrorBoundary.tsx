@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { dictFor } from '../i18n';
-import { useDesign } from '../state/designStore';
+import { projectRooms, useSurvey } from '../state/spaceStore';
 import { buttonClass, downloadText } from './common';
 
 interface State {
@@ -9,7 +9,7 @@ interface State {
 
 /**
  * Last line of defence: a render crash shows a readable screen with the error text and a one-click backup of
- * every project, instead of a blank page that looks like the work is gone.
+ * the open property, instead of a blank page that looks like the work is gone.
  */
 export class ErrorBoundary extends Component<{ children: ReactNode; locale: 'he' | 'en' }, State> {
   state: State = { error: null };
@@ -26,16 +26,16 @@ export class ErrorBoundary extends Component<{ children: ReactNode; locale: 'he'
     const { error } = this.state;
     if (!error) return this.props.children;
     const t = dictFor(this.props.locale).crash;
-    const projects = useDesign.getState().projects;
+    const rooms = projectRooms(useSurvey.getState()).length;
     return (
       <div dir={dictFor(this.props.locale).dir} className="flex min-h-screen flex-col items-center justify-center gap-4 bg-paper p-8 text-center">
         <h1 className="text-2xl font-bold">{t.title}</h1>
-        <p className="max-w-xl text-control leading-relaxed text-muted">{t.text(projects.length)}</p>
+        <p className="max-w-xl text-control leading-relaxed text-muted">{t.text(rooms)}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <button
             type="button"
             className={buttonClass('primary', 'md')}
-            onClick={() => downloadText(`buildable-projects-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(useDesign.getState().exportAll(), null, 2), 'application/json;charset=utf-8')}
+            onClick={() => downloadText(`buildable-project-${new Date().toISOString().slice(0, 10)}.json`, useSurvey.getState().exportProject(), 'application/json;charset=utf-8')}
           >
             {t.backup}
           </button>
