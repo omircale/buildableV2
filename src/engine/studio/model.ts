@@ -16,7 +16,10 @@ import { CITATIONS, type CitationId } from './citations';
  * reviewed, and every screen that shows it says so.
  */
 
-export type SpaceUse = 'kitchen' | 'restroom' | 'dining' | 'storage' | 'other';
+export type SpaceUse = 'kitchen' | 'restroom' | 'bathroom' | 'dining' | 'storage' | 'other';
+
+/** A food business and a home are held to different rules: a home has no grease separator and no backflow duty of a business. */
+export type ProjectKind = 'commercial' | 'residential';
 
 export interface StudioSpace {
   id: string;
@@ -41,6 +44,7 @@ export interface StudioDesign {
   city: string;
   /** Where the sewer leaves the building, once someone has marked it. Null until then — and assumed. */
   connection: Pt | null;
+  kind: ProjectKind;
 }
 
 export type ElementKind =
@@ -48,6 +52,7 @@ export type ElementKind =
   | 'floor_drain'
   | 'wc'
   | 'basin'
+  | 'shower'
   | 'drain_run'
   | 'water_run'
   | 'grease_separator'
@@ -117,7 +122,7 @@ export function blankStudio(): StudioProject {
     name: '',
     fileName: null,
     spaces: [],
-    design: { slopePct: null, diameterMm: null, ceilingMm: null, city: '', connection: null },
+    design: { slopePct: null, diameterMm: null, ceilingMm: null, city: '', connection: null, kind: 'commercial' },
     status: {},
     acknowledged: [],
     approvals: [],
@@ -130,8 +135,9 @@ export function blankStudio(): StudioProject {
 
 const USE_TERMS: [SpaceUse, RegExp][] = [
   ['kitchen', /מטבח|kitchen/i],
-  ['restroom', /שירותים|נוחיות|wc|toilet|restroom/i],
-  ['dining', /אולם|ישיבה|סועדים|dining|seating|hall/i],
+  ['bathroom', /אמבטיה|אמבט|מקלחת|רחצה|bath|shower/i],
+  ['restroom', /שירותי|נוחיות|wc|toilet|restroom/i],
+  ['dining', /אולם|ישיבה|סועדים|סלון|dining|seating|hall|living/i],
   ['storage', /מחסן|אחסון|storage|store/i],
 ];
 
@@ -191,15 +197,14 @@ export function spacesFromDrawing(d: DxfDrawing, layer: string, unit: Exclude<Dx
 /* ---------------------------------------------------------------- the proposal */
 
 /** Which fixtures a space of each use gets. A demonstration table, not a programme of requirements. */
-export const FIXTURES: Record<SpaceUse, ElementKind[]> = {
-  kitchen: ['sink', 'sink', 'floor_drain'],
-  restroom: ['wc', 'basin'],
-  dining: [],
-  storage: [],
-  other: [],
+const FIXTURE_TABLE: Record<ProjectKind, Record<SpaceUse, ElementKind[]>> = {
+  commercial: { kitchen: ['sink', 'sink', 'floor_drain'], restroom: ['wc', 'basin'], bathroom: ['wc', 'basin', 'shower'], dining: [], storage: [], other: [] },
+  residential: { kitchen: ['sink'], restroom: ['wc', 'basin'], bathroom: ['wc', 'basin', 'shower'], dining: [], storage: [], other: [] },
 };
 
-const WATER_FIXTURES = new Set<ElementKind>(['sink', 'wc', 'basin']);
+export const fixturesFor = (use: SpaceUse, kind: ProjectKind = 'commercial'): ElementKind[] => FIXTURE_TABLE[kind][use];
+
+const WATER_FIXTURES = new Set<ElementKind>(['sink', 'wc', 'basin', 'shower']);
 const INSET = 500;
 
 interface Box {
@@ -227,8 +232,8 @@ export function runLengthM(points: Pt[]): number {
 }
 
 /** Where the sewer is taken to leave when nobody has marked it: the street side, under the wet rooms. */
-export function assumedConnection(spaces: StudioSpace[]): Pt | null {
-  const wet = spaces.filter((s) => FIXTURES[s.use].length > 0);
+export function assumedConnection(spaces: StudioSpace[], kind: ProjectKind = 'commercial'): Pt | null {
+  const wet = spaces.filter((s) => fixturesFor(s.use, kind).length > 0);
   if (!wet.length) return null;
   const all = boxOf(spaces.flatMap((s) => s.outline));
   const x = wet.reduce((sum, s) => sum + centroid(s.outline).x, 0) / wet.length;
@@ -236,17 +241,20 @@ export function assumedConnection(spaces: StudioSpace[]): Pt | null {
 }
 
 export function proposePlumbing(project: StudioProject): StudioElement[] {
-  const connection = project.design.connection ?? assumedConnection(project.spaces);
+  const kind = project.design.kind;
+  const commercial = kind === 'commercial';
+  const connection = project.design.connection ?? assumedConnection(project.spaces, kind);
   if (!connection) return [];
   const out: StudioElement[] = [
     { id: 'sewer_connection', kind: 'sewer_connection', layer: 'drainage', points: [connection], citations: [] },
   ];
   const all = boxOf(project.spaces.flatMap((s) => s.outline));
   const waterEntry = { x: Math.min(all.maxX - INSET, connection.x + 1000), y: connection.y + INSET };
-  out.push({ id: 'backflow', kind: 'backflow', layer: 'water', points: [waterEntry], citations: ['backflowInstall', 'backflowTest'] });
+  // The backflow rule that was learned binds a business; a home is not proposed one on its strength.
+  if (commercial) out.push({ id: 'backflow', kind: 'backflow', layer: 'water', points: [waterEntry], citations: ['backflowInstall', 'backflowTest'] });
 
   for (const space of project.spaces) {
-    const kinds = FIXTURES[space.use];
+    const kinds = fixturesFor(space.use, kind);
     if (!kinds.length) continue;
     const b = boxOf(space.outline);
     // Fixtures go along the side of the room that faces the connection — the shortest way out.
@@ -270,7 +278,7 @@ export function proposePlumbing(project: StudioProject): StudioElement[] {
 
     const meanX = Math.round(fixtures.reduce((s, f) => s + f.points[0].x, 0) / fixtures.length);
     const collector = { x: meanX, y: Math.round(collectorY) };
-    const grease = space.use === 'kitchen';
+    const grease = commercial && space.use === 'kitchen';
     if (grease) out.push({ id: `${space.id}_grease`, kind: 'grease_separator', layer: 'drainage', spaceId: space.id, points: [collector], citations: ['greaseTelAviv', 'greaseRestaurant', 'planMarks'] });
 
     fixtures.forEach((f, i) =>
@@ -466,6 +474,7 @@ export const KIND_LABEL: Record<ElementKind, { he: string; en: string }> = {
   floor_drain: { he: 'מחסום רצפה', en: 'floor drain' },
   wc: { he: 'אסלה', en: 'WC' },
   basin: { he: 'כיור רחצה', en: 'wash basin' },
+  shower: { he: 'מקלחת', en: 'shower' },
   drain_run: { he: 'קו שפכים', en: 'soil pipe' },
   water_run: { he: 'קו מים', en: 'water pipe' },
   grease_separator: { he: 'מפריד שומן', en: 'grease separator' },
@@ -497,7 +506,7 @@ export function studioBill(project: StudioProject, elements: StudioElement[], lo
   const add = (description: string, unit: string, qty: number, note: string) => {
     if (qty > 0) lines.push(['07', description, unit, qty, '', '', note]);
   };
-  for (const k of ['sink', 'floor_drain', 'wc', 'basin'] as const) add(he ? `נקודת ${label(k)}` : `${label(k)} point`, he ? "נק'" : 'pt', count(k), sectionNote);
+  for (const k of ['sink', 'floor_drain', 'wc', 'basin', 'shower'] as const) add(he ? `נקודת ${label(k)}` : `${label(k)} point`, he ? "נק'" : 'pt', count(k), sectionNote);
   add(
     diameter ? (he ? `${label('drain_run')} קוטר ${diameter.value} מ"מ` : `${label('drain_run')} ${diameter.value} mm`) : he ? `${label('drain_run')} — קוטר לפי תכנון` : `${label('drain_run')} — diameter by design`,
     he ? 'מ"א' : 'm',

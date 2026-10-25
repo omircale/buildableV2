@@ -4,7 +4,7 @@ import { decodeDxf, layerSummary, likelyUnit, parseDxf, type DxfDrawing, type Dx
 import type { Pt } from '../engine/geometry';
 import { CITATIONS, type CitationId } from '../engine/studio/citations';
 import {
-  FIXTURES,
+  fixturesFor,
   KIND_LABEL,
   MARK_LABEL,
   STUDIO_DRAFT,
@@ -20,6 +20,7 @@ import {
   type Layer,
   type Manual,
   type MarkCategory,
+  type ProjectKind,
   type SpaceUse,
   type StudioElement,
   type StudioIssue,
@@ -66,6 +67,7 @@ function StartStep() {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(studio.name);
   const [city, setCity] = useState(studio.design.city);
+  const [kind, setKind] = useState<ProjectKind>(studio.design.kind);
 
   const layers = useMemo(() => (drawing ? layerSummary(drawing).filter((l) => l.closed > 0) : []), [drawing]);
   const spaces = useMemo(() => (drawing && layer ? spacesFromDrawing(drawing, layer, unit) : []), [drawing, layer, unit]);
@@ -94,13 +96,15 @@ function StartStep() {
     }
   };
 
-  const loadDemo = async () => {
+  const loadDemo = async (which: ProjectKind) => {
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch(`${import.meta.env.BASE_URL}samples/restaurant-demo.dxf`);
-      read(new Uint8Array(await res.arrayBuffer()), 'restaurant-demo.dxf');
-      if (!name) setName('מסעדה — הדגמה');
+      const file = which === 'commercial' ? 'restaurant-demo.dxf' : 'apartment-demo.dxf';
+      const res = await fetch(`${import.meta.env.BASE_URL}samples/${file}`);
+      read(new Uint8Array(await res.arrayBuffer()), file);
+      setKind(which);
+      setName(which === 'commercial' ? 'מסעדה — הדגמה' : 'דירת 4 חדרים — הדגמה');
       if (!city) setCity('תל אביב-יפו');
     } catch {
       setError(s.notDxf);
@@ -114,6 +118,7 @@ function StartStep() {
     studio.loadSpaces(spaces, file);
     studio.setName(name.trim());
     studio.setCity(city.trim());
+    studio.setKind(kind);
     go('building');
   };
 
@@ -125,8 +130,11 @@ function StartStep() {
         <Button variant="primary" onClick={() => fileRef.current?.click()} disabled={busy}>
           {busy ? s.reading : s.choose}
         </Button>
-        <Button onClick={loadDemo} disabled={busy}>
+        <Button onClick={() => void loadDemo('commercial')} disabled={busy}>
           {s.demo}
+        </Button>
+        <Button onClick={() => void loadDemo('residential')} disabled={busy}>
+          {s.demoApartment}
         </Button>
         <input
           ref={fileRef}
@@ -171,6 +179,17 @@ function StartStep() {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-small font-medium">{s.kind}</span>
+              <select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value as ProjectKind)}>
+                {(['commercial', 'residential'] as const).map((k) => (
+                  <option key={k} value={k}>
+                    {s.kinds[k]}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-caption text-muted">{s.kindHint}</span>
             </label>
             <label className="block">
               <span className="mb-1 block text-small font-medium">{s.name}</span>
@@ -229,7 +248,7 @@ function BuildingStep() {
               ))}
             </select>
             <span className="text-small tabular-nums">{b.area(fmt(sp.areaM2))}</span>
-            <span className="text-small text-muted">{b.fixtures(FIXTURES[sp.use].length)}</span>
+            <span className="text-small text-muted">{b.fixtures(fixturesFor(sp.use, studio.design.kind).length)}</span>
           </li>
         ))}
       </ul>

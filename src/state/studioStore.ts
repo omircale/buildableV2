@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { blankStudio, type ElementStatus, type FieldMark, type Manual, type StudioProject, type StudioSpace } from '../engine/studio/model';
+import { blankStudio, type ElementStatus, type FieldMark, type Manual, type ProjectKind, type StudioProject, type StudioSpace } from '../engine/studio/model';
 import type { Pt } from '../engine/geometry';
 import { onOwnerChange, ownedKey } from './owner';
 
@@ -30,6 +30,7 @@ interface StudioState extends StudioProject {
   loadSpaces: (spaces: StudioSpace[], fileName: string) => void;
   setName: (name: string) => void;
   setCity: (city: string) => void;
+  setKind: (kind: ProjectKind) => void;
   setCeiling: (mm: number | null) => void;
   setManual: (key: 'slopePct' | 'diameterMm', value: Manual | null) => void;
   setConnection: (at: Pt | null) => void;
@@ -68,10 +69,11 @@ export const useStudio = create<StudioState>((set, get) => {
   return {
     ...load(),
     saveFailed: false,
-    loadSpaces: (spaces, fileName) =>
-      change({ spaces, fileName, status: {}, acknowledged: [], design: { ...get().design, connection: null } }),
+    // A new plan is a new project: every decision, value, approval and mark belonged to the old one.
+    loadSpaces: (spaces, fileName) => change({ ...blankStudio(), spaces, fileName }),
     setName: (name) => note({ name }),
     setCity: (city) => change({ design: { ...get().design, city } }),
+    setKind: (kind) => change({ design: { ...get().design, kind } }),
     setCeiling: (ceilingMm) => change({ design: { ...get().design, ceilingMm } }),
     setManual: (key, value) => change({ design: { ...get().design, [key]: value } }),
     // Moving the connection moves every run that ends there and the water entry beside it, so those go

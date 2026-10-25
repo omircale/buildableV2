@@ -83,6 +83,35 @@ describe('the proposal', () => {
   });
 });
 
+describe('a home', () => {
+  const flat = parseDxf(decodeDxf(new Uint8Array(readFileSync(new URL('../../../public/samples/apartment-demo.dxf', import.meta.url)))));
+  const home = (): StudioProject => ({ ...blankStudio(), spaces: spacesFromDrawing(flat, 'A-ROOM', 'mm'), design: { ...blankStudio().design, kind: 'residential' } });
+
+  test('the apartment’s rooms are read with their uses', () => {
+    const uses = Object.fromEntries(home().spaces.map((s) => [s.name, s.use]));
+    expect(uses['מטבח']).toBe('kitchen');
+    expect(uses['חדר רחצה']).toBe('bathroom');
+    expect(uses['שירותי אורחים']).toBe('restroom');
+    expect(uses['סלון']).toBe('dining');
+  });
+
+  test('gets no grease separator and no backflow preventer, and a shower in the bathroom', () => {
+    const els = proposePlumbing(home());
+    const kinds = (k: string) => els.filter((e) => e.kind === k).length;
+    expect(kinds('grease_separator')).toBe(0);
+    expect(kinds('backflow')).toBe(0);
+    expect(kinds('shower')).toBe(1);
+    expect(kinds('sink')).toBe(1);
+    expect(kinds('floor_drain')).toBe(0);
+  });
+
+  test('the same plan as a business would get the business rules', () => {
+    const p = home();
+    const els = proposePlumbing({ ...p, design: { ...p.design, kind: 'commercial' } });
+    expect(els.some((e) => e.kind === 'grease_separator')).toBe(true);
+  });
+});
+
 describe('what is wrong with it', () => {
   test('slope and diameter block until someone enters them with a source', () => {
     const p = project();
@@ -121,7 +150,7 @@ describe('what is wrong with it', () => {
 
 describe('approval', () => {
   const ready = (): StudioProject => {
-    const p = project({ design: { slopePct: { value: 2, source: 'מתכנן' }, diameterMm: { value: 110, source: 'מתכנן' }, ceilingMm: 3000, city: 'תל אביב-יפו', connection: { x: 10000, y: 0 } } });
+    const p = project({ design: { slopePct: { value: 2, source: 'מתכנן' }, diameterMm: { value: 110, source: 'מתכנן' }, ceilingMm: 3000, city: 'תל אביב-יפו', connection: { x: 10000, y: 0 }, kind: 'commercial' } });
     const els = proposePlumbing(p);
     return { ...p, status: Object.fromEntries(els.map((e) => [e.id, 'accepted' as const])) };
   };
