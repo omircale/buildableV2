@@ -6,9 +6,11 @@ const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.A
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const CheckPage = lazy(() => import('./pages/Check').then((m) => ({ default: m.CheckPage })));
 const ComparePage = lazy(() => import('./pages/Compare').then((m) => ({ default: m.ComparePage })));
+const StudioPage = lazy(() => import('./pages/Studio').then((m) => ({ default: m.StudioPage })));
 import { isHome } from './pages/routes';
 import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { checkStepFromRoute } from './pages/checkSteps';
+import { studioStepFromRoute } from './pages/studioSteps';
 import { HomePage } from './pages/Home';
 import { NotFoundPage } from './pages/NotFound';
 import { LoginPage } from './pages/Login';
@@ -76,6 +78,7 @@ function useGlobalCommands() {
       { id: 'lang', group: 'actions', label: t.command.actions.language, keywords: 'language שפה english עברית', run: () => setLocale(locale === 'he' ? 'en' : 'he') },
       { id: 'projects-page', group: 'steps', label: t.header.projects, keywords: 'projects פרויקטים', run: () => (window.location.hash = '#/projects') },
       { id: 'space-page', group: 'steps', label: t.survey.title, keywords: 'space boq quantities חלל כתב כמויות מלון', run: () => (window.location.hash = '#/space') },
+      { id: 'studio-page', group: 'steps', label: 'סטודיו תכנון · Design studio', keywords: 'studio design plumbing mep סטודיו תכנון אינסטלציה', run: () => (window.location.hash = '#/studio/start') },
       { id: 'journey-page', group: 'steps', label: t.journey.title, keywords: 'journey demo client vr ar scan מסע לקוח הדגמה סריקה', run: () => (window.location.hash = '#/journey') },
     ],
     [t, locale, setTheme, setLocale],
@@ -96,6 +99,8 @@ export default function App() {
     ? `${t.check.steps[checkStepFromRoute(route)]} — ${t.check.title}`
     : route.startsWith('#/compare')
       ? t.compare.title
+      : route.startsWith('#/studio')
+        ? locale === 'he' ? 'סטודיו תכנון' : 'Design studio'
       : route.startsWith('#/journey')
     ? `${t.journey.stages[journeyStage(route)].title} — ${t.journey.title}`
     : route.startsWith('#/space')
@@ -145,6 +150,7 @@ export default function App() {
   else if (route.startsWith('#/space')) page = <SpacePage auth={auth} />;
   else if (route.startsWith('#/journey')) page = <JourneyPage auth={auth} stage={journeyStage(route)} />;
   else if (route.startsWith('#/check')) page = <CheckPage auth={auth} step={checkStepFromRoute(route)} />;
+  else if (route.startsWith('#/studio')) page = <StudioPage auth={auth} step={studioStepFromRoute(route)} />;
   else if (route.startsWith('#/compare')) page = <ComparePage auth={auth} ids={route.split('/').slice(2, 4)} />;
   else if (isHome(route)) page = <HomePage auth={auth} />;
   else page = <NotFoundPage auth={auth} />;

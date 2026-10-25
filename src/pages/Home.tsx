@@ -1,5 +1,6 @@
 import type { AuthState } from '../cloud/supabase';
 import { useT } from '../i18n';
+import { useStudioT } from '../i18n/studio';
 import { projectRooms, useSurvey } from '../state/spaceStore';
 import { AppHeader } from '../ui/AppHeader';
 import { buttonClass } from '../ui/common';
@@ -13,6 +14,7 @@ import { buttonClass } from '../ui/common';
 export function HomePage({ auth }: { auth: AuthState }) {
   const t = useT();
   const h = t.home;
+  const studio = useStudioT();
   const survey = useSurvey();
   const rooms = projectRooms(survey);
   const answered = Object.keys(survey.siteChecks).length;
@@ -36,6 +38,9 @@ export function HomePage({ auth }: { auth: AuthState }) {
             </a>
             <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
               {h.hotelDirect}
+            </a>
+            <a href="#/studio/start" className="text-body font-medium text-accent-ink underline underline-offset-2">
+              {studio.homeLink}
             </a>
           </div>
           <p className="max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-small leading-relaxed">{h.draftNote}</p>
