@@ -28,13 +28,15 @@ import { useStudioT } from '../i18n/studio';
 import { useStudio } from '../state/studioStore';
 import { useUi } from '../state/uiStore';
 import { AppHeader } from '../ui/AppHeader';
-import { Button, buttonClass, inputClass } from '../ui/common';
+import { Button, buttonClass, downloadText, inputClass } from '../ui/common';
 
 /** The shared field style without its full width, for a field that sits inline. */
 const inlineInput = inputClass.replace('w-full', '');
 import { LAYER_COLOR } from '../ui/studio/layers';
 import { PlanCanvas, type Visible } from '../ui/studio/PlanCanvas';
 import { downloadWorkbook } from '../ui/xlsxFile';
+import { planDxf, planSheet } from '../engine/studio/drawing';
+import { downloadSheetPdf } from '../ui/studio/sheetPdf';
 import { STUDIO_STEPS, type StudioStep } from './studioSteps';
 
 const go = (step: StudioStep) => (window.location.hash = `#/studio/${step}`);
@@ -711,17 +713,51 @@ function OutputsStep() {
   const locale = useUi((st) => st.locale);
   const { project, elements, issues } = useDesign();
   const approval = currentApproval(project);
+  const sheet = useMemo(() => planSheet(project, elements, locale), [project, elements, locale]);
+  const preview = useMemo(() => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sheet.svg)}`, [sheet]);
+  const [making, setMaking] = useState(false);
+  const [pdfFailed, setPdfFailed] = useState(false);
   if (!project.spaces.length) return <p className="text-body text-muted">{t.building.empty}</p>;
   const accepted = elements.filter((e) => statusOf(project, e.id) === 'accepted').length;
+  const base = project.name || 'studio';
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="max-w-4xl space-y-4">
       <p className={`rounded-lg px-3 py-2 text-small ${approval ? 'bg-ok-soft' : 'bg-warn-soft'}`}>{approval ? o.approved(approval.by) : o.notApproved}</p>
       <section className="space-y-2 rounded-xl border border-line bg-panel p-4">
         <Button variant="primary" onClick={() => void downloadWorkbook(`${project.name || 'studio'}-plumbing.xlsx`, [studioBill(project, elements, locale)], locale === 'he')}>
           {o.bill}
         </Button>
         <p className="text-small text-muted">{o.billNote}</p>
+      </section>
+      <section className="space-y-3 rounded-xl border border-line bg-panel p-4">
+        <h2 className="text-body font-semibold">{o.drawing}</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => downloadText(`${base}-plumbing.dxf`, planDxf(project, elements, locale), 'application/dxf')}>{o.dxf}</Button>
+          <Button
+            disabled={making}
+            onClick={async () => {
+              setMaking(true);
+              setPdfFailed(false);
+              try {
+                await downloadSheetPdf(sheet.svg, 420, 297, `${base}-plumbing.pdf`);
+              } catch {
+                setPdfFailed(true);
+              } finally {
+                setMaking(false);
+              }
+            }}
+          >
+            {making ? o.making : o.pdf}
+          </Button>
+        </div>
+        {pdfFailed && (
+          <p role="alert" className="text-small text-bad">
+            {o.pdfFailed}
+          </p>
+        )}
+        <p className="text-small text-muted">{o.drawingNote(sheet.scale)}</p>
+        <img src={preview} alt={o.preview} className="w-full rounded-lg border border-line bg-white" />
       </section>
       <section className="space-y-2 rounded-xl border border-line bg-panel p-4">
         <h2 className="text-body font-semibold">{o.report}</h2>
