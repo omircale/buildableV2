@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { enabledProviders, supabase, type AuthState } from '../cloud/supabase';
+import { EDITION, workHome } from '../edition';
 import { useT, type Dict } from '../i18n';
 import { AppHeader } from '../ui/AppHeader';
 import { Button, Field, buttonClass, inputClass } from '../ui/common';
@@ -169,8 +170,8 @@ export function LoginPage({ auth }: { auth: AuthState }) {
         {!auth.role && !auth.loading && <p className="text-small leading-relaxed text-muted">{a.pendingBody}</p>}
         {note}
         <div className="flex flex-wrap gap-2">
-          <a href="#/projects" className={buttonClass('primary', 'md')}>
-            {a.toProjects}
+          <a href={workHome()} className={buttonClass('primary', 'md')}>
+            {EDITION === 'contractors' ? a.toWork : a.toProjects}
           </a>
           {auth.role === 'admin' && (
             <a href="#/admin" className={buttonClass('secondary', 'md')}>
@@ -193,7 +194,7 @@ export function LoginPage({ auth }: { auth: AuthState }) {
         undefined,
         () => {
           setPassword('');
-          window.location.hash = '#/projects';
+          window.location.hash = workHome();
         },
       );
     } else if (mode === 'signup') {

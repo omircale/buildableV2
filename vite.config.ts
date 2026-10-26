@@ -3,7 +3,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
+// `vite build --mode hospitality` builds Buildable for hospitality; any other mode builds it for contractors.
+export default defineConfig(({ mode }) => ({
+  define: { 'import.meta.env.VITE_EDITION': JSON.stringify(mode === 'hospitality' ? 'hospitality' : 'contractors') },
   plugins: [react(), tailwindcss()],
   resolve: {
     // model-viewer ships its own bundled three and asks for an older version than the app uses.
@@ -24,4 +26,4 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['src/test-setup.ts'],
   },
-});
+}));

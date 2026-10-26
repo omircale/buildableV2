@@ -12,6 +12,8 @@ import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { checkStepFromRoute } from './pages/checkSteps';
 import { studioStepFromRoute } from './pages/studioSteps';
 import { HomePage } from './pages/Home';
+import { HomeContractorsPage } from './pages/HomeContractors';
+import { EDITION, hasArea, routeAllowed, type Area } from './edition';
 import { NotFoundPage } from './pages/NotFound';
 import { LoginPage } from './pages/Login';
 import { setOwner } from './state/owner';
@@ -63,13 +65,16 @@ function useDocumentPreferences() {
   }, [locale, t.dir]);
 }
 
+/** The commands that open a page of one edition only. Each edition only offers its own pages. */
+const AREA_OF: Record<string, Area> = { check: 'check', 'projects-page': 'projects', 'space-page': 'space', 'studio-page': 'studio', 'journey-page': 'journey' };
+
 function useGlobalCommands() {
   const t = useT();
   const locale = useUi((s) => s.locale);
   const setTheme = useUi((s) => s.setTheme);
   const setLocale = useUi((s) => s.setLocale);
-  const commands = useMemo<Command[]>(
-    () => [
+  const commands = useMemo<Command[]>(() => {
+    const all: Command[] = [
       { id: 'home', group: 'steps', label: t.command.actions.home, keywords: 'home בית', run: () => (window.location.hash = '#/') },
       { id: 'check', group: 'steps', label: t.check.title, keywords: 'property check site נכס בדיקה סיור', run: () => (window.location.hash = '#/check/start') },
       { id: 'theme-light', group: 'actions', label: t.command.actions.themeLight, keywords: 'day light theme יום בהיר', run: () => setTheme('light') },
@@ -80,9 +85,9 @@ function useGlobalCommands() {
       { id: 'space-page', group: 'steps', label: t.survey.title, keywords: 'space boq quantities חלל כתב כמויות מלון', run: () => (window.location.hash = '#/space') },
       { id: 'studio-page', group: 'steps', label: 'סטודיו תכנון · Design studio', keywords: 'studio design plumbing mep סטודיו תכנון אינסטלציה', run: () => (window.location.hash = '#/studio/start') },
       { id: 'journey-page', group: 'steps', label: t.journey.title, keywords: 'journey demo client vr ar scan מסע לקוח הדגמה סריקה', run: () => (window.location.hash = '#/journey') },
-    ],
-    [t, locale, setTheme, setLocale],
-  );
+    ];
+    return all.filter((c) => !AREA_OF[c.id] || hasArea(AREA_OF[c.id]));
+  }, [t, locale, setTheme, setLocale]);
   useRegisterCommands('global', commands);
 }
 
@@ -95,7 +100,9 @@ export default function App() {
   useGlobalCommands();
 
   // Each page says what it is. History, tabs and a screen reader all read this.
-  const pageTitle = route.startsWith('#/check')
+  const pageTitle = !routeAllowed(route)
+    ? t.notFound.title
+    : route.startsWith('#/check')
     ? `${t.check.steps[checkStepFromRoute(route)]} — ${t.check.title}`
     : route.startsWith('#/compare')
       ? t.compare.title
@@ -112,11 +119,15 @@ export default function App() {
               : route.startsWith('#/admin')
                 ? t.header.admin
                 : isHome(route)
-                  ? t.home.hotelTitle
+                  ? EDITION === 'contractors'
+                    ? locale === 'he'
+                      ? 'תכנון מערכות מהתוכנית'
+                      : 'Services design from the plan'
+                    : t.home.hotelTitle
                   : t.notFound.title;
   useEffect(() => {
-    document.title = `${pageTitle} · Buildable`;
-  }, [pageTitle]);
+    document.title = `${pageTitle} · ${EDITION === 'hospitality' ? (locale === 'he' ? 'Buildable מלונאות' : 'Buildable Hospitality') : 'Buildable'}`;
+  }, [pageTitle, locale]);
 
   // After a move to another page the content takes the focus, so a keyboard or a screen reader starts
   // from the new page instead of from wherever the old one left it. Not on first load.
@@ -144,6 +155,8 @@ export default function App() {
   let page;
   // Someone who came from a reset e-mail chooses a new password before anything else.
   if (auth.recovery) page = <LoginPage auth={auth} />;
+  // A page that belongs to the other edition does not exist on this site.
+  else if (!routeAllowed(route)) page = <NotFoundPage auth={auth} />;
   else if (route.startsWith('#/admin')) page = <AdminPage auth={auth} />;
   else if (route.startsWith('#/login')) page = <LoginPage auth={auth} />;
   else if (route.startsWith('#/projects')) page = <ProjectsPage auth={auth} />;
@@ -152,7 +165,7 @@ export default function App() {
   else if (route.startsWith('#/check')) page = <CheckPage auth={auth} step={checkStepFromRoute(route)} />;
   else if (route.startsWith('#/studio')) page = <StudioPage auth={auth} step={studioStepFromRoute(route)} />;
   else if (route.startsWith('#/compare')) page = <ComparePage auth={auth} ids={route.split('/').slice(2, 4)} />;
-  else if (isHome(route)) page = <HomePage auth={auth} />;
+  else if (isHome(route)) page = EDITION === 'contractors' ? <HomeContractorsPage auth={auth} /> : <HomePage auth={auth} />;
   else page = <NotFoundPage auth={auth} />;
 
   return (

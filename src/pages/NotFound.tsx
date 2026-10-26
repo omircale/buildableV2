@@ -2,6 +2,7 @@ import type { AuthState } from '../cloud/supabase';
 import { useT } from '../i18n';
 import { AppHeader } from '../ui/AppHeader';
 import { buttonClass } from '../ui/common';
+import { hasArea } from '../edition';
 
 /**
  * An address that leads nowhere says so.
@@ -22,9 +23,11 @@ export function NotFoundPage({ auth }: { auth: AuthState }) {
           <a href="#/" className={buttonClass('primary')}>
             {t.notFound.home}
           </a>
-          <a href="#/journey" className={buttonClass('secondary')}>
-            {t.journey.title}
-          </a>
+          {hasArea('journey') && (
+            <a href="#/journey" className={buttonClass('secondary')}>
+              {t.journey.title}
+            </a>
+          )}
         </div>
       </main>
     </div>

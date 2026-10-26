@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { AuthState } from '../cloud/supabase';
+import { EDITION, hasArea } from '../edition';
 import { useT } from '../i18n';
+import { useStudioT } from '../i18n/studio';
 import { useResolvedTheme, useUi } from '../state/uiStore';
 import { Kbd } from './common';
 import { IconLogo, IconMoon, IconSearch, IconSun, IconUser } from './icons';
@@ -45,6 +47,7 @@ export function SearchButton({ compact }: { compact?: boolean }) {
 
 export function AppHeader({ auth, start, center, end }: { auth: AuthState; start?: ReactNode; center?: ReactNode; end?: ReactNode }) {
   const t = useT();
+  const studioT = useStudioT();
   const locale = useUi((s) => s.locale);
   const setLocale = useUi((s) => s.setLocale);
   return (
@@ -53,6 +56,7 @@ export function AppHeader({ auth, start, center, end }: { auth: AuthState; start
         <a href="#/" className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg text-accent" aria-label={t.header.home} title={t.header.home}>
           <IconLogo size={26} />
           {!start && <span className="text-xl font-bold tracking-tight text-ink">Buildable</span>}
+          {!start && EDITION === 'hospitality' && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-caption font-semibold text-accent-ink">{studioT.hospitality}</span>}
         </a>
         {start}
       </div>
@@ -60,9 +64,11 @@ export function AppHeader({ auth, start, center, end }: { auth: AuthState; start
       <div className="flex shrink-0 items-center justify-end gap-1 sm:min-w-0 sm:flex-1">
         {end}
         {/* In the editor the header also carries the stepper, so the link only shows where there is room. */}
-        <a href="#/projects" className={`${center ? 'hidden 2xl:inline-flex' : 'hidden sm:inline-flex'} h-10 items-center rounded-lg px-3 text-control whitespace-nowrap hover:bg-sunken`}>
-          {t.header.projects}
-        </a>
+        {hasArea('projects') && (
+          <a href="#/projects" className={`${center ? 'hidden 2xl:inline-flex' : 'hidden sm:inline-flex'} h-10 items-center rounded-lg px-3 text-control whitespace-nowrap hover:bg-sunken`}>
+            {t.header.projects}
+          </a>
+        )}
         <SearchButton compact={Boolean(center)} />
         <button type="button" onClick={() => setLocale(locale === 'he' ? 'en' : 'he')} aria-label={t.header.switchLanguageLabel} title={t.header.switchLanguageLabel} className={`${center ? 'hidden sm:inline-flex' : 'inline-flex'} h-10 items-center rounded-lg px-3 text-control hover:bg-sunken`}>
           {t.header.switchLanguage}

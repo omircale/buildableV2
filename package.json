@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:hospitality": "tsc -b && vite build --mode hospitality --outDir dist-hospitality",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "deploy": "npm run test && npm run build && wrangler deploy"
+    "deploy": "npm run test && npm run build && wrangler deploy",
+    "deploy:hospitality": "npm run test && npm run build:hospitality && wrangler deploy --env hospitality"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",

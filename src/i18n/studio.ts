@@ -144,6 +144,20 @@ const he = {
   },
   saveFailed: 'השמירה במכשיר נכשלה. העבודה על המסך תאבד ברענון.',
   homeLink: 'סטודיו תכנון — אב-טיפוס',
+  home: {
+    title: 'תכנון מערכות מהתוכנית — הצעה לבדיקה, עם מקור לכל מספר',
+    body: 'מעלים תוכנית DXF, ומקבלים הצעת אינסטלציה על התוכנית. בודקים, מאשרים, ומוציאים כתב כמויות ותוכניות לבעלי המקצוע. מה שאין לו מקור נשאר ריק עד שאדם ממלא אותו.',
+    start: 'פתיחת הסטודיו',
+    open: 'המשך הפרויקט הפתוח',
+    how: 'איך זה עובד',
+    steps: [
+      { title: 'מעלים תוכנית', body: 'קובץ DXF ממודד או מאדריכל. בוחרים את שכבת החדרים ומאשרים יחידות.' },
+      { title: 'המערכת מציעה', body: 'נקודות, קווי שפכים ומים, וההתקנים שהכללים דורשים, עם הכרטיס שעליו כל אחד נשען.' },
+      { title: 'בודקים ומאשרים', body: 'בעיות חוסמות, אזהרות וערכים חסרים. האישור נפתח רק כשהכל הוכרע.' },
+      { title: 'מוציאים לשטח', body: 'כתב כמויות ב-Excel, תוכנית DXF ו-PDF לבעל המקצוע, וסימון שינויים מהטלפון.' },
+    ],
+  },
+  hospitality: 'מלונאות',
   reset: 'פרויקט חדש',
   resetConfirm: 'כל הפרויקט בסטודיו יימחק מהמכשיר. להמשיך?',
 };
@@ -289,6 +303,20 @@ const en: StudioDict = {
   },
   saveFailed: 'Saving on this device failed. The work on screen will be lost on refresh.',
   homeLink: 'Design studio — prototype',
+  home: {
+    title: 'Services design from the plan — a proposal to review, with a source for every number',
+    body: 'Upload a DXF plan and get a plumbing proposal on it. Review it, approve it, and take out a bill of quantities and drawings for the trades. Whatever has no source stays empty until a person fills it in.',
+    start: 'Open the studio',
+    open: 'Continue the open project',
+    how: 'How it works',
+    steps: [
+      { title: 'Upload a plan', body: 'A DXF from the surveyor or the architect. Pick the rooms layer and confirm the units.' },
+      { title: 'The system proposes', body: 'Points, soil and water runs, and the devices the rules call for, each with the card it rests on.' },
+      { title: 'Review and approve', body: 'Blocking issues, warnings and missing values. Approval opens only when everything is decided.' },
+      { title: 'Take it to site', body: 'A bill in Excel, a DXF and PDF drawing for the trade, and change marks from a phone.' },
+    ],
+  },
+  hospitality: 'Hospitality',
   reset: 'New project',
   resetConfirm: 'The whole studio project will be deleted from this device. Continue?',
 };
