@@ -15,8 +15,10 @@ export interface BranchTemplate {
   sector: Sector | 'all';
   /** An id appears once per unit, as in a room. */
   equipmentIds: string[];
-  /** True for the one the app ships with. It is an example to replace, not the chain's real list. */
+  /** True for the ones the app ships with. They are examples to replace, not the chain's real list. */
   example?: boolean;
+  /** What the room the template fills is called. */
+  roomName?: string;
 }
 
 /**
@@ -87,9 +89,38 @@ export const useTemplates = create<TemplateState>((set, get) => {
   };
 });
 
-/** The account's templates, then the example. */
+/**
+ * An example of a typical hotel guest room and its bathroom. Set it once, then say how many identical
+ * rooms there are. The composition is invented for the example; a hotel's own standard replaces it.
+ */
+export const HOTEL_ROOM_TEMPLATE: BranchTemplate = {
+  id: 'example_hotel_room',
+  name: 'דוגמה: חדר אירוח טיפוסי',
+  sector: 'hotel',
+  example: true,
+  roomName: 'חדר אירוח',
+  equipmentIds: [
+    'wc',
+    'vanity_basin',
+    'shower',
+    'bathroom_exhaust_fan',
+    'mirror_light',
+    'hair_dryer',
+    'fan_coil',
+    'bedside_station',
+    'guest_desk',
+    'guest_tv',
+    'minibar',
+    'room_safe',
+    'key_card_switch',
+    'room_board',
+    'guest_coffee',
+  ],
+};
+
+/** The account's templates, then the examples. */
 export function allTemplates(own: BranchTemplate[]): BranchTemplate[] {
-  return [...own, EXAMPLE_TEMPLATE];
+  return [...own, EXAMPLE_TEMPLATE, HOTEL_ROOM_TEMPLATE];
 }
 
 onOwnerChange(() => useTemplates.setState({ templates: load() }));

@@ -54,15 +54,18 @@ export type EquipmentCategory =
   | 'point_of_sale'
   | 'climate'
   | 'shopfront'
-  | 'security';
+  | 'security'
+  | 'sanitary'
+  | 'guest_room'
+  | 'laundry';
 
 /**
  * The kind of place an item belongs in. An item can belong in several — a hand-wash basin is in a
  * restaurant, a shop and an office alike. This only decides what a person is offered first; nothing
  * stops a fridge being put in an office.
  */
-export type Sector = 'bar' | 'restaurant' | 'office' | 'shop';
-export const SECTORS: readonly Sector[] = ['bar', 'restaurant', 'office', 'shop'];
+export type Sector = 'bar' | 'restaurant' | 'office' | 'shop' | 'hotel';
+export const SECTORS: readonly Sector[] = ['bar', 'restaurant', 'office', 'shop', 'hotel'];
 
 export interface EquipmentItem {
   id: string;
@@ -254,7 +257,7 @@ export const EQUIPMENT: EquipmentItem[] = [
     sources: NO_SOURCE_YET,
   },
   // ---- A restaurant kitchen ----
-  bought('hand_wash_basin', 'כיור רחיצת ידיים', 'Hand-wash basin', 'sink', ['restaurant', 'bar', 'shop', 'office'], [NEED.cold, NEED.hot, NEED.drain]),
+  bought('hand_wash_basin', 'כיור רחיצת ידיים', 'Hand-wash basin', 'sink', ['restaurant', 'bar', 'shop', 'office', 'hotel'], [NEED.cold, NEED.hot, NEED.drain]),
   bought('prep_sink_double', 'כיור הכנה כפול', 'Double-bowl prep sink', 'sink', ['restaurant'], [NEED.cold, NEED.hot, NEED.drain], {
     he: 'נספר ניקוז אחד לשתי הקערות. אם האינסטלטור מפריד — לעדכן.',
     en: 'One drain is counted for the two bowls. If the plumber separates them, update it.',
@@ -288,11 +291,11 @@ export const EQUIPMENT: EquipmentItem[] = [
   }),
   bought('meeting_room_screen', 'מסך חדר ישיבות', 'Meeting-room screen', 'workplace', ['office'], [NEED.power, NEED.data]),
   bought('printer_mfp', 'מדפסת משולבת', 'Multifunction printer', 'workplace', ['office', 'shop'], [NEED.power, NEED.data]),
-  bought('network_cabinet', 'ארון תקשורת', 'Network cabinet', 'network', ['office', 'shop', 'restaurant'], [NEED.circuit], {
+  bought('network_cabinet', 'ארון תקשורת', 'Network cabinet', 'network', ['office', 'shop', 'restaurant', 'hotel'], [NEED.circuit], {
     he: 'הארון הוא המקור של נקודות התקשורת — לרשום אותו גם תחת "מאיפה זה מוזן".',
     en: 'The cabinet is where the data points are fed from — record it under "What feeds it" as well.',
   }),
-  bought('wifi_access_point', 'נקודת גישה אלחוטית', 'Wi-Fi access point', 'network', ['office', 'shop', 'restaurant'], [NEED.data], {
+  bought('wifi_access_point', 'נקודת גישה אלחוטית', 'Wi-Fi access point', 'network', ['office', 'shop', 'restaurant', 'hotel'], [NEED.data], {
     he: 'מוזנת בדרך כלל דרך כבל התקשורת. דגם שדורש שקע נפרד — להוסיף נקודת חשמל.',
     en: 'Usually powered over the data cable. For a model that needs its own socket, add an electrical point.',
   }),
@@ -303,23 +306,77 @@ export const EQUIPMENT: EquipmentItem[] = [
     he: 'יש דגמים שדורשים גם ניקוז — לבדוק מול הדגם.',
     en: 'Some models also need a drain — check against the model.',
   }),
-  bought('split_ac_indoor', 'מזגן מפוצל — יחידה פנימית', 'Split air conditioner — indoor unit', 'climate', ['office', 'shop', 'restaurant'], [NEED.drain, NEED.power], {
+  bought('split_ac_indoor', 'מזגן מפוצל — יחידה פנימית', 'Split air conditioner — indoor unit', 'climate', ['office', 'shop', 'restaurant', 'hotel'], [NEED.drain, NEED.power], {
     he: 'ניקוז מי עיבוי, והזנת חשמל למערכת — ליחידה הפנימית או החיצונית לפי הדגם. התפוקה ומיקום היחידה החיצונית לפי יועץ מיזוג.',
     en: 'Condensate drain, and power to the system — to the indoor or the outdoor unit depending on the model. Capacity and the outdoor unit’s position per the HVAC consultant.',
   }),
 
   // ---- A shop ----
-  bought('pos_terminal', 'עמדת קופה', 'Point-of-sale terminal', 'point_of_sale', ['shop', 'restaurant', 'bar'], [NEED.power, NEED.data]),
+  bought('pos_terminal', 'עמדת קופה', 'Point-of-sale terminal', 'point_of_sale', ['shop', 'restaurant', 'bar', 'hotel'], [NEED.power, NEED.data]),
   bought('display_fridge', 'מקרר תצוגה', 'Display refrigerator', 'refrigeration', ['shop', 'restaurant'], [NEED.power, NEED.heat]),
   bought('display_freezer', 'מקפיא תצוגה', 'Display freezer', 'refrigeration', ['shop'], [NEED.power, NEED.heat]),
   bought('illuminated_sign', 'שלט מואר', 'Illuminated sign', 'shopfront', ['shop', 'restaurant', 'bar'], [NEED.power]),
   bought('automatic_door', 'דלת אוטומטית', 'Automatic door', 'shopfront', ['shop', 'office'], [NEED.power]),
   bought('electric_shutter', 'תריס גלילה חשמלי', 'Electric roller shutter', 'shopfront', ['shop', 'restaurant'], [NEED.power]),
-  bought('security_camera', 'מצלמת אבטחה', 'Security camera', 'security', ['shop', 'office', 'restaurant', 'bar'], [NEED.data], {
+  bought('security_camera', 'מצלמת אבטחה', 'Security camera', 'security', ['shop', 'office', 'restaurant', 'bar', 'hotel'], [NEED.data], {
     he: 'מוזנת בדרך כלל דרך כבל התקשורת. דגם שדורש שקע נפרד — להוסיף נקודת חשמל.',
     en: 'Usually powered over the data cable. For a model that needs its own socket, add an electrical point.',
   }),
   bought('anti_theft_gate', 'שער נגד גניבות', 'Anti-theft gate', 'security', ['shop'], [NEED.power]),
+
+  // ---- A hotel: the guest room and its bathroom ----
+  // What each item needs is what it is: a WC takes cold water and a drain. How many sockets a point
+  // carries, what each is rated and how the room is fed stay with the licensed designer.
+  bought('wc', 'אסלה', 'WC', 'sanitary', ['hotel', 'office', 'shop', 'restaurant'], [NEED.cold, NEED.drain], {
+    he: 'מיכל הדחה סמוי או גלוי — לפי המפרט. הניקוז נספר כנקודה אחת.',
+    en: 'Concealed or exposed cistern — per the specification. The drain is counted as one point.',
+  }),
+  bought('vanity_basin', 'כיור רחצה', 'Vanity basin', 'sanitary', ['hotel'], [NEED.cold, NEED.hot, NEED.drain]),
+  bought('shower', 'מקלחת', 'Shower', 'sanitary', ['hotel'], [NEED.cold, NEED.hot, NEED.drain], {
+    he: 'נקודת ניקוז אחת. מחסום רצפה או תעלת ניקוז — לפי תכנון האינסטלציה.',
+    en: 'One drain point. Floor trap or linear channel — per the plumbing design.',
+  }),
+  bought('bathtub', 'אמבטיה', 'Bathtub', 'sanitary', ['hotel'], [NEED.cold, NEED.hot, NEED.drain]),
+  bought('bathroom_exhaust_fan', 'מאוורר פליטה לחדר רחצה', 'Bathroom exhaust fan', 'sanitary', ['hotel', 'office', 'shop', 'restaurant'], [NEED.duct, NEED.power], {
+    he: 'חיבור לפיר או לתעלה — לפי יועץ אוורור. במלון רבים מחוברים לפליטה מרכזית ואין להם מנוע בחדר; אז לא צריך נקודת חשמל.',
+    en: 'Connected to a shaft or duct — per the ventilation consultant. In many hotels it is on central extract with no motor in the room; then no power point is needed.',
+  }),
+  bought('mirror_light', 'מראה מוארת', 'Illuminated mirror', 'sanitary', ['hotel'], [NEED.power]),
+  bought('hair_dryer', 'מייבש שיער קבוע', 'Fixed hair dryer', 'sanitary', ['hotel'], [NEED.power]),
+  bought('fan_coil', 'יחידת מיזוג חדרית (מפוח-נחשון)', 'Room fan-coil unit', 'climate', ['hotel', 'office'], [NEED.drain, NEED.power], {
+    he: 'ניקוז מי עיבוי והזנת חשמל. חיבור צנרת המים של מערכת המיזוג והתפוקה — לפי יועץ מיזוג, ולא נספרים כאן.',
+    en: 'Condensate drain and power. The HVAC water connections and the capacity are the HVAC consultant’s, and are not counted here.',
+  }),
+  bought('bedside_station', 'עמדת מיטה (שני צדדים)', 'Bedside station (both sides)', 'guest_room', ['hotel'], [{ ...NEED.power, quantity: 2 }], {
+    he: 'נקודת חשמל בכל צד של המיטה. השקעים, ה-USB ותאורת הקריאה בכל נקודה — לפי המתכנן.',
+    en: 'A power point on each side of the bed. Sockets, USB and reading light at each — per the designer.',
+  }),
+  bought('guest_desk', 'שולחן עבודה בחדר', 'Guest-room desk', 'guest_room', ['hotel'], [NEED.power, NEED.data]),
+  bought('guest_tv', 'טלוויזיה בחדר', 'Guest-room TV', 'guest_room', ['hotel'], [NEED.power, NEED.data], {
+    he: 'נקודת תקשורת אחת — טלוויזיה במלון לרוב מוזנת ברשת. אם יש גם כבל אנטנה — להוסיף נקודה.',
+    en: 'One data point — hotel TV is usually fed over the network. If there is also an aerial cable, add a point.',
+  }),
+  bought('minibar', 'מיני-בר', 'Minibar', 'guest_room', ['hotel'], [NEED.power, NEED.heat]),
+  bought('room_safe', 'כספת חדר', 'Room safe', 'guest_room', ['hotel'], [NEED.power], {
+    he: 'דגמים על סוללות לא צריכים נקודת חשמל — לבדוק מול הדגם.',
+    en: 'Battery models need no power point — check against the model.',
+  }),
+  bought('key_card_switch', 'מתג כרטיס (חיסכון אנרגיה)', 'Key-card energy switch', 'guest_room', ['hotel'], [NEED.power], {
+    he: 'מחובר ללוח החדר או למערכת ניהול החדר — לפי חשמלאי.',
+    en: 'Wired to the room board or the room-management system — per the electrician.',
+  }),
+  bought('room_board', 'לוח חשמל חדרי', 'Guest-room distribution board', 'guest_room', ['hotel'], [NEED.circuit], {
+    he: 'הלוח הוא מקור הנקודות בחדר — לרשום אותו גם תחת "מאיפה זה מוזן". ההזנה מהלוח הקומתי לפי חשמלאי.',
+    en: 'The board is where the room’s points are fed from — record it under "What feeds it" as well. Its feed from the floor board per the electrician.',
+  }),
+  bought('guest_coffee', 'עמדת קפה בחדר', 'In-room coffee station', 'guest_room', ['hotel'], [NEED.power]),
+
+  // ---- A hotel: housekeeping ----
+  bought('washer_commercial', 'מכונת כביסה תעשייתית', 'Commercial washer', 'laundry', ['hotel'], [NEED.cold, NEED.hot, NEED.drain, NEED.circuit], MODEL_DECIDES_WATER),
+  bought('dryer_commercial', 'מייבש כביסה תעשייתי', 'Commercial dryer', 'laundry', ['hotel'], [NEED.circuit, NEED.duct], {
+    he: 'פליטת אוויר חם ולחות — לפי יועץ אוורור. דגם בגז צריך גם נקודת גז.',
+    en: 'Hot, humid exhaust — per the ventilation consultant. A gas model also needs a gas point.',
+  }),
 ];
 
 /** The items offered for one kind of place, in catalogue order. */

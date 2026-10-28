@@ -130,7 +130,10 @@ describe('the catalogue beyond the bar', () => {
   it('a hood is the only thing in the kitchen that asks for a duct', () => {
     // A cooking appliance does not pull a hood in by itself: whether one is needed is a consultant's
     // call, so the hood is its own item and the appliance's note says so.
-    const ducts = EQUIPMENT.filter((e) => e.services.some((s) => s.kind === 'ventilation' && (s.form ?? 'point') === 'point')).map((e) => e.id);
+    // A bathroom extract fan and a laundry dryer do ask for one, and are not kitchen equipment.
+    const ducts = EQUIPMENT.filter((e) => e.category !== 'sanitary' && e.category !== 'laundry')
+      .filter((e) => e.services.some((s) => s.kind === 'ventilation' && (s.form ?? 'point') === 'point'))
+      .map((e) => e.id);
     expect(ducts).toEqual(['extraction_hood']);
     expect(equipmentById('range_gas')!.noteHe).toContain('קולט אדים');
   });
@@ -144,5 +147,21 @@ describe('the catalogue beyond the bar', () => {
 
   it('an item whose water depends on the model says so instead of deciding', () => {
     for (const id of ['dishwasher_commercial', 'glasswasher', 'kitchenette_dishwasher']) expect(equipmentById(id)!.noteHe, id).toContain('לפי הדגם');
+  });
+});
+
+describe('the hotel', () => {
+  it('a guest bathroom’s fixtures ask for what they are', () => {
+    const kinds = (id: string) => equipmentById(id)!.services.map((s) => s.kind).sort();
+    expect(kinds('wc')).toEqual(['drain', 'water_cold']);
+    expect(kinds('shower')).toEqual(['drain', 'water_cold', 'water_hot']);
+    expect(kinds('vanity_basin')).toEqual(['drain', 'water_cold', 'water_hot']);
+  });
+
+  it('the bedside station is two power points, and nothing in the room claims a size or a price', () => {
+    expect(equipmentById('bedside_station')!.services).toEqual([expect.objectContaining({ kind: 'electrical', quantity: 2 })]);
+    for (const item of equipmentFor('hotel')) {
+      expect(item.priceIls, item.id).toBeNull();
+    }
   });
 });

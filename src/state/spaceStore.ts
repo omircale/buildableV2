@@ -315,6 +315,8 @@ export interface SurveyState extends Survey, ProjectExtras {
   /** Adds one of an item, or takes every one of it out if it is already there. */
   toggleEquipment: (id: string) => void;
   setEquipmentCount: (id: string, count: number) => void;
+  /** Adds a set of items to the open room, on top of what is there. */
+  addEquipment: (ids: string[]) => void;
   /** How many identical rooms the open room stands for. */
   setRoomCount: (count: number) => void;
   setPropertyName: (name: string) => void;
@@ -487,6 +489,13 @@ export const useSurvey = create<SurveyState>((set, get) => {
     toggleEquipment: (id) => {
       const have = get().equipmentIds;
       set({ equipmentIds: have.includes(id) ? have.filter((x) => x !== id) : [...have, id] });
+      persist();
+    },
+
+    addEquipment: (ids) => {
+      const next = [...get().equipmentIds, ...ids];
+      if (next.length > MAX_ITEM_COUNT) return set({ refusal: { code: 'item_count', asked: next.length, limit: MAX_ITEM_COUNT } });
+      set({ refusal: null, equipmentIds: next });
       persist();
     },
 

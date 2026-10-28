@@ -49,7 +49,7 @@ function StartStep({ onStarted }: { onStarted: () => void }) {
 
   const start = (tpl: BranchTemplate) => {
     if (hasWork && !confirm(c.startConfirm(tpl.name))) return;
-    survey.startFromTemplate({ sector: tpl.sector, equipmentIds: tpl.equipmentIds, roomName: tpl.example ? 'מטבח' : tpl.name }, name.trim());
+    survey.startFromTemplate({ sector: tpl.sector, equipmentIds: tpl.equipmentIds, roomName: tpl.roomName ?? (tpl.example ? 'מטבח' : tpl.name) }, name.trim());
     onStarted();
   };
 

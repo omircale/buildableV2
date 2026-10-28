@@ -47,3 +47,16 @@ describe('branch templates', () => {
     expect(mod.useTemplates.getState().templates[0].name).toBe('של אליס');
   });
 });
+
+describe('the hotel guest-room example', () => {
+  it('every item is in the catalogue and offered for a hotel', async () => {
+    const { HOTEL_ROOM_TEMPLATE } = await import('./templateStore');
+    const { equipmentById } = await import('../engine');
+    for (const id of HOTEL_ROOM_TEMPLATE.equipmentIds) {
+      const item = equipmentById(id);
+      expect(item, id).toBeDefined();
+      expect(item!.sectors, id).toContain('hotel');
+    }
+    expect(HOTEL_ROOM_TEMPLATE.roomName).toBe('חדר אירוח');
+  });
+});

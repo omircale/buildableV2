@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { EQUIPMENT, SECTORS, UNIT_LABEL, builtPerimeterM, danglingFeeds, floorAreaM2, mismatchedFeeds, spaceProblems, unknownEquipment, wallAreaM2, wallsOf, whatIsMissing } from '../../engine';
 import { useT } from '../../i18n';
 import { countOf, useSurvey } from '../../state/spaceStore';
+import { HOTEL_ROOM_TEMPLATE } from '../../state/templateStore';
 import { CountInput } from './CountInput';
 import { useUi } from '../../state/uiStore';
-import { Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
+import { Button, Chip, Field, FlatSections, Section, inputClass, matchesQuery } from '../common';
 import { IconMinus, IconPlus, IconX } from '../icons';
 import { SERVICE_KINDS, serviceName } from './services';
 
@@ -159,6 +160,21 @@ export function SurveyEditor() {
             </Chip>
           ))}
         </div>
+        {survey.sector === 'hotel' && (
+          <div className="space-y-1">
+            <Button
+              size="sm"
+              onClick={() => {
+                survey.addEquipment(HOTEL_ROOM_TEMPLATE.equipmentIds);
+                // A room still carrying the placeholder name takes the template's, so the bill reads "guest room ×120".
+                if (/^(חלל חדש|חלל \d+|New space|Space \d+)$/.test(survey.space.nameHe) && HOTEL_ROOM_TEMPLATE.roomName) survey.setName(HOTEL_ROOM_TEMPLATE.roomName);
+              }}
+            >
+              {t.survey.hotelRoom(HOTEL_ROOM_TEMPLATE.equipmentIds.length)}
+            </Button>
+            <p className="text-caption text-muted">{t.survey.hotelRoomHint}</p>
+          </div>
+        )}
         <input type="search" className={inputClass} placeholder={t.survey.equipmentSearch} aria-label={t.survey.equipmentSearch} value={equipmentQuery} onChange={(e) => setEquipmentQuery(e.target.value)} />
         {unknownIds.length > 0 && (
           <div role="alert" className="space-y-1.5 rounded-lg bg-bad-soft px-3 py-2 text-small">
