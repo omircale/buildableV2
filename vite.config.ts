@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1500,
   },
   test: {
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'worker/**/*.test.ts'],
     environment: 'node',
     setupFiles: ['src/test-setup.ts'],
   },
