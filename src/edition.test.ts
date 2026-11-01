@@ -12,6 +12,10 @@ describe('editions', () => {
     expect(routeAllowed('#/studio/start', 'hospitality')).toBe(false);
   });
 
+  test('the equipment screen is in both', () => {
+    for (const e of ['contractors', 'hospitality'] as const) expect(routeAllowed('#/equipment', e)).toBe(true);
+  });
+
   test('home, sign-in and admin are in both', () => {
     for (const e of ['contractors', 'hospitality'] as const) for (const r of ['#/', '', '#/login', '#/admin']) expect(routeAllowed(r, e)).toBe(true);
   });

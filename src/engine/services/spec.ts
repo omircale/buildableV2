@@ -16,12 +16,14 @@ export interface Fact<T> {
   value: T | null;
   /** Where the value was read. Null only together with a null value. */
   source: Source | null;
-  /** Anything a reader must know to use the value: what it is not, or how it was read. */
+  /** Anything a reader must know to use the value: what it is not, or how it was read. Hebrew, with English beside it. */
   note?: string;
+  noteEn?: string;
 }
 
-export const unknown = <T>(note?: string): Fact<T> => ({ value: null, source: null, note });
-export const fact = <T>(value: T, source: Source, note?: string): Fact<T> => ({ value, source, note });
+type Note = { he: string; en: string };
+export const unknown = <T>(note?: Note): Fact<T> => ({ value: null, source: null, note: note?.he, noteEn: note?.en });
+export const fact = <T>(value: T, source: Source, note?: Note): Fact<T> => ({ value, source, note: note?.he, noteEn: note?.en });
 
 export type DrainKind = 'direct' | 'indirect' | 'floor_gully';
 export type CondenserKind = 'air' | 'water' | 'remote';

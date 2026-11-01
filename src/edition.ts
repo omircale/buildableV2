@@ -12,11 +12,13 @@ export type Edition = 'contractors' | 'hospitality';
 export const EDITION: Edition = import.meta.env.VITE_EDITION === 'hospitality' ? 'hospitality' : 'contractors';
 
 /** The parts of the app, by their first route segment. */
-export type Area = 'studio' | 'check' | 'compare' | 'journey' | 'space' | 'projects';
+export type Area = 'studio' | 'check' | 'compare' | 'journey' | 'space' | 'projects' | 'equipment';
 
 const AREAS: Record<Edition, readonly Area[]> = {
-  contractors: ['studio'],
-  hospitality: ['check', 'compare', 'journey', 'space', 'projects'],
+  // What equipment asks of the building is the same arithmetic for a contractor's fit-out and a hotel's
+  // pool bar, so both have it.
+  contractors: ['studio', 'equipment'],
+  hospitality: ['check', 'compare', 'journey', 'space', 'projects', 'equipment'],
 };
 
 /** Routes every edition has: home, sign-in, admin. */

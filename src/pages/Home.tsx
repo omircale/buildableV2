@@ -1,4 +1,5 @@
 import type { AuthState } from '../cloud/api';
+import { useServicesT } from '../i18n/services';
 import { useT } from '../i18n';
 import { projectRooms, useSurvey } from '../state/spaceStore';
 import { AppHeader } from '../ui/AppHeader';
@@ -11,6 +12,7 @@ import { buttonClass } from '../ui/common';
  * open property, if there is one, is offered back so a refresh or a second visit does not start over.
  */
 export function HomePage({ auth }: { auth: AuthState }) {
+  const equipmentLink = useServicesT().homeLink;
   const t = useT();
   const h = t.home;
   const survey = useSurvey();
@@ -36,6 +38,9 @@ export function HomePage({ auth }: { auth: AuthState }) {
             </a>
             <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
               {h.hotelDirect}
+            </a>
+            <a href="#/equipment" className="text-body font-medium text-accent-ink underline underline-offset-2">
+              {equipmentLink}
             </a>
 
           </div>

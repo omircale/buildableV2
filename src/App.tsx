@@ -7,6 +7,7 @@ const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default:
 const CheckPage = lazy(() => import('./pages/Check').then((m) => ({ default: m.CheckPage })));
 const ComparePage = lazy(() => import('./pages/Compare').then((m) => ({ default: m.ComparePage })));
 const StudioPage = lazy(() => import('./pages/Studio').then((m) => ({ default: m.StudioPage })));
+const EquipmentPage = lazy(() => import('./pages/Equipment').then((m) => ({ default: m.EquipmentPage })));
 import { isHome } from './pages/routes';
 import { stageFromRoute as journeyStage } from './pages/journeyStages';
 import { checkStepFromRoute } from './pages/checkSteps';
@@ -67,7 +68,7 @@ function useDocumentPreferences() {
 }
 
 /** The commands that open a page of one edition only. Each edition only offers its own pages. */
-const AREA_OF: Record<string, Area> = { check: 'check', 'projects-page': 'projects', 'space-page': 'space', 'studio-page': 'studio', 'journey-page': 'journey' };
+const AREA_OF: Record<string, Area> = { check: 'check', 'projects-page': 'projects', 'space-page': 'space', 'studio-page': 'studio', 'journey-page': 'journey', 'equipment-page': 'equipment' };
 
 function useGlobalCommands() {
   const t = useT();
@@ -85,6 +86,7 @@ function useGlobalCommands() {
       { id: 'projects-page', group: 'steps', label: t.header.projects, keywords: 'projects פרויקטים', run: () => (window.location.hash = '#/projects') },
       { id: 'space-page', group: 'steps', label: t.survey.title, keywords: 'space boq quantities חלל כתב כמויות מלון', run: () => (window.location.hash = '#/space') },
       { id: 'studio-page', group: 'steps', label: 'סטודיו תכנון · Design studio', keywords: 'studio design plumbing mep סטודיו תכנון אינסטלציה', run: () => (window.location.hash = '#/studio/start') },
+      { id: 'equipment-page', group: 'steps', label: 'מה הציוד צריך מהבניין · Equipment needs', keywords: 'equipment bar pool slush load heat ציוד בר בריכה ברד עומס חום', run: () => (window.location.hash = '#/equipment') },
       { id: 'journey-page', group: 'steps', label: t.journey.title, keywords: 'journey demo client vr ar scan מסע לקוח הדגמה סריקה', run: () => (window.location.hash = '#/journey') },
     ];
     return all.filter((c) => !AREA_OF[c.id] || hasArea(AREA_OF[c.id]));
@@ -109,6 +111,8 @@ export default function App() {
       ? t.compare.title
       : route.startsWith('#/studio')
         ? locale === 'he' ? 'סטודיו תכנון' : 'Design studio'
+      : route.startsWith('#/equipment')
+        ? locale === 'he' ? 'מה הציוד צריך מהבניין' : 'Equipment needs'
       : route.startsWith('#/journey')
     ? `${t.journey.stages[journeyStage(route)].title} — ${t.journey.title}`
     : route.startsWith('#/space')
@@ -165,6 +169,7 @@ export default function App() {
   else if (route.startsWith('#/journey')) page = <JourneyPage auth={auth} stage={journeyStage(route)} />;
   else if (route.startsWith('#/check')) page = <CheckPage auth={auth} step={checkStepFromRoute(route)} />;
   else if (route.startsWith('#/studio')) page = <StudioPage auth={auth} step={studioStepFromRoute(route)} />;
+  else if (route.startsWith('#/equipment')) page = <EquipmentPage auth={auth} />;
   else if (route.startsWith('#/compare')) page = <ComparePage auth={auth} ids={route.split('/').slice(2, 4)} />;
   else if (isHome(route)) page = EDITION === 'contractors' ? <HomeContractorsPage auth={auth} /> : <HomePage auth={auth} />;
   else page = <NotFoundPage auth={auth} />;

@@ -14,12 +14,15 @@ const UGOLINI_NG: Source = {
 };
 
 const NG_NOT_STATED = {
-  water: 'The sheet lists no water connection. Not stated is not "none": confirm with the supplier.',
-  drain: 'The sheet lists no drain connection. Not stated is not "none": confirm with the supplier.',
-  current: 'The sheet gives power, not current. Current is on the unit’s data plate.',
-  phases: 'The sheet gives 230 V 50 Hz without the number of phases. Confirm on the data plate.',
-  heat: 'The sheet mentions a removable panel for cleaning the condenser, so it has one, but not whether it is air cooled or how much heat it gives off.',
-  circuit: 'The sheet does not say whether it needs a dedicated circuit; the electrician decides.',
+  water: { he: 'בדף הנתונים אין חיבור מים. "לא כתוב" אינו "אין" — לאשר מול הספק.', en: 'The sheet lists no water connection. Not stated is not "none": confirm with the supplier.' },
+  drain: { he: 'בדף הנתונים אין חיבור ניקוז. "לא כתוב" אינו "אין" — לאשר מול הספק.', en: 'The sheet lists no drain connection. Not stated is not "none": confirm with the supplier.' },
+  current: { he: 'בדף מופיע הספק ולא זרם. הזרם כתוב על תווית הנתונים של המכונה.', en: 'The sheet gives power, not current. Current is on the unit’s data plate.' },
+  phases: { he: 'בדף כתוב 230V 50Hz בלי מספר הפאזות. לאשר מול תווית הנתונים.', en: 'The sheet gives 230 V 50 Hz without the number of phases. Confirm on the data plate.' },
+  heat: {
+    he: 'בדף מוזכר פאנל נשלף לניקוי המעבה, כלומר יש מעבה — אבל לא כתוב אם הוא מקורר אוויר וכמה חום הוא פולט.',
+    en: 'The sheet mentions a removable panel for cleaning the condenser, so it has one, but not whether it is air cooled or how much heat it gives off.',
+  },
+  circuit: { he: 'בדף לא כתוב אם צריך מעגל ייעודי; החשמלאי מחליט.', en: 'The sheet does not say whether it needs a dedicated circuit; the electrician decides.' },
 };
 
 function ng(model: string, row: { powerW: number; widthCm: number; depthCm: number; heightCm: number; netKg: number | null }): ProductSpec {
@@ -27,14 +30,17 @@ function ng(model: string, row: { powerW: number; widthCm: number; depthCm: numb
   return {
     ...s,
     size: { widthMm: fact(row.widthCm * 10, UGOLINI_NG), depthMm: fact(row.depthCm * 10, UGOLINI_NG), heightMm: fact(row.heightCm * 10, UGOLINI_NG) },
-    massKg: row.netKg === null ? unknown('The net weight of this model could not be read from the sheet.') : fact(row.netKg, UGOLINI_NG, 'net weight'),
+    massKg:
+      row.netKg === null
+        ? unknown({ he: 'את המשקל נטו של הדגם הזה לא ניתן היה לקרוא מהדף.', en: 'The net weight of this model could not be read from the sheet.' })
+        : fact(row.netKg, UGOLINI_NG, { he: 'משקל נטו', en: 'net weight' }),
     water: { ...s.water, required: unknown(NG_NOT_STATED.water) },
     drain: { ...s.drain, required: unknown(NG_NOT_STATED.drain) },
     electrical: {
-      voltageV: fact(230, UGOLINI_NG, 'the 230 V 50 Hz version; the sheet lists other voltages too'),
+      voltageV: fact(230, UGOLINI_NG, { he: 'הגרסה ל-230V 50Hz; בדף מופיעים גם מתחים אחרים', en: 'the 230 V 50 Hz version; the sheet lists other voltages too' }),
       frequencyHz: fact(50, UGOLINI_NG),
       phases: unknown(NG_NOT_STATED.phases),
-      powerW: fact(row.powerW, UGOLINI_NG, 'stated for 240 V 50 Hz and 230 V 50 Hz'),
+      powerW: fact(row.powerW, UGOLINI_NG, { he: 'כפי שמופיע עבור 240V 50Hz ו-230V 50Hz', en: 'stated for 240 V 50 Hz and 230 V 50 Hz' }),
       currentA: unknown(NG_NOT_STATED.current),
       dedicatedCircuit: unknown(NG_NOT_STATED.circuit),
     },

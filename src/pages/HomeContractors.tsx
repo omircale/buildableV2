@@ -1,4 +1,5 @@
 import type { AuthState } from '../cloud/api';
+import { useServicesT } from '../i18n/services';
 import { useStudioT } from '../i18n/studio';
 import { useStudio } from '../state/studioStore';
 import { AppHeader } from '../ui/AppHeader';
@@ -9,6 +10,7 @@ import { buttonClass } from '../ui/common';
  * there is one, is offered back so a second visit does not start over.
  */
 export function HomeContractorsPage({ auth }: { auth: AuthState }) {
+  const equipmentLink = useServicesT().homeLink;
   const t = useStudioT();
   const h = t.home;
   const name = useStudio((s) => s.name);
@@ -27,6 +29,9 @@ export function HomeContractorsPage({ auth }: { auth: AuthState }) {
               {hasPlan ? h.open : h.start}
             </a>
             {hasPlan && name && <span className="text-body text-muted">{name}</span>}
+            <a href="#/equipment" className="text-body font-medium text-accent-ink underline underline-offset-2">
+              {equipmentLink}
+            </a>
           </div>
           <p className="max-w-3xl rounded-xl bg-warn-soft px-4 py-3 text-small leading-relaxed">{t.demo}</p>
         </section>
