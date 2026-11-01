@@ -17,6 +17,7 @@ import { EDITION, hasArea, routeAllowed, type Area } from './edition';
 import { NotFoundPage } from './pages/NotFound';
 import { LoginPage } from './pages/Login';
 import { setOwner } from './state/owner';
+import { AppStatus } from './ui/AppStatus';
 import { ProjectsPage } from './pages/Projects';
 import { SpacePage } from './pages/Space';
 import { useResolvedTheme, useUi } from './state/uiStore';
@@ -173,6 +174,7 @@ export default function App() {
       <button type="button" onClick={focusMain} className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">
         {t.common.skipToContent}
       </button>
+      <AppStatus auth={auth} />
       <ErrorBoundary locale={locale} key={route.split('/')[1]}>
         <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-paper text-muted">{t.common.loading}</div>}>{page}</Suspense>
       </ErrorBoundary>

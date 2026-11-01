@@ -21,6 +21,11 @@ export interface AuthState {
   session: Session | null;
   role: Role;
   loading: boolean;
+  /**
+   * The server could not be reached, so this is who was signed in on this device the last time it
+   * could. Their work stays on screen; anything that needs the server waits for the connection.
+   */
+  offline: boolean;
   /** Kept for the screens that still ask; a Google account has no password to recover. */
   recovery: boolean;
 }
@@ -32,41 +37,82 @@ export function signInUrl(returnTo: string): string {
 
 const listeners = new Set<() => void>();
 
+/**
+ * The last answer to "who is signed in" on this device. Only the screen uses it, to keep showing a
+ * person's own work when there is no connection; the server never trusts it and still checks the
+ * session cookie on every request.
+ */
+const LAST_KEY = 'buildable.auth.last';
+
+function rememberAuth(who: { user: Session['user']; role: Role } | null): void {
+  try {
+    if (who) localStorage.setItem(LAST_KEY, JSON.stringify(who));
+    else localStorage.removeItem(LAST_KEY);
+  } catch {
+    // Storage refused: offline, the person shows as signed out, as before.
+  }
+}
+
+function lastAuth(): { user: Session['user']; role: Role } | null {
+  try {
+    const raw = localStorage.getItem(LAST_KEY);
+    const v = raw ? (JSON.parse(raw) as { user?: Session['user']; role?: Role }) : null;
+    return v?.user?.id && v.user.email ? { user: v.user, role: v.role ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Asks every screen holding the account to read it again — after signing out, say. */
 export function refreshAuth(): void {
   for (const l of listeners) l();
 }
 
 export function useAuth(): AuthState {
-  const [state, setState] = useState<AuthState>({ session: null, role: null, loading: true, recovery: false });
+  const [state, setState] = useState<AuthState>({ session: null, role: null, loading: true, recovery: false, offline: false });
   useEffect(() => {
     let active = true;
     const load = async () => {
-      let next: AuthState = { session: null, role: null, loading: false, recovery: false };
+      let next: AuthState = { session: null, role: null, loading: false, recovery: false, offline: false };
       try {
         const res = await fetch('/api/me', { credentials: 'same-origin' });
         if (res.ok) {
           const body = (await res.json()) as { user: Session['user']; role: Role };
-          next = { session: { user: body.user }, role: body.role ?? null, loading: false, recovery: false };
+          next = { session: { user: body.user }, role: body.role ?? null, loading: false, recovery: false, offline: false };
+          rememberAuth({ user: body.user, role: body.role ?? null });
+        } else if (res.status === 401) {
+          rememberAuth(null);
+        } else {
+          throw new Error(`HTTP ${res.status}`);
         }
       } catch {
-        // No server (offline, or the dev server): the person is simply not signed in here.
+        // No server: no connection on site, or the dev server. Whoever was signed in here last is still
+        // the person at this device, so their work stays theirs; with nobody remembered, nobody is.
+        const last = lastAuth();
+        if (last) next = { session: { user: last.user }, role: last.role, loading: false, recovery: false, offline: true };
       }
       if (active) setState(next);
     };
     void load();
     listeners.add(load);
+    // Back online: ask again, so the screen learns whether the session is still good.
+    window.addEventListener('online', load);
     return () => {
       active = false;
       listeners.delete(load);
+      window.removeEventListener('online', load);
     };
   }, []);
   return state;
 }
 
 export async function signOut(): Promise<void> {
-  await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: '{}' });
-  refreshAuth();
+  rememberAuth(null);
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: '{}' });
+  } finally {
+    refreshAuth();
+  }
 }
 
 /** Which ways of signing in the site offers. Anything but a clear yes counts as no. */

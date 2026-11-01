@@ -2,11 +2,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { offlineApp } from './pwa/plugin.ts';
 
 // `vite build --mode hospitality` builds Buildable for hospitality; any other mode builds it for contractors.
 export default defineConfig(({ mode }) => ({
   define: { 'import.meta.env.VITE_EDITION': JSON.stringify(mode === 'hospitality' ? 'hospitality' : 'contractors') },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), offlineApp(mode === 'hospitality' ? 'hospitality' : 'contractors')],
   resolve: {
     // model-viewer ships its own bundled three and asks for an older version than the app uses.
     // Without pinning one copy, the dev optimizer re-scans and invalidates already-loaded chunks,
