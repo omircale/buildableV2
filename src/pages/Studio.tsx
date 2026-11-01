@@ -91,6 +91,8 @@ function StartStep({ auth }: { auth: AuthState }) {
     setBusy(true);
     try {
       read(new Uint8Array(await f.arrayBuffer()), f.name);
+      // A new file is a new project: it goes by the file's name until someone names it.
+      setName(f.name.replace(/\.dxf$/i, ''));
     } catch {
       setError(s.notDxf);
     } finally {

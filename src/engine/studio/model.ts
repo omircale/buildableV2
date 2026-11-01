@@ -135,7 +135,7 @@ export function blankStudio(): StudioProject {
 
 const USE_TERMS: [SpaceUse, RegExp][] = [
   ['kitchen', /מטבח|kitchen/i],
-  ['bathroom', /אמבטיה|אמבט|מקלחת|רחצה|bath|shower/i],
+  ['bathroom', /אמבטיה|אמבט|מקלח|רחצה|bath|shower/i],
   ['restroom', /שירותי|נוחיות|wc|toilet|restroom/i],
   ['dining', /אולם|ישיבה|סועדים|סלון|dining|seating|hall|living/i],
   ['storage', /מחסן|אחסון|storage|store/i],
@@ -153,6 +153,40 @@ function inside(poly: Pt[], at: Pt): boolean {
     if (a.y > at.y !== b.y > at.y && at.x < ((b.x - a.x) * (at.y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
   }
   return hit;
+}
+
+/**
+ * Where a room's name goes: a point well inside the room. The average of the corners is inside a
+ * rectangle but not always inside an L or a U — a hotel room wrapped around its bathroom, a deck wrapped
+ * around the pool — so the point farthest from the walls is taken from a grid over the room.
+ */
+export function labelPoint(poly: Pt[]): Pt {
+  const c = centroid(poly);
+  const xs = poly.map((p) => p.x);
+  const ys = poly.map((p) => p.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const clearance = (at: Pt) =>
+    Math.min(
+      ...poly.map((a, i) => {
+        const b = poly[(i + 1) % poly.length];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const t = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+        return Math.hypot(at.x - (a.x + t * dx), at.y - (a.y + t * dy));
+      }),
+    );
+  let best = inside(poly, c) ? { at: c, room: clearance(c) } : null;
+  const N = 16;
+  for (let i = 1; i < N; i++) {
+    for (let j = 1; j < N; j++) {
+      const at = { x: x0 + ((x1 - x0) * i) / N, y: y0 + ((y1 - y0) * j) / N };
+      if (!inside(poly, at)) continue;
+      const room = clearance(at);
+      // The centre wins unless a point clearly roomier exists, so a plain room keeps its name in the middle.
+      if (!best || room > best.room * 1.5) best = { at, room };
+    }
+  }
+  return best?.at ?? c;
 }
 
 function centroid(poly: Pt[]): Pt {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Pt } from '../../engine/geometry';
-import { statusOf, type FieldMark, type Layer, type StudioElement, type StudioIssue, type StudioProject } from '../../engine/studio/model';
+import { labelPoint, statusOf, type FieldMark, type Layer, type StudioElement, type StudioIssue, type StudioProject } from '../../engine/studio/model';
 import { useStudioT } from '../../i18n/studio';
 import { LAYER_COLOR } from './layers';
 
@@ -135,7 +135,7 @@ export function PlanCanvas({ project, elements, issues, marks, visible, selected
       >
         {visible.architecture &&
           project.spaces.map((sp) => {
-            const c = { x: sp.outline.reduce((a, p) => a + p.x, 0) / sp.outline.length, y: sp.outline.reduce((a, p) => a + p.y, 0) / sp.outline.length };
+            const c = labelPoint(sp.outline);
             return (
               <g key={sp.id}>
                 <polygon points={sp.outline.map(P).join(' ')} fill="var(--color-sunken)" stroke="var(--color-muted)" strokeWidth={2.5 * u} />

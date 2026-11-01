@@ -1,5 +1,5 @@
 import type { Pt } from '../geometry';
-import { KIND_LABEL, STUDIO_DRAFT, currentApproval, statusOf, type StudioElement, type StudioProject } from './model';
+import { KIND_LABEL, STUDIO_DRAFT, currentApproval, labelPoint, statusOf, type StudioElement, type StudioProject } from './model';
 
 /**
  * The plumbing drawing a trade takes away: as DXF for their CAD program, and as an A3 sheet for print.
@@ -164,7 +164,7 @@ export function planDxf(project: StudioProject, elements: StudioElement[], local
   g(2, 'ENTITIES');
   for (const sp of project.spaces) {
     polyline(DRAWING_LAYERS.room.name, sp.outline, true);
-    const c = { x: sp.outline.reduce((a, p) => a + p.x, 0) / sp.outline.length, y: sp.outline.reduce((a, p) => a + p.y, 0) / sp.outline.length };
+    const c = labelPoint(sp.outline);
     if (sp.name) text(DRAWING_LAYERS.roomText.name, c, 250, sp.name);
   }
   const he = locale === 'he';
@@ -238,7 +238,7 @@ export function planSheet(project: StudioProject, elements: StudioElement[], loc
 
   for (const sp of project.spaces) {
     parts.push(`<polygon points="${pl(sp.outline)}" fill="#f6f3ee" stroke="${DRAWING_LAYERS.room.hex}" stroke-width="0.5"/>`);
-    const c = P({ x: sp.outline.reduce((a, p) => a + p.x, 0) / sp.outline.length, y: sp.outline.reduce((a, p) => a + p.y, 0) / sp.outline.length });
+    const c = P(labelPoint(sp.outline));
     if (sp.name) parts.push(`<text x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" ${font} font-size="3.5" fill="#6b6358" text-anchor="middle" direction="${dir}">${esc(sp.name)}</text>`);
   }
 
