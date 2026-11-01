@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { adminUsage, invite, listInvited, listMembers, removeMember, uninvite, type AuthState, type MemberRow, type Usage } from '../cloud/api';
+import { adminUsage, createPasswordLink, invite, listInvited, listMembers, passwordLinkUrl, removeMember, uninvite, type AuthState, type MemberRow, type Usage } from '../cloud/api';
 import { Button, inputClass } from '../ui/common';
 
 type Tab = 'members' | 'usage';
@@ -49,6 +49,62 @@ export function AdminPage({ auth }: { auth: AuthState }) {
 }
 
 /**
+ * A one-time link for choosing a password, made on request and shown once. The site sends no e-mail,
+ * so the admin passes it on — by WhatsApp, a message, in person — and whoever opens it chooses the
+ * password. It is shown here only; closing the box does not cancel it, a newer link does.
+ */
+function PasswordLink({ email, hasPassword }: { email: string; hasPassword: boolean }) {
+  const [link, setLink] = useState<{ url: string; until: string; reset: boolean } | null>(null);
+  const [state, setState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle');
+
+  if (!link) {
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={state === 'busy'}
+        onClick={() => {
+          if (hasPassword && !confirm(`ליצור קישור לאיפוס הסיסמה של ${email}? הסיסמה הנוכחית תמשיך לעבוד עד שישתמשו בקישור.`)) return;
+          setState('busy');
+          createPasswordLink(email).then(
+            (r) => {
+              setLink({ url: passwordLinkUrl(r.token), until: new Date(r.expires_at).toLocaleString('he-IL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), reset: r.purpose === 'reset' });
+              setState('idle');
+            },
+            () => setState('failed'),
+          );
+        }}
+      >
+        {state === 'failed' ? 'יצירת הקישור נכשלה — לנסות שוב' : hasPassword ? 'קישור לאיפוס סיסמה' : 'קישור לבחירת סיסמה'}
+      </Button>
+    );
+  }
+  return (
+    <div className="basis-full space-y-2 rounded-lg bg-sunken p-3">
+      <p className="text-xs text-muted">
+        {link.reset ? 'קישור לאיפוס הסיסמה' : 'קישור לבחירת סיסמה'} עבור <span dir="ltr">{email}</span>. עובד פעם אחת, עד {link.until}. שלחו אותו לאדם עצמו בלבד: מי שפותח אותו בוחר את הסיסמה.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <input className={`${inputClass} min-w-0 flex-1 text-xs`} dir="ltr" readOnly value={link.url} aria-label="הקישור" onFocus={(e) => e.target.select()} />
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => navigator.clipboard.writeText(link.url).then(() => setState('copied'), () => setState('failed'))}
+        >
+          {state === 'copied' ? 'הועתק' : 'העתקה'}
+        </Button>
+        {/* The phone's own share sheet: the link goes inside the message, not into another site's address. */}
+        {typeof navigator.share === 'function' && (
+          <Button size="sm" onClick={() => void navigator.share({ text: `קישור לבחירת סיסמה ב-Buildable: ${link.url}` }).catch(() => undefined)}>
+            שיתוף
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Who may work here. Signing in grants nothing by itself: an address becomes a working account once it
  * is on this list. The admin sees who the accounts are — not what is in them; a customer's bills are
  * closed to the admin by the server, not by this screen.
@@ -80,7 +136,7 @@ function MembersTab({ selfId }: { selfId: string }) {
       <section className="space-y-2">
         <h2 className="font-semibold">הזמנת חשבון</h2>
         <p className="max-w-prose text-sm text-muted">
-          מזינים את כתובת ה-Gmail או חשבון Google של האדם. מי שנכנס עם Google בכתובת הזו מקבל חשבון פעיל, ורואה רק את הפרויקטים של עצמו. אם כבר נכנס פעם, החשבון נפתח מיד.
+          מזינים את כתובת האימייל של האדם. אחרי ההזמנה הוא יכול להיכנס בשתי דרכים: עם Google בכתובת הזו, או עם סיסמה שהוא בוחר דרך קישור שיוצרים כאן ושולחים לו. בכל דרך הוא רואה רק את הפרויקטים של עצמו.
         </p>
         <form
           className="flex flex-wrap gap-2"
@@ -106,6 +162,8 @@ function MembersTab({ selfId }: { selfId: string }) {
                 {m.email}
               </span>
               <span className="rounded-full bg-sunken px-2 py-0.5 text-xs">{m.role === 'admin' ? 'מנהל' : 'חשבון'}</span>
+              <span className="text-xs text-muted">{m.has_password ? 'סיסמה · Google' : 'Google'}</span>
+              <PasswordLink email={m.email} hasPassword={!!m.has_password} />
               {m.user_id !== selfId && m.role !== 'admin' && (
                 <Button
                   size="sm"
@@ -128,10 +186,11 @@ function MembersTab({ selfId }: { selfId: string }) {
           <h2 className="font-semibold">הוזמנו ועוד לא נרשמו · {waiting.length}</h2>
           <ul className="divide-y divide-line rounded-xl bg-panel ring-1 ring-line">
             {waiting.map((i) => (
-              <li key={i.email} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+              <li key={i.email} className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
                 <span dir="ltr" className="min-w-0 flex-1 truncate">
                   {i.email}
                 </span>
+                <PasswordLink email={i.email} hasPassword={false} />
                 <Button size="sm" variant="ghost" onClick={() => act(uninvite(i.email))}>
                   ביטול הזמנה
                 </Button>

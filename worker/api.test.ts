@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { handleApi } from './api';
-import { identityFromIdToken, safeReturn, sha256 } from './auth';
+import { DUMMY_HASH, hashPassword, identityFromIdToken, safeReturn, sha256, verifyPassword } from './auth';
 import type { Db, Env, Stmt } from './db';
 
 /** D1's interface over Node's SQLite, so the API runs here exactly as it runs on Cloudflare. */
@@ -237,5 +237,102 @@ describe('design-studio projects', () => {
     expect((await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: 'x'.repeat(5 * 1024 * 1024 + 1) } })).status).toBe(413);
     const { id } = await (await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: {} } })).json();
     expect((await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: {} } })).status).toBe(400);
+  });
+});
+
+describe('signing in with an address and a password', () => {
+  const session = (res: Response) => res.headers.get('set-cookie')?.match(/bsid=([^;]+)/)?.[1] ?? null;
+  const login = (email: string, password: string) => call('/api/auth/password/login', null, { method: 'POST', body: { email, password } });
+  const linkFor = async (admin: string, email: string) => (await call('/api/admin/password-links', admin, { method: 'POST', body: { email } })).json();
+  const setPassword = (token: string, password: string) => call('/api/auth/password/set', null, { method: 'POST', body: { token, password } });
+
+  test('a password is kept only as a salted hash, and checked against it', async () => {
+    const a = await hashPassword('סיסמה ארוכה 123');
+    const b = await hashPassword('סיסמה ארוכה 123');
+    expect(a).toMatch(/^pbkdf2-sha256\$100000\$/);
+    expect(a).not.toBe(b);
+    expect(a).not.toContain('סיסמה');
+    expect(await verifyPassword('סיסמה ארוכה 123', a)).toBe(true);
+    expect(await verifyPassword('סיסמה ארוכה 124', a)).toBe(false);
+    expect(await verifyPassword('anything', DUMMY_HASH)).toBe(false);
+  });
+
+  test('invited, the person sets a password through the admin’s link and is a member at once', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    const link = await linkFor(admin, 'Site@X.com');
+    expect(link.purpose).toBe('invite');
+    // The token itself is never stored.
+    expect(await env.DB.prepare('select 1 from password_links where token_hash = ?').bind(link.token).first()).toBeNull();
+
+    expect(await (await call('/api/auth/password/link', null, { method: 'POST', body: { token: link.token } })).json()).toEqual({ email: 'site@x.com', purpose: 'invite' });
+    expect((await setPassword(link.token, 'short')).status).toBe(400);
+    const set = await setPassword(link.token, 'a long enough one');
+    expect(set.status).toBe(200);
+    expect((await (await call('/api/me', session(set))).json()).role).toBe('member');
+
+    // The link is used up.
+    expect((await setPassword(link.token, 'another long one')).status).toBe(404);
+
+    const ok = await login(' SITE@x.com ', 'a long enough one');
+    expect(ok.status).toBe(200);
+    expect((await (await call('/api/me', session(ok))).json()).user.email).toBe('site@x.com');
+    expect((await (await call('/api/admin/members', admin)).json()).find((m: { email: string }) => m.email === 'site@x.com').has_password).toBe(1);
+  });
+
+  test('a wrong address and a wrong password get the same answer; repeated guesses lock the account', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    await setPassword((await linkFor(admin, 'site@x.com')).token, 'the right password');
+
+    expect(await (await login('nobody@x.com', 'whatever it is')).json()).toEqual({ error: 'bad_credentials' });
+    for (let i = 0; i < 4; i++) expect((await login('site@x.com', 'a wrong password')).status).toBe(401);
+    expect(await (await login('site@x.com', 'a wrong password')).json()).toEqual({ error: 'locked' });
+    // Locked even for the right password, until the time is up.
+    expect((await login('site@x.com', 'the right password')).status).toBe(429);
+    await env.DB.prepare("update users set locked_until = '2000-01-01T00:00:00Z' where email = 'site@x.com'").run();
+    expect((await login('site@x.com', 'the right password')).status).toBe(200);
+  });
+
+  test('a reset link replaces the password and ends the sessions that used the old one', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    await setPassword((await linkFor(admin, 'site@x.com')).token, 'the first password');
+    const phone = session(await login('site@x.com', 'the first password'));
+
+    const reset = await linkFor(admin, 'site@x.com');
+    expect(reset.purpose).toBe('reset');
+    const fresh = session(await setPassword(reset.token, 'the second password'));
+    expect((await call('/api/me', phone)).status).toBe(401);
+    expect((await call('/api/me', fresh)).status).toBe(200);
+    expect((await login('site@x.com', 'the first password')).status).toBe(401);
+    expect((await login('site@x.com', 'the second password')).status).toBe(200);
+  });
+
+  test('links are the admin’s, for invited addresses only, and withdrawing the invitation withdraws the link', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    const member = await signIn('m1', 'm@x.com', 'member');
+    expect((await call('/api/admin/password-links', member, { method: 'POST', body: { email: 'm@x.com' } })).status).toBe(403);
+    expect(await (await call('/api/admin/password-links', admin, { method: 'POST', body: { email: 'stranger@x.com' } })).json()).toEqual({ error: 'not_invited' });
+
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    const { token } = await linkFor(admin, 'site@x.com');
+    await call('/api/admin/invites/site%40x.com', admin, { method: 'DELETE' });
+    expect((await setPassword(token, 'a long enough one')).status).toBe(404);
+  });
+
+  test('Google and a password with the same address are one account', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    const viaPassword = session(await setPassword((await linkFor(admin, 'site@x.com')).token, 'a long enough one'));
+    const passwordId = (await (await call('/api/me', viaPassword)).json()).user.id;
+
+    const start = await call('/api/auth/google?return=%23%2F', null);
+    const state = new URL(start.headers.get('location')!).searchParams.get('state');
+    const claims = { iss: 'https://accounts.google.com', aud: 'cid', exp: 4_000_000_000, sub: 'google-site', email: 'site@x.com', email_verified: true };
+    vi.stubGlobal('fetch', async () => new Response(JSON.stringify({ id_token: idToken(claims) })));
+    const res = await handleApi(new Request(`${ORIGIN}/api/auth/callback?code=c&state=${state}`, { headers: { cookie: start.headers.get('set-cookie')!.split(';')[0] } }), env);
+    const viaGoogle = await (await call('/api/me', session(res))).json();
+    expect(viaGoogle).toEqual({ user: { id: passwordId, email: 'site@x.com' }, role: 'member' });
   });
 });

@@ -1,20 +1,27 @@
 import {
+  DUMMY_HASH,
   SESSION_COOKIE,
   SESSION_DAYS,
   STATE_COOKIE,
   cookie,
   exchangeCode,
   googleAuthUrl,
+  hashPassword,
   identityFromIdToken,
+  passwordAcceptable,
   randomToken,
   readCookie,
   safeReturn,
   sha256,
+  verifyPassword,
 } from './auth';
 import type { Db, Env } from './db';
 
 /**
  * The app's API: who is signed in, their folders and bills, and the admin's member list.
+ *
+ * A person signs in with Google or with an address and a password; either way they are the same
+ * account, found by the address, and get the same kind of session.
  *
  * Every data query carries the account it acts for. A folder or a bill is visible to the account that
  * owns it and to nobody else — the admin included; the admin sees who is a member, never their work.
@@ -29,6 +36,11 @@ interface Me {
 }
 
 const MAX_BILL_BYTES = 5 * 1024 * 1024;
+/** Wrong passwords in a row before an account stops accepting them for a while. */
+const MAX_FAILED_LOGINS = 5;
+const LOCK_MINUTES = 15;
+/** How long a password link works: an invitation waits a week for its person, a reset a day. */
+const LINK_HOURS = { invite: 7 * 24, reset: 24 } as const;
 const now = () => new Date().toISOString();
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -60,6 +72,19 @@ async function admit(db: Db, user: { id: string; email: string }, bootstrap: str
   const invited = await db.prepare('select 1 from invited_emails where email = ?').bind(user.email).first();
   if (invited) await db.prepare("insert into app_users (user_id, role) values (?, 'member')").bind(user.id).run();
 }
+
+/** A new session for an account: the cookie that carries it. */
+async function startSession(db: Db, userId: string): Promise<string> {
+  const token = randomToken(32);
+  const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString();
+  await db.prepare('insert into sessions (token_hash, user_id, expires_at) values (?, ?, ?)').bind(await sha256(token), userId, expires).run();
+  return cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400);
+}
+
+const cleanEmail = (v: unknown) => {
+  const email = typeof v === 'string' ? v.trim().toLowerCase() : '';
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 320 ? email : null;
+};
 
 async function body<T>(request: Request): Promise<T | null> {
   // A mutation must say it is JSON: a form posted from another site cannot, so it never gets here.
@@ -113,17 +138,16 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     const who = idToken && identityFromIdToken(idToken, env.GOOGLE_CLIENT_ID, Math.floor(Date.now() / 1000));
     if (!who) return new Response(null, { status: 302, headers: { location: `${url.origin}/#/login?error=google`, 'set-cookie': clear } });
 
-    await db
-      .prepare('insert into users (id, email) values (?, ?) on conflict (id) do update set email = excluded.email')
-      .bind(who.sub, who.email)
-      .run();
-    await admit(db, { id: who.sub, email: who.email }, env.BOOTSTRAP_ADMIN_EMAIL);
-    const token = randomToken(32);
-    const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString();
-    await db.prepare('insert into sessions (token_hash, user_id, expires_at) values (?, ?, ?)').bind(await sha256(token), who.sub, expires).run();
+    // Google has confirmed the address, so an account that already has it — one made with a password —
+    // is this person's. Otherwise the account is keyed by Google's id.
+    const known = await db.prepare('select id from users where id = ? or email = ? order by id = ? desc limit 1').bind(who.sub, who.email, who.sub).first<{ id: string }>();
+    const userId = known?.id ?? who.sub;
+    if (!known) await db.prepare('insert into users (id, email) values (?, ?)').bind(userId, who.email).run();
+    else await db.prepare('update users set email = ? where id = ? and not exists (select 1 from users where email = ? and id <> ?)').bind(who.email, userId, who.email, userId).run();
+    await admit(db, { id: userId, email: who.email }, env.BOOTSTRAP_ADMIN_EMAIL);
     const headers = new Headers({ location: home });
     headers.append('set-cookie', clear);
-    headers.append('set-cookie', cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400));
+    headers.append('set-cookie', await startSession(db, userId));
     return new Response(null, { status: 302, headers });
   }
 
@@ -134,7 +158,60 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   }
 
   if (path === '/api/auth/providers' && method === 'GET') {
-    return json({ google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) });
+    return json({ google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), password: true });
+  }
+
+  // An address and a password. A wrong address and a wrong password get the same answer, in the same
+  // time; after repeated wrong passwords the account rests for a while.
+  if (path === '/api/auth/password/login' && method === 'POST') {
+    const b = await body<{ email?: string; password?: string }>(request);
+    const email = cleanEmail(b?.email);
+    const password = typeof b?.password === 'string' ? b.password : '';
+    const row = email
+      ? await db.prepare('select id, email, password_hash, failed_logins, locked_until from users where email = ?').bind(email).first<{ id: string; email: string; password_hash: string | null; failed_logins: number; locked_until: string | null }>()
+      : null;
+    if (!row?.password_hash) {
+      await verifyPassword(password, DUMMY_HASH);
+      return fail(401, 'bad_credentials');
+    }
+    if (row.locked_until && row.locked_until > now()) return fail(429, 'locked');
+    if (!(await verifyPassword(password, row.password_hash))) {
+      const failed = row.failed_logins + 1;
+      const lock = failed >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null;
+      await db.prepare('update users set failed_logins = ?, locked_until = ? where id = ?').bind(lock ? 0 : failed, lock, row.id).run();
+      return fail(lock ? 429 : 401, lock ? 'locked' : 'bad_credentials');
+    }
+    await db.prepare('update users set failed_logins = 0, locked_until = null where id = ?').bind(row.id).run();
+    await admit(db, { id: row.id, email: row.email }, env.BOOTSTRAP_ADMIN_EMAIL);
+    return json({ ok: true }, 200, { 'set-cookie': await startSession(db, row.id) });
+  }
+
+  // A link from the admin: which address it is for, so the page can say so before a password is chosen.
+  const link = async (token: unknown) =>
+    typeof token === 'string' && token
+      ? await db.prepare('select token_hash, email, purpose from password_links where token_hash = ? and expires_at > ?').bind(await sha256(token), now()).first<{ token_hash: string; email: string; purpose: 'invite' | 'reset' }>()
+      : null;
+  if (path === '/api/auth/password/link' && method === 'POST') {
+    const found = await link((await body<{ token?: string }>(request))?.token);
+    return found ? json({ email: found.email, purpose: found.purpose }) : fail(404, 'link_expired');
+  }
+
+  // Setting the password through the link. The link is used up, every other session of the account
+  // ends (a reset is often because someone else may know the old one), and this browser is signed in.
+  if (path === '/api/auth/password/set' && method === 'POST') {
+    const b = await body<{ token?: string; password?: string }>(request);
+    const found = await link(b?.token);
+    if (!found) return fail(404, 'link_expired');
+    if (!passwordAcceptable(b?.password)) return fail(400, 'weak_password');
+    const hash = await hashPassword(b.password);
+    const existing = await db.prepare('select id from users where email = ?').bind(found.email).first<{ id: string }>();
+    const userId = existing?.id ?? crypto.randomUUID();
+    if (existing) await db.prepare('update users set password_hash = ?, failed_logins = 0, locked_until = null where id = ?').bind(hash, userId).run();
+    else await db.prepare('insert into users (id, email, password_hash) values (?, ?, ?)').bind(userId, found.email, hash).run();
+    await db.prepare('delete from password_links where email = ?').bind(found.email).run();
+    await db.prepare('delete from sessions where user_id = ?').bind(userId).run();
+    await admit(db, { id: userId, email: found.email }, env.BOOTSTRAP_ADMIN_EMAIL);
+    return json({ ok: true, email: found.email }, 200, { 'set-cookie': await startSession(db, userId) });
   }
 
   /* ---------------------------------------------------------------- everything else needs a person */
@@ -150,7 +227,9 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   if (path.startsWith('/api/admin/')) {
     if (user.role !== 'admin') return fail(403, 'not_admin');
     if (path === '/api/admin/members' && method === 'GET') {
-      const { results } = await db.prepare('select a.user_id, u.email, a.role, a.created_at from app_users a join users u on u.id = a.user_id order by a.created_at').all();
+      const { results } = await db
+        .prepare('select a.user_id, u.email, a.role, a.created_at, u.password_hash is not null as has_password from app_users a join users u on u.id = a.user_id order by a.created_at')
+        .all();
       return json(results);
     }
     const memberId = path.match(/^\/api\/admin\/members\/([^/]+)$/)?.[1];
@@ -175,8 +254,27 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     const inviteEmail = path.match(/^\/api\/admin\/invites\/([^/]+)$/)?.[1];
     if (inviteEmail && method === 'DELETE') {
-      await db.prepare('delete from invited_emails where email = ?').bind(decodeURIComponent(inviteEmail).toLowerCase()).run();
+      const email = decodeURIComponent(inviteEmail).toLowerCase();
+      await db.prepare('delete from invited_emails where email = ?').bind(email).run();
+      await db.prepare('delete from password_links where email = ?').bind(email).run();
       return json({ ok: true });
+    }
+    // A one-time link for setting a password: an invitation for someone without one, a reset for
+    // someone who has one. Only for an address the admin invited or a working account. The admin passes
+    // the link on; whoever opens it chooses the password, so it goes to that person only.
+    if (path === '/api/admin/password-links' && method === 'POST') {
+      const email = cleanEmail((await body<{ email?: string }>(request))?.email);
+      if (!email) return fail(400, 'bad_email');
+      const account = await db.prepare('select u.password_hash is not null as has_password, a.role from users u left join app_users a on a.user_id = u.id where u.email = ?').bind(email).first<{ has_password: number; role: Role | null }>();
+      const invited = await db.prepare('select 1 from invited_emails where email = ?').bind(email).first();
+      if (!invited && !account?.role) return fail(400, 'not_invited');
+      const purpose = account?.has_password ? 'reset' : 'invite';
+      const token = randomToken(32);
+      const expires = new Date(Date.now() + LINK_HOURS[purpose] * 3600_000).toISOString();
+      // A new link replaces any earlier one for the address.
+      await db.prepare('delete from password_links where email = ?').bind(email).run();
+      await db.prepare('insert into password_links (token_hash, email, purpose, created_by, expires_at) values (?, ?, ?, ?, ?)').bind(await sha256(token), email, purpose, user.id, expires).run();
+      return json({ token, purpose, expires_at: expires }, 201);
     }
     if (path === '/api/admin/usage' && method === 'GET') {
       // Counts only. The admin learns how much is kept, never what.

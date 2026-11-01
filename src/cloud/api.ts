@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
  * The app's account: who is signed in, and their folders and bills, kept by the site's own Worker
  * (worker/api.ts) on Cloudflare D1.
  *
- * Signing in is with Google only, through the Worker. The session is an HttpOnly cookie the page never
- * sees; this module only asks the Worker who it is talking to. Nothing here decides who may see what —
- * the Worker checks that on every request.
+ * Signing in is with an address and a password, or with Google, both through the Worker. The session
+ * is an HttpOnly cookie the page never sees; this module only asks the Worker who it is talking to.
+ * Nothing here decides who may see what — the Worker checks that on every request.
  */
 
 export const cloudConfigured = true;
@@ -69,14 +69,14 @@ export async function signOut(): Promise<void> {
   refreshAuth();
 }
 
-/** Whether the site can sign anyone in. Anything but a clear yes counts as no. */
-export async function enabledProviders(): Promise<{ google: boolean }> {
+/** Which ways of signing in the site offers. Anything but a clear yes counts as no. */
+export async function enabledProviders(): Promise<{ google: boolean; password: boolean }> {
   try {
     const res = await fetch('/api/auth/providers');
-    const body = (await res.json()) as { google?: boolean };
-    return { google: body.google === true };
+    const body = (await res.json()) as { google?: boolean; password?: boolean };
+    return { google: body.google === true, password: body.password === true };
   } catch {
-    return { google: false };
+    return { google: false, password: false };
   }
 }
 
@@ -111,6 +111,35 @@ async function call<T>(path: string, init: { method?: string; body?: unknown } =
   }
   return (await res.json()) as T;
 }
+
+/* ---------------------------------------------------------------- passwords */
+
+/** The server's rule, repeated here only to say it before the server has to. */
+export const PASSWORD_MIN = 10;
+
+export async function passwordSignIn(email: string, password: string): Promise<void> {
+  await call('/api/auth/password/login', { method: 'POST', body: { email, password } });
+  refreshAuth();
+}
+
+/** The address a password link is for, or null when the link no longer works. */
+export async function checkPasswordLink(token: string): Promise<{ email: string; purpose: 'invite' | 'reset' } | null> {
+  try {
+    return await call<{ email: string; purpose: 'invite' | 'reset' }>('/api/auth/password/link', { method: 'POST', body: { token } });
+  } catch (e) {
+    if ((e as ApiError).status === 404) return null;
+    throw e;
+  }
+}
+
+/** Sets the password through the link and signs this browser in. */
+export async function setPasswordWithLink(token: string, password: string): Promise<void> {
+  await call('/api/auth/password/set', { method: 'POST', body: { token, password } });
+  refreshAuth();
+}
+
+/** Where a password link takes its person. The token rides after the #, so it is never sent to a server. */
+export const passwordLinkUrl = (token: string) => `${window.location.origin}/#/login/password?t=${encodeURIComponent(token)}`;
 
 /* ---------------------------------------------------------------- folders and bills */
 
@@ -180,6 +209,8 @@ export interface MemberRow {
   email: string;
   role: 'admin' | 'member';
   created_at: string;
+  /** 1 when the account has a password (it may also sign in with Google). */
+  has_password: number;
 }
 
 export interface Usage {
@@ -196,3 +227,7 @@ export const listInvited = () => call<{ email: string; created_at: string }[]>('
 export const invite = async (email: string) => void (await call('/api/admin/invites', { method: 'POST', body: { email } }));
 export const uninvite = async (email: string) => void (await call(`/api/admin/invites/${encodeURIComponent(email)}`, { method: 'DELETE' }));
 export const adminUsage = () => call<Usage>('/api/admin/usage');
+
+/** A one-time link for the address: an invitation to choose a password, or a reset of one. */
+export const createPasswordLink = (email: string) =>
+  call<{ token: string; purpose: 'invite' | 'reset'; expires_at: string }>('/api/admin/password-links', { method: 'POST', body: { email } });
