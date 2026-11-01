@@ -285,6 +285,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
         places: await count('places'),
         bills: await count('bills'),
         studio: await count('studio_projects'),
+        shared: await count('studio_members'),
       });
     }
     return fail(404, 'not_found');
@@ -383,11 +384,33 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
 
   /* -------------------------------------------------- design-studio projects */
 
-  // A save carries the version it started from. If another device saved in between, the save is
-  // refused with the version that is there now, and the person chooses which one to keep.
-  const STUDIO = 'id, name, version, updated_at';
+  // A save carries the version it started from. If another device or another person saved in between,
+  // the save is refused with the version that is there now, and the person chooses which one to keep.
+  //
+  // A project is its owner's, and also of the people the owner shared it with: those who may edit save
+  // to it, those who may only look read it. To anyone else it does not exist.
+  const STUDIO = 'p.id, p.name, p.version, p.updated_at, owner.email as owner_email';
+  const studioRow = (id: string) =>
+    db
+      .prepare(
+        `select ${STUDIO}, case when p.owner_id = ? then 'owner' else m.access end as access
+         from studio_projects p join users owner on owner.id = p.owner_id
+         left join studio_members m on m.project_id = p.id and m.email = ?
+         where p.id = ? and (p.owner_id = ? or m.email is not null)`,
+      )
+      .bind(user.id, user.email, id, user.id)
+      .first<{ id: string; access: 'owner' | 'edit' | 'view' }>();
+
   if (path === '/api/studio' && method === 'GET') {
-    const { results } = await db.prepare(`select ${STUDIO} from studio_projects where owner_id = ? order by updated_at desc`).bind(user.id).all();
+    const { results } = await db
+      .prepare(
+        `select ${STUDIO}, case when p.owner_id = ? then 'owner' else m.access end as access
+         from studio_projects p join users owner on owner.id = p.owner_id
+         left join studio_members m on m.project_id = p.id and m.email = ?
+         where p.owner_id = ? or m.email is not null order by p.updated_at desc`,
+      )
+      .bind(user.id, user.email, user.id)
+      .all();
     return json(results);
   }
   if (path === '/api/studio' && method === 'POST') {
@@ -398,32 +421,74 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
     const id = crypto.randomUUID();
     await db.prepare('insert into studio_projects (id, owner_id, name, data) values (?, ?, ?, ?)').bind(id, user.id, name, data).run();
-    return json(await db.prepare(`select ${STUDIO} from studio_projects where id = ?`).bind(id).first(), 201);
+    return json(await studioRow(id), 201);
   }
   const studioId = path.match(/^\/api\/studio\/([^/]+)$/)?.[1];
   if (studioId && method === 'GET') {
-    const row = await db.prepare(`select ${STUDIO}, data from studio_projects where id = ? and owner_id = ?`).bind(studioId, user.id).first<Record<string, unknown> & { data: string }>();
+    const row = await studioRow(studioId);
     if (!row) return fail(404, 'not_found');
-    const { data, ...rest } = row;
-    return json({ row: rest, data: JSON.parse(data) });
+    const data = await db.prepare('select data from studio_projects where id = ?').bind(studioId).first<{ data: string }>();
+    return json({ row, data: JSON.parse(data!.data) });
   }
   if (studioId && method === 'PUT') {
+    const row = await studioRow(studioId);
+    if (!row) return fail(404, 'not_found');
+    if (row.access === 'view') return fail(403, 'view_only');
     const b = await body<{ name?: string; data?: unknown; baseVersion?: number; force?: boolean }>(request);
     const name = cleanName(b?.name, 200);
     const data = b?.data == null ? null : JSON.stringify(b.data);
     if (!name || data == null || (!b?.force && !Number.isInteger(b?.baseVersion))) return fail(400, 'bad_project');
     if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
     const r = await db
-      .prepare('update studio_projects set name = ?, data = ?, version = version + 1, updated_at = ? where id = ? and owner_id = ? and (? or version = ?)')
-      .bind(name, data, now(), studioId, user.id, b?.force ? 1 : 0, b?.baseVersion ?? 0)
+      .prepare('update studio_projects set name = ?, data = ?, version = version + 1, updated_at = ? where id = ? and (? or version = ?)')
+      .bind(name, data, now(), studioId, b?.force ? 1 : 0, b?.baseVersion ?? 0)
       .run();
-    const row = await db.prepare(`select ${STUDIO} from studio_projects where id = ? and owner_id = ?`).bind(studioId, user.id).first();
-    if (!row) return fail(404, 'not_found');
-    return r.meta.changes ? json(row) : json({ error: 'stale', row }, 409);
+    const after = await studioRow(studioId);
+    return r.meta.changes ? json(after) : json({ error: 'stale', row: after }, 409);
   }
   if (studioId && method === 'DELETE') {
     const r = await db.prepare('delete from studio_projects where id = ? and owner_id = ?').bind(studioId, user.id).run();
     return r.meta.changes ? json({ ok: true }) : fail(404, 'not_found');
+  }
+
+  // The team of a project: everyone on it sees who else is; only the owner changes it.
+  const team = path.match(/^\/api\/studio\/([^/]+)\/members(?:\/([^/]+))?$/);
+  if (team) {
+    const [, projectId, memberEmail] = team;
+    const row = await studioRow(projectId);
+    if (!row) return fail(404, 'not_found');
+    if (!memberEmail && method === 'GET') {
+      const { results } = await db.prepare('select email, access, title, created_at from studio_members where project_id = ? order by created_at').bind(projectId).all();
+      return json({ owner: (row as unknown as { owner_email: string }).owner_email, members: results });
+    }
+    if (!memberEmail && method === 'POST') {
+      if (row.access !== 'owner') return fail(403, 'not_owner');
+      const b = await body<{ email?: string; access?: string; title?: string | null }>(request);
+      const email = cleanEmail(b?.email);
+      if (!email) return fail(400, 'bad_email');
+      if (b?.access !== 'edit' && b?.access !== 'view') return fail(400, 'bad_access');
+      const title = b?.title == null || b.title === '' ? null : cleanName(b.title, 60);
+      if (b?.title && !title) return fail(400, 'bad_title');
+      if (email === user.email) return fail(400, 'is_owner');
+      // The site stays invite-only: a project is shared only with someone the admin let in.
+      const known = await db
+        .prepare("select 1 from invited_emails where email = ? union select 1 from users u join app_users a on a.user_id = u.id where u.email = ?")
+        .bind(email, email)
+        .first();
+      if (!known) return fail(400, 'not_invited');
+      await db
+        .prepare('insert into studio_members (project_id, email, access, title, added_by) values (?, ?, ?, ?, ?) on conflict (project_id, email) do update set access = excluded.access, title = excluded.title')
+        .bind(projectId, email, b.access, title, user.id)
+        .run();
+      return json({ ok: true });
+    }
+    if (memberEmail && method === 'DELETE') {
+      const email = decodeURIComponent(memberEmail).toLowerCase();
+      // The owner removes anyone; anyone else may only leave.
+      if (row.access !== 'owner' && email !== user.email) return fail(403, 'not_owner');
+      const r = await db.prepare('delete from studio_members where project_id = ? and email = ?').bind(projectId, email).run();
+      return r.meta.changes ? json({ ok: true }) : fail(404, 'not_found');
+    }
   }
 
   return fail(404, 'not_found');

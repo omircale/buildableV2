@@ -30,7 +30,7 @@ vi.mock('../cloud/api', () => {
   return {
     createStudio: async (name: string, data: unknown) => {
       reach();
-      const row = { id: `p${++n}`, name, version: 1, updated_at: `t${n}` };
+      const row = { id: `p${++n}`, name, version: 1, updated_at: `t${n}`, access: 'owner' as const, owner_email: 'me@x.com' };
       server.rows.set(row.id, { row, data: structuredClone(data) });
       return row;
     },
@@ -180,6 +180,39 @@ describe('a studio project kept in the account', () => {
     await sync.putInCloud();
     studio().loadSpaces([], 'other.dxf');
     expect(studio().cloud).toBeNull();
+  });
+
+  it('brings in what a teammate saved, when nothing here is waiting to be sent', async () => {
+    studio().setName('בר');
+    await sync.putInCloud();
+    const id = studio().cloud!.id;
+    const r = server.rows.get(id)!;
+    r.row = { ...r.row, version: 2 };
+    r.data = { ...(r.data as object), name: 'בר — מהשטח' };
+
+    await sync.pullLatest();
+    expect(studio()).toMatchObject({ name: 'בר — מהשטח', cloud: { version: 2 } });
+    expect(store.hasUnsaved(studio())).toBe(false);
+  });
+
+  it('with changes here too, a teammate’s newer version is a choice, not an overwrite either way', async () => {
+    await sync.putInCloud();
+    const id = studio().cloud!.id;
+    server.rows.get(id)!.row.version = 2;
+    studio().setName('שלי');
+    await sync.pullLatest();
+    expect(status()).toBe('conflict');
+    expect(studio().name).toBe('שלי');
+  });
+
+  it('a project shared to look at only is never sent, whatever changes here', async () => {
+    await sync.putInCloud();
+    const link = studio().cloud!;
+    studio().linkCloud({ ...link, access: 'view' });
+    studio().setName('ניסיון');
+    await sync.syncNow();
+    expect(status()).toBe('viewOnly');
+    expect(server.puts).toEqual([]);
   });
 
   it('is listed under its name, or its file when it has none', () => {

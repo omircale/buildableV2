@@ -28,7 +28,7 @@ import {
 import { useStudioT } from '../i18n/studio';
 import { useStudio } from '../state/studioStore';
 import { startStudioSync } from '../state/studioSync';
-import { CloudChoice, CloudProjects, CloudStatus } from '../ui/studio/CloudSave';
+import { CloudChoice, CloudProjects, CloudStatus, TeamPanel } from '../ui/studio/CloudSave';
 import { useUi } from '../state/uiStore';
 import { AppHeader } from '../ui/AppHeader';
 import { Button, buttonClass, downloadText, inputClass } from '../ui/common';
@@ -830,6 +830,7 @@ export function StudioPage({ auth, step }: { auth: AuthState; step: StudioStep }
         </div>
         <p className="no-print rounded-lg bg-warn-soft px-3 py-2 text-small">{t.demo}</p>
         <CloudChoice />
+        <TeamPanel auth={auth} />
         {saveFailed && (
           <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-small text-bad">
             {t.saveFailed}

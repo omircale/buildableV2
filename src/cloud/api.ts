@@ -227,18 +227,39 @@ export async function loadBill(id: string): Promise<{ row: BillRow; data: unknow
 
 /* ---------------------------------------------------------------- design-studio projects */
 
-/** A studio project saved to the account. `version` goes up with every save, from any device. */
+/** What this account may do with a studio project: it is theirs, or shared with them to edit or to look. */
+export type StudioAccess = 'owner' | 'edit' | 'view';
+
+/** A studio project saved to the account. `version` goes up with every save, from any device, by anyone. */
 export interface StudioRow {
   id: string;
   name: string;
   version: number;
   updated_at: string;
+  access: StudioAccess;
+  owner_email: string;
+}
+
+export interface TeamMember {
+  email: string;
+  access: 'edit' | 'view';
+  title: string | null;
+  created_at: string;
 }
 
 export const listStudio = () => call<StudioRow[]>('/api/studio');
 export const createStudio = (name: string, data: unknown) => call<StudioRow>('/api/studio', { method: 'POST', body: { name, data } });
 export const loadStudio = (id: string) => call<{ row: StudioRow; data: unknown }>(`/api/studio/${encodeURIComponent(id)}`);
 export const deleteStudio = async (id: string) => void (await call(`/api/studio/${encodeURIComponent(id)}`, { method: 'DELETE' }));
+
+/** The team of a project: its owner and the people it is shared with. */
+export const studioTeam = (id: string) => call<{ owner: string; members: TeamMember[] }>(`/api/studio/${encodeURIComponent(id)}/members`);
+/** Adds someone to the team, or changes what they may do. Only the owner may. */
+export const shareStudio = async (id: string, member: { email: string; access: 'edit' | 'view'; title: string | null }) =>
+  void (await call(`/api/studio/${encodeURIComponent(id)}/members`, { method: 'POST', body: member }));
+/** Takes someone off the team; anyone may take themselves off. */
+export const unshareStudio = async (id: string, email: string) =>
+  void (await call(`/api/studio/${encodeURIComponent(id)}/members/${encodeURIComponent(email)}`, { method: 'DELETE' }));
 
 /**
  * Saves on top of `baseVersion`. If another device saved since, the server refuses: the error has
@@ -265,6 +286,7 @@ export interface Usage {
   places: number;
   bills: number;
   studio: number;
+  shared: number;
 }
 
 export const listMembers = () => call<MemberRow[]>('/api/admin/members');

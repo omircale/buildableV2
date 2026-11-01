@@ -20,6 +20,8 @@ const storageKey = () => ownedKey(STORAGE_BASE);
 /** Where this device's copy stands against the account's. */
 export interface CloudLink {
   id: string;
+  /** Whether this account owns the project, or it was shared with them to edit or only to look. */
+  access: 'owner' | 'edit' | 'view';
   /** The account's version this device last saved or opened. */
   version: number;
   savedAt: string;
@@ -45,7 +47,9 @@ function load(): Kept {
     const raw = localStorage.getItem(storageKey());
     if (!raw) return blankKept();
     const p = JSON.parse(raw) as Partial<Kept>;
-    return { ...fill(p), cloud: p.cloud ?? null, edits: typeof p.edits === 'number' ? p.edits : 0 };
+    // A project linked before sharing existed was always its owner's.
+    const cloud = p.cloud ? { ...p.cloud, access: p.cloud.access ?? 'owner' } : null;
+    return { ...fill(p), cloud, edits: typeof p.edits === 'number' ? p.edits : 0 };
   } catch {
     return blankKept();
   }

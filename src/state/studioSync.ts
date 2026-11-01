@@ -29,6 +29,8 @@ export type SyncStatus =
   | 'gone'
   /** Signed out, or not admitted: the project stays on this device. */
   | 'signedOut'
+  /** Shared with this account to look only: changes made here stay on this device. */
+  | 'viewOnly'
   | 'tooLarge'
   | 'failed';
 
@@ -52,8 +54,9 @@ let running: Promise<void> | null = null;
 let again = false;
 
 function statusFor(e: unknown): SyncStatus {
-  const { status } = e as ApiError;
+  const { status, code } = e as ApiError;
   if (status === undefined) return 'offline'; // the request never reached the server
+  if (code === 'view_only') return 'viewOnly';
   if (status === 401 || status === 403) return 'signedOut';
   if (status === 404) return 'gone';
   if (status === 413) return 'tooLarge';
@@ -63,6 +66,10 @@ function statusFor(e: unknown): SyncStatus {
 async function send(force: boolean): Promise<void> {
   const s = useStudio.getState();
   if (!s.cloud) return;
+  if (s.cloud.access === 'view') {
+    useStudioSync.setState({ status: 'viewOnly' });
+    return;
+  }
   if (!force && !hasUnsaved(s)) {
     useStudioSync.setState({ status: 'saved' });
     return;
@@ -78,7 +85,7 @@ async function send(force: boolean): Promise<void> {
     const row = await saveStudio(id, { name: cloudName(s, untitledName), data: studioSnapshot(s), baseVersion: s.cloud.version, force });
     // Only if the device is still on the same project: a new plan or an opened one replaced it meanwhile.
     if (useStudio.getState().cloud?.id !== id) return;
-    useStudio.getState().linkCloud({ id, version: row.version, savedAt: row.updated_at, syncedEdits: edits });
+    useStudio.getState().linkCloud({ id, access: row.access, version: row.version, savedAt: row.updated_at, syncedEdits: edits });
     useStudioSync.setState({ status: 'saved', theirs: null });
   } catch (e) {
     if ((e as ApiError).status === 409) {
@@ -117,7 +124,7 @@ export async function putInCloud(): Promise<void> {
   useStudioSync.setState({ status: 'saving' });
   try {
     const row = await createStudio(cloudName(s, untitledName), studioSnapshot(s));
-    useStudio.getState().linkCloud({ id: row.id, version: row.version, savedAt: row.updated_at, syncedEdits: edits });
+    useStudio.getState().linkCloud({ id: row.id, access: row.access, version: row.version, savedAt: row.updated_at, syncedEdits: edits });
     useStudioSync.setState({ status: 'saved', theirs: null });
     // Anything changed while the first save was on its way.
     if (hasUnsaved(useStudio.getState())) await syncNow();
@@ -130,12 +137,42 @@ export async function putInCloud(): Promise<void> {
 export async function openFromCloud(id: string): Promise<boolean> {
   try {
     const { row, data } = await loadStudio(id);
-    useStudio.getState().openCloud(data as Partial<StudioProject>, { id: row.id, version: row.version, savedAt: row.updated_at });
-    useStudioSync.setState({ status: 'saved', theirs: null });
+    useStudio.getState().openCloud(data as Partial<StudioProject>, { id: row.id, access: row.access, version: row.version, savedAt: row.updated_at });
+    useStudioSync.setState({ status: row.access === 'view' ? 'viewOnly' : 'saved', theirs: null });
     return true;
   } catch (e) {
     useStudioSync.setState({ status: statusFor(e) });
     return false;
+  }
+}
+
+/**
+ * Brings in what someone else saved since this device last saw the project. With nothing unsaved here
+ * it simply opens the newer version; with changes here too, the person chooses, as with a refused save.
+ */
+export async function pullLatest(): Promise<void> {
+  const s = useStudio.getState();
+  if (!s.cloud || running || useStudioSync.getState().status === 'conflict') return;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  const { id, version } = s.cloud;
+  try {
+    const { row, data } = await loadStudio(id);
+    const now = useStudio.getState();
+    if (now.cloud?.id !== id) return;
+    if (row.version === version) {
+      // Same version; the owner may have changed what this account may do with it.
+      if (row.access !== now.cloud.access) now.linkCloud({ ...now.cloud, access: row.access });
+      return;
+    }
+    if (!hasUnsaved(now)) {
+      now.openCloud(data as Partial<StudioProject>, { id, access: row.access, version: row.version, savedAt: row.updated_at });
+      useStudioSync.setState({ status: row.access === 'view' ? 'viewOnly' : 'saved', theirs: null });
+    } else {
+      useStudioSync.setState({ status: 'conflict', theirs: row });
+    }
+  } catch (e) {
+    const status = statusFor(e);
+    if (status !== 'offline') useStudioSync.setState({ status });
   }
 }
 
@@ -165,17 +202,29 @@ export function startStudioSync(untitled: string): () => void {
     clearTimeout(timer);
     timer = setTimeout(() => void syncNow(), DEBOUNCE_MS);
   };
+  // Changes here go out; with none, what others saved comes in.
+  const refresh = () => {
+    if (!useStudio.getState().cloud) return;
+    if (hasUnsaved(useStudio.getState())) void syncNow();
+    else void pullLatest();
+  };
   const stopWatching = useStudio.subscribe((s, prev) => {
-    if (s.cloud?.id !== prev.cloud?.id) useStudioSync.setState({ status: s.cloud ? 'saved' : 'idle', theirs: null });
+    if (s.cloud?.id !== prev.cloud?.id) {
+      useStudioSync.setState({ status: s.cloud ? 'saved' : 'idle', theirs: null });
+      // Another project on screen — opened, or the signed-in person's own once they are known, which on
+      // a fresh page is after the studio started — so it is checked against the account now.
+      refresh();
+    }
     if (s.cloud && s.edits !== prev.edits) later();
   });
-  const online = () => void syncNow();
-  window.addEventListener('online', online);
-  // Whatever was left unsent the last time the studio was open.
-  if (useStudio.getState().cloud) void syncNow();
+  const visible = () => document.visibilityState === 'visible' && refresh();
+  window.addEventListener('online', refresh);
+  document.addEventListener('visibilitychange', visible);
+  refresh();
   return () => {
     clearTimeout(timer);
     stopWatching();
-    window.removeEventListener('online', online);
+    window.removeEventListener('online', refresh);
+    document.removeEventListener('visibilitychange', visible);
   };
 }

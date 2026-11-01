@@ -336,3 +336,75 @@ describe('signing in with an address and a password', () => {
     expect(viaGoogle).toEqual({ user: { id: passwordId, email: 'site@x.com' }, role: 'member' });
   });
 });
+
+describe('a studio project shared with the team', () => {
+  const project = (name: string) => ({ name, spaces: [], marks: [], revision: 1 });
+  async function setUp() {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    const pm = await signIn('pm', 'pm@x.com', 'member');
+    const trade = await signIn('tr', 'trade@x.com', 'member');
+    const client = await signIn('cl', 'client@x.com', 'member');
+    const stranger = await signIn('st', 'stranger@x.com', 'member');
+    const { id } = await (await call('/api/studio', pm, { method: 'POST', body: { name: 'בר בריכה', data: project('בר בריכה') } })).json();
+    return { admin, pm, trade, client, stranger, id };
+  }
+  const share = (token: string, id: string, email: string, access: string, title?: string) => call(`/api/studio/${id}/members`, token, { method: 'POST', body: { email, access, title } });
+
+  test('someone the owner adds to edit sees it, opens it and saves on top of the latest version', async () => {
+    const { pm, trade, id } = await setUp();
+    expect((await share(pm, id, 'Trade@X.com', 'edit', 'אינסטלטור')).status).toBe(200);
+
+    const listed = await (await call('/api/studio', trade)).json();
+    expect(listed).toEqual([expect.objectContaining({ id, access: 'edit', owner_email: 'pm@x.com' })]);
+    const opened = await (await call(`/api/studio/${id}`, trade)).json();
+    expect(opened.row.access).toBe('edit');
+
+    const saved = await call(`/api/studio/${id}`, trade, { method: 'PUT', body: { name: 'בר בריכה', data: { ...project('בר בריכה'), marks: [1] }, baseVersion: 1 } });
+    expect((await saved.json()).version).toBe(2);
+    // The owner's next save, from the version they had, is refused: nothing the trade saved is lost.
+    expect((await call(`/api/studio/${id}`, pm, { method: 'PUT', body: { name: 'x', data: project('x'), baseVersion: 1 } })).status).toBe(409);
+  });
+
+  test('someone added to look reads it but cannot save; the team is visible to all on it', async () => {
+    const { pm, client, id } = await setUp();
+    await share(pm, id, 'client@x.com', 'view', 'לקוח');
+    expect((await call(`/api/studio/${id}`, client)).status).toBe(200);
+    expect(await (await call(`/api/studio/${id}`, client, { method: 'PUT', body: { name: 'x', data: {}, force: true } })).json()).toEqual({ error: 'view_only' });
+    expect(await (await call(`/api/studio/${id}/members`, client)).json()).toEqual({
+      owner: 'pm@x.com',
+      members: [expect.objectContaining({ email: 'client@x.com', access: 'view', title: 'לקוח' })],
+    });
+  });
+
+  test('only the owner changes the team or deletes the project; a member may leave', async () => {
+    const { pm, trade, client, id } = await setUp();
+    await share(pm, id, 'trade@x.com', 'edit');
+    expect((await share(trade, id, 'client@x.com', 'edit')).status).toBe(403);
+    expect((await call(`/api/studio/${id}/members/pm%40x.com`, trade, { method: 'DELETE' })).status).toBe(403);
+    expect((await call(`/api/studio/${id}`, trade, { method: 'DELETE' })).status).toBe(404);
+
+    expect((await call(`/api/studio/${id}/members/trade%40x.com`, trade, { method: 'DELETE' })).status).toBe(200);
+    expect((await call(`/api/studio/${id}`, trade)).status).toBe(404);
+    expect(await (await call('/api/studio', client)).json()).toEqual([]);
+  });
+
+  test('to anyone not on the team, the admin included, the project does not exist', async () => {
+    const { admin, stranger, id } = await setUp();
+    for (const who of [admin, stranger]) {
+      expect((await call(`/api/studio/${id}`, who)).status).toBe(404);
+      expect((await call(`/api/studio/${id}/members`, who)).status).toBe(404);
+      expect((await share(who, id, 'stranger@x.com', 'edit')).status).toBe(404);
+    }
+  });
+
+  test('a project is shared only with someone the admin let in; deleting it ends the sharing', async () => {
+    const { pm, id } = await setUp();
+    expect(await (await share(pm, id, 'outsider@x.com', 'edit')).json()).toEqual({ error: 'not_invited' });
+    expect(await (await share(pm, id, 'pm@x.com', 'edit')).json()).toEqual({ error: 'is_owner' });
+    expect((await share(pm, id, 'trade@x.com', 'admin')).status).toBe(400);
+
+    await share(pm, id, 'trade@x.com', 'edit');
+    await call(`/api/studio/${id}`, pm, { method: 'DELETE' });
+    expect(await env.DB.prepare('select count(*) as n from studio_members').first()).toEqual({ n: 0 });
+  });
+});
