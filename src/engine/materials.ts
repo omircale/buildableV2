@@ -1,0 +1,503 @@
+import { buildSupplierMaterials } from './suppliers/catalogMaterials';
+import { HAYOZRIM } from './suppliers/hayozrim';
+import type { Supplier, SupplierProduct } from './suppliers/types';
+import type { Ec5Class, Material, Source, SourcedValue, StockSize } from './types';
+
+export const SOURCES = {
+  system32: {
+    title: '32 mm cabinetmaking system (Wikipedia, describing Hettich System 32)',
+    reference: 'מרווח בין חורים 32 מ"מ; קוטר 5 מ"מ; שורה ראשונה 37 מ"מ מהקצה הקדמי; עומק חור 12–14 מ"מ',
+    referenceEn: 'Hole pitch 32 mm; diameter 5 mm; first row 37 mm from the front edge; hole depth 12–14 mm',
+    url: 'https://en.wikipedia.org/wiki/32_mm_cabinetmaking_system',
+  },
+  en622_5: {
+    title: 'EN 622-5:2009 Fibreboards — Requirements for dry process boards (MDF)',
+    reference: 'Table 3 (MDF general purpose, dry) / Table 5 (MDF.LA)',
+    url: 'https://www.choobeno.com/wp-content/uploads/2019/12/BSI-BS-EN-622-5.pdf',
+  },
+  en312: {
+    title: 'EN 312:2010 Particleboards — Specifications',
+    reference: 'Table 3 (P2, boards for interior fitments, dry)',
+    url: 'https://cdn.standards.iteh.ai/samples/32825/f503d7326937419baa76fe3ab40205d0/SIST-EN-312-2011.pdf',
+  },
+  finnishPlywood: {
+    title: 'Handbook of Finnish Plywood (Koskisen)',
+    reference: 'Tables 3-1 and 3-2 — birch plywood 18 mm, 13 plies (values per EN 789 testing)',
+    url: 'https://koskisen.fi/wp-content/uploads/materials/HandBook-of-Koskisen-Plywood.pdf',
+  },
+  en1991_1_1: {
+    title: 'EN 1991-1-1:2002 (Eurocode 1), Annex A',
+    reference: 'Table A.2 — construction materials, masonry: granite/syenite/porphyry 27.0–30.0 kN/m³',
+    url: 'https://www.phd.eng.br/wp-content/uploads/2015/12/en.1991.1.1.2002.pdf',
+  },
+  caesarstone: {
+    title: 'Caesarstone Technical Data Manual',
+    reference: 'Physical properties — bulk density ≥ 2.1 g/cm³ per ASTM C97 / EN 14617-1; slab 3050 × 1440 mm',
+    url: 'https://www.caesarstoneus.com/wp-content/uploads/2021/10/Ceasarstone_CS_TechnicalDataManual-5.pdf',
+  },
+  thyssenkrupp304: {
+    title: 'thyssenkrupp material data sheet 1.4301 / 304',
+    reference: 'Density 8,000 kg/m³',
+    url: 'https://ucpcdn.thyssenkrupp.com/_legacy/UCPthyssenkruppBAMXUK/assets.files/material-data-sheets/stainless-steel/stainless-steel-1.4301-304.pdf',
+  },
+  aalco304: {
+    title: 'Aalco — Stainless Steel 1.4301 (304) Sheet and Plate',
+    reference: 'Properties stated per EN 10088-2:2005; density 8.00 g/cm³',
+    url: 'https://www.aalco.co.uk/datasheets/Stainless-Steel-14301-Sheet-and-Plate-Quarto-Plate--CPP-Plate_343.ashx',
+  },
+  corian: {
+    title: 'Corian Solid Surface — performance properties (K-26829)',
+    reference: 'Density 1.75 g/cm³ per ISO 1183',
+    url: 'https://www.corian.uk/IMG/pdf/k-26829_performance_properties_en.pdf',
+  },
+  steelWorktops: {
+    title: 'Metalsheets Ltd — stainless steel worktops',
+    reference: 'Worktops bonded to plywood / MR-MDF / aluminium substrates; 4 mm solid 304 for bars and professional kitchens; seamless runs to 3 m',
+    url: 'https://metalsheets.co.uk/our_product/stainless-steel-worktops/',
+  },
+  stainlessSheetStock: {
+    title: 'Metal Supplies — stainless steel sheet stock list',
+    reference: 'Stock sheets 2000×1000, 2500×1250, 3000×1500 mm; 0.4–2.5 mm',
+    url: 'https://www.metalsupplies.com/products/stainless-steel-sheet/',
+  },
+  en338_2003: {
+    title: 'EN 338:2003 Structural timber — Strength classes',
+    reference: 'Table 1 (C16, C24, D30)',
+    url: 'http://higiene.unex.es/Bibliogr/ISO_BS_USDA/ISO_BS/BS%20EN/BS%20EN%2000338-2003.pdf',
+  },
+  en338_2016: {
+    title: 'EN 338:2016 excerpt (dataholz.eu)',
+    reference: 'Strength classes — E0,mean and fm,k for C16/C24 match the 2003 edition',
+    url: 'https://www.dataholz.eu/fileadmin/dataholz/media/baustoffe/Datenblaetter_en/vh_en_01.pdf',
+  },
+  ec5: {
+    title: 'EN 1995-1-1:2004+A1:2008 (Eurocode 5)',
+    reference: 'Table 2.3 (γM), Table 3.1 (kmod), Table 3.2 (kdef), Table 7.2 (deflection limits)',
+    url: 'https://gaprojekt.com/wp-content/uploads/2021/11/Eurocode-5-Design-of-timber-structures.pdf',
+  },
+} satisfies Record<string, Source>;
+
+/** Stock sheet sizes have not yet been confirmed with Israeli suppliers (PRD §34). */
+const assumedSheet = (lengthMm: number, widthMm: number): StockSize => ({
+  lengthMm,
+  widthMm,
+  kind: 'assumption',
+  note: 'מידת לוח מקובלת — טרם אומתה מול ספק',
+  noteEn: 'Common sheet size — not yet confirmed with a supplier',
+});
+
+/**
+ * Density for panels is not set by EN 622-5 / EN 312. Self-weight is a small part of shelf load, so an
+ * explicitly-labelled upper-bound assumption is used and the structural result is capped at YELLOW.
+ */
+const assumedDensity = (value: number, note: string, noteEn: string): SourcedValue => ({ value, kind: 'assumption', sources: [], note, noteEn });
+
+export const MATERIAL_LIBRARY: Material[] = [
+  {
+    id: 'birch_plywood',
+    nameHe: "סנדוויץ' ליבנה",
+    nameEn: 'Birch plywood',
+    descriptionHe: 'לבוד ליבנה פיני/בלטי. ערכי חוזק זמינים לעובי 18 מ"מ בלבד.',
+    descriptionEn: 'Finnish/Baltic birch plywood. Strength values are available for 18 mm thickness only.',
+    category: 'plywood',
+    ec5Class: 'plywood',
+    thicknessesMm: [6.5, 12, 15, 18, 21, 24],
+    densityKgM3: { value: 680, kind: 'mean', sources: [SOURCES.finnishPlywood] },
+    properties: [
+      {
+        minMm: 17,
+        maxMm: 19,
+        eBendingMpa: { value: 10048, kind: 'mean', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים', noteEn: 'Parallel to the face-ply grain' },
+        fBendingMpa: { value: 40.2, kind: 'characteristic', sources: [SOURCES.finnishPlywood], note: 'במקביל לסיבי שכבת הפנים', noteEn: 'Parallel to the face-ply grain' },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: true,
+    stock: [assumedSheet(2500, 1250), assumedSheet(2440, 1220)],
+    defaultColor: '#dcc39a',
+    verified: true,
+  },
+  {
+    id: 'mdf',
+    nameHe: 'MDF',
+    nameEn: 'MDF (general purpose, dry)',
+    descriptionHe: 'ערכי מינימום לפי EN 622-5. MDF רגיל אינו מכוסה ב-Eurocode 5 — זחילה מוערכת באנלוגיה ל-MDF.LA.',
+    descriptionEn: 'Minimum values per EN 622-5. General-purpose MDF is not covered by Eurocode 5 — creep is estimated by analogy with MDF.LA.',
+    category: 'mdf',
+    ec5Class: 'not_covered',
+    ec5AnalogyClass: 'mdf_la',
+    thicknessesMm: [16, 18, 19, 22, 25],
+    densityKgM3: assumedDensity(800, 'EN 622-5 אינו קובע צפיפות. 800 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.', 'EN 622-5 does not specify density. 800 kg/m³ — upper-bound assumption for self-weight.'),
+    properties: [
+      {
+        minMm: 12,
+        maxMm: 19,
+        eBendingMpa: { value: 2200, kind: 'standard_minimum', sources: [SOURCES.en622_5] },
+        fBendingMpa: { value: 20, kind: 'standard_minimum', sources: [SOURCES.en622_5] },
+      },
+      {
+        minMm: 19,
+        maxMm: 30,
+        eBendingMpa: { value: 2100, kind: 'standard_minimum', sources: [SOURCES.en622_5] },
+        fBendingMpa: { value: 18, kind: 'standard_minimum', sources: [SOURCES.en622_5] },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: false,
+    stock: [assumedSheet(2800, 2070), assumedSheet(2440, 1220)],
+    defaultColor: '#b89f7e',
+    verified: true,
+  },
+  {
+    id: 'particleboard_p2',
+    nameHe: 'סיבית (P2)',
+    nameEn: 'Particleboard P2',
+    descriptionHe: 'סיבית לריהוט פנים לפי EN 312. אינה מכוסה ב-Eurocode 5 — זחילה מוערכת באנלוגיה ל-P4.',
+    descriptionEn: 'Particleboard for interior fitments per EN 312. Not covered by Eurocode 5 — creep is estimated by analogy with P4.',
+    category: 'particleboard',
+    ec5Class: 'not_covered',
+    ec5AnalogyClass: 'particleboard_p4',
+    thicknessesMm: [16, 18],
+    densityKgM3: assumedDensity(750, 'EN 312 אינו קובע צפיפות. 750 ק"ג/מ"ק — הנחת גבול עליון לחישוב משקל עצמי.', 'EN 312 does not specify density. 750 kg/m³ — upper-bound assumption for self-weight.'),
+    properties: [
+      {
+        minMm: 13,
+        maxMm: 20,
+        eBendingMpa: { value: 1600, kind: 'standard_minimum', sources: [SOURCES.en312] },
+        fBendingMpa: { value: 11, kind: 'standard_minimum', sources: [SOURCES.en312] },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: false,
+    stock: [assumedSheet(2800, 2070)],
+    defaultColor: '#e8e4dc',
+    verified: true,
+  },
+  {
+    id: 'softwood_c24',
+    nameHe: 'עץ רך מלא — מדורג C24',
+    nameEn: 'Solid softwood, strength class C24',
+    descriptionHe: 'עץ מחטני (אורן/אשוח) שעבר מיון חוזק ל-C24. לוח מודבק שלא עבר מיון — הערכים אינם חלים.',
+    descriptionEn: 'Softwood (pine/spruce) strength-graded to C24. For glued panels that were not graded, these values do not apply.',
+    category: 'solid_softwood',
+    ec5Class: 'solid_timber',
+    thicknessesMm: [18, 20, 27, 40],
+    densityKgM3: { value: 420, kind: 'mean', sources: [SOURCES.en338_2003] },
+    properties: [
+      {
+        minMm: 0,
+        maxMm: 150,
+        eBendingMpa: { value: 11000, kind: 'mean', sources: [SOURCES.en338_2003, SOURCES.en338_2016] },
+        fBendingMpa: { value: 24, kind: 'characteristic', sources: [SOURCES.en338_2003, SOURCES.en338_2016] },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: true,
+    stock: [assumedSheet(3000, 1200)],
+    defaultColor: '#e6c68f',
+    verified: true,
+  },
+  {
+    id: 'softwood_c16',
+    nameHe: 'עץ רך מלא — מדורג C16',
+    nameEn: 'Solid softwood, strength class C16',
+    descriptionHe: 'עץ מחטני שעבר מיון חוזק ל-C16.',
+    descriptionEn: 'Softwood strength-graded to C16.',
+    category: 'solid_softwood',
+    ec5Class: 'solid_timber',
+    thicknessesMm: [18, 20, 27, 40],
+    densityKgM3: { value: 370, kind: 'mean', sources: [SOURCES.en338_2003] },
+    properties: [
+      {
+        minMm: 0,
+        maxMm: 150,
+        eBendingMpa: { value: 8000, kind: 'mean', sources: [SOURCES.en338_2003, SOURCES.en338_2016] },
+        fBendingMpa: { value: 16, kind: 'characteristic', sources: [SOURCES.en338_2003, SOURCES.en338_2016] },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: true,
+    stock: [assumedSheet(3000, 1200)],
+    defaultColor: '#edd3a4',
+    verified: true,
+  },
+  {
+    id: 'hardwood_d30',
+    nameHe: 'עץ קשה מלא — מדורג D30 (למשל אלון)',
+    nameEn: 'Solid hardwood, strength class D30',
+    descriptionHe: 'עץ נשיר שעבר מיון חוזק ל-D30. ערכי EN 338:2003.',
+    descriptionEn: 'Hardwood strength-graded to D30. EN 338:2003 values.',
+    category: 'solid_hardwood',
+    ec5Class: 'solid_timber',
+    thicknessesMm: [20, 26, 40],
+    densityKgM3: { value: 640, kind: 'mean', sources: [SOURCES.en338_2003] },
+    properties: [
+      {
+        minMm: 0,
+        maxMm: 150,
+        eBendingMpa: { value: 10000, kind: 'mean', sources: [SOURCES.en338_2003], note: 'במהדורת 2016 ייתכן ערך שונה — לא אומת', noteEn: 'The 2016 edition may give a different value — not verified' },
+        fBendingMpa: { value: 30, kind: 'characteristic', sources: [SOURCES.en338_2003] },
+      },
+    ],
+    structuralUse: true,
+    hasGrain: true,
+    stock: [assumedSheet(3000, 1200)],
+    defaultColor: '#b58a5a',
+    verified: true,
+  },
+  {
+    id: 'hdf_back',
+    nameHe: 'HDF לגב',
+    nameEn: 'HDF back panel',
+    descriptionHe: 'לוח גב דק. אינו רכיב נושא עומס; אין נתוני חוזק במערכת.',
+    descriptionEn: 'Thin back panel. Not a load-bearing member; no strength data in the system.',
+    category: 'mdf',
+    ec5Class: 'not_covered',
+    thicknessesMm: [3, 4],
+    densityKgM3: assumedDensity(950, 'צפיפות HDF לא אומתה — הנחת גבול עליון לחישוב משקל בלבד.', 'HDF density not verified — upper-bound assumption, used for weight only.'),
+    properties: [],
+    structuralUse: false,
+    hasGrain: false,
+    stock: [assumedSheet(2440, 1220), assumedSheet(2800, 2070)],
+    defaultColor: '#8a735a',
+    verified: false,
+  },
+  {
+    id: 'granite_worktop',
+    nameHe: 'משטח גרניט',
+    nameEn: 'Granite worktop',
+    descriptionHe: 'אבן טבעית. הצפיפות היא טווח לפי Eurocode 1 — אבן טבעית משתנה בין מחצבות, והתקן עצמו אינו נוקב בערך יחיד.',
+    descriptionEn: 'Natural stone. The density is a range from Eurocode 1 — natural stone varies between quarries, and the standard itself does not give a single figure.',
+    category: 'stone',
+    ec5Class: 'not_covered',
+    thicknessesMm: [20, 30],
+    densityKgM3: {
+      value: 2752,
+      valueMax: 3058,
+      kind: 'characteristic',
+      sources: [SOURCES.en1991_1_1],
+      note: 'הומר מ-27.0–30.0 קילו-ניוטון למ״ק (משקל סגולי) לפי g = 9.81. "גרניט שחור" מסחרי הוא לרוב גברו, 27.0–31.0.',
+      noteEn: 'Converted from 27.0–30.0 kN/m³ (weight density) at g = 9.81. Commercial "black granite" is usually gabbro, 27.0–31.0.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [
+      {
+        lengthMm: 3200,
+        widthMm: 1900,
+        kind: 'supplier',
+        note: 'מלאי של סיטונאי אחד, לא תקן. לוח אבן טבעית מוגבל בגודל הגוש במחצבה ומשתנה.',
+        noteEn: 'One wholesaler’s inventory, not a standard. A natural stone slab is limited by the quarry block and varies.',
+      },
+    ],
+    defaultColor: '#8d8b86',
+    verified: true,
+  },
+  {
+    id: 'quartz_worktop',
+    nameHe: 'משטח קוורץ מהונדס',
+    nameEn: 'Engineered quartz worktop',
+    descriptionHe: 'אבן קוורץ מהונדסת. היצרן מפרסם מינימום; הקצה העליון נגזר ממשקלי הלוחות באותו מסמך.',
+    descriptionEn: 'Engineered quartz. The maker publishes a minimum; the upper end is derived from slab weights in the same document.',
+    category: 'stone',
+    ec5Class: 'not_covered',
+    thicknessesMm: [13, 20, 30],
+    densityKgM3: {
+      value: 2100,
+      valueMax: 2390,
+      kind: 'manufacturer',
+      sources: [SOURCES.caesarstone],
+      note: '2100 הוא מינימום שפורסם (ASTM C97 / EN 14617-1). 2390 נגזר ממשקלי הלוחות באותו מדריך — נגזר, לא פורסם.',
+      noteEn: '2100 is the published minimum (ASTM C97 / EN 14617-1). 2390 is derived from slab weights in the same manual — derived, not published.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [
+      { lengthMm: 3050, widthMm: 1440, kind: 'manufacturer', note: 'לוח תקני. סובלנות ±5 מ״מ רוחב, ±10 מ״מ אורך.', noteEn: 'Standard slab. Tolerance ±5 mm width, ±10 mm length.' },
+      { lengthMm: 3340, widthMm: 1640, kind: 'manufacturer', note: 'לוח ג׳מבו.', noteEn: 'Jumbo slab.' },
+    ],
+    defaultColor: '#d8d4cc',
+    verified: true,
+  },
+  {
+    id: 'stainless_304_skin',
+    nameHe: 'ציפוי נירוסטה 304 על מצע',
+    nameEn: 'Stainless 304 skin on a substrate',
+    descriptionHe:
+      'הבנייה המקובלת למשטח נירוסטה מסחרי: יריעת פלדה דקה מודבקת על ליבת MDF עמיד-לחות או דיקט. זהו שני פריטים בכתב הכמויות — הציפוי והמצע.',
+    descriptionEn:
+      'The usual build for a commercial stainless worktop: a thin steel sheet bonded to a moisture-resistant MDF or plywood core. That is two items in a bill of quantities — the skin and the substrate.',
+    category: 'stainless_steel',
+    ec5Class: 'not_covered',
+    thicknessesMm: [1, 1.2, 1.5, 2, 2.5],
+    densityKgM3: {
+      value: 8000,
+      kind: 'manufacturer',
+      sources: [SOURCES.thyssenkrupp304, SOURCES.aalco304],
+      note: 'שני דפי יצרן עצמאיים, לפי EN 10088-2. הערך 7900 המצוטט לעיתים לא אומת.',
+      noteEn: 'Two independent maker datasheets, per EN 10088-2. The sometimes-quoted 7900 could not be verified.',
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    requiresSubstrate: {
+      reasonHe: 'הציפוי אינו נושא בעצמו — נדרש לוח מצע מתחתיו, והוא פריט נפרד. עובי המצע לא אומת ולכן אינו נקוב.',
+      reasonEn: 'The skin carries nothing on its own — a substrate board is required beneath it, as a separate item. The substrate thickness could not be verified and is therefore not stated.',
+      sources: [SOURCES.steelWorktops],
+    },
+    hasGrain: false,
+    stock: [
+      { lengthMm: 3000, widthMm: 1500, kind: 'supplier', note: 'יריעת מלאי. רצף ללא תפר מוגבל ל-3 מטר בגלל גודל היריעה.', noteEn: 'Stock sheet. A seamless run is limited to 3 m by the sheet size.' },
+      { lengthMm: 2500, widthMm: 1250, kind: 'supplier' },
+      { lengthMm: 2000, widthMm: 1000, kind: 'supplier' },
+    ],
+    defaultColor: '#b6b9bd',
+    verified: true,
+  },
+  {
+    id: 'stainless_304_solid',
+    nameHe: 'נירוסטה 304 מלאה 4 מ״מ',
+    nameEn: 'Solid 304 stainless, 4 mm',
+    descriptionHe: 'לוח מלא לשימוש כבד בברים ובמטבחים מקצועיים. כבד משמעותית מציפוי על מצע.',
+    descriptionEn: 'Solid plate for heavy use in bars and professional kitchens. Considerably heavier than a skin on a substrate.',
+    category: 'stainless_steel',
+    ec5Class: 'not_covered',
+    thicknessesMm: [4],
+    densityKgM3: {
+      value: 8000,
+      kind: 'manufacturer',
+      sources: [SOURCES.thyssenkrupp304, SOURCES.aalco304],
+    },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [{ lengthMm: 3000, widthMm: 1500, kind: 'supplier', note: 'רצף ללא תפר מוגבל ל-3 מטר.', noteEn: 'A seamless run is limited to 3 m.' }],
+    defaultColor: '#a9adb2',
+    verified: true,
+  },
+  {
+    id: 'solid_surface_corian',
+    nameHe: 'משטח אקרילי (Corian)',
+    nameEn: 'Solid surface (Corian)',
+    descriptionHe: 'קומפוזיט אקרילי. קל משמעותית מאבן.',
+    descriptionEn: 'Acrylic composite. Considerably lighter than stone.',
+    category: 'solid_surface',
+    ec5Class: 'not_covered',
+    thicknessesMm: [12],
+    densityKgM3: { value: 1750, kind: 'manufacturer', sources: [SOURCES.corian], note: 'לפי ISO 1183.', noteEn: 'Per ISO 1183.' },
+    properties: [],
+    structuralUse: false,
+    outsideEngineScope: {
+      reasonHe:
+        'Eurocode 5 מכסה עץ ולוחות מבוססי עץ. אבן ומתכת נתונות לקודים אחרים (EC3 לפלדה, EC9 לאלומיניום) שאינם ממומשים כאן, ולכן מפתח ועומס המשטח אינם מחושבים.',
+      reasonEn:
+        'Eurocode 5 covers timber and wood-based panels. Stone and metal fall under other codes (EC3 for steel, EC9 for aluminium) that are not implemented here, so the surface’s span and load are not calculated.',
+      sources: [SOURCES.ec5],
+    },
+    hasGrain: false,
+    stock: [],
+    defaultColor: '#e6e2db',
+    verified: true,
+  },
+];
+
+const byId = new Map(MATERIAL_LIBRARY.map((m) => [m.id, m]));
+
+export const SUPPLIERS: Supplier[] = [HAYOZRIM];
+
+export const SUPPLIER_MATERIALS: Material[] = SUPPLIERS.flatMap((s) => buildSupplierMaterials(s, (id) => byId.get(id)));
+for (const m of SUPPLIER_MATERIALS) byId.set(m.id, m);
+
+export function supplierProductFor(material: Material | undefined): { supplier: Supplier; product: SupplierProduct } | null {
+  if (!material?.supplier) return null;
+  const supplier = SUPPLIERS.find((s) => s.id === material.supplier!.supplierId);
+  const product = supplier?.products.find((p) => p.handle === material.supplier!.handle);
+  return supplier && product ? { supplier, product } : null;
+}
+
+let customMaterials = new Map<string, Material>();
+
+export function setCustomMaterials(list: Material[]): void {
+  customMaterials = new Map(list.map((m) => [m.id, m]));
+}
+
+export function getMaterial(id: string): Material | undefined {
+  return byId.get(id) ?? customMaterials.get(id);
+}
+
+export function allMaterials(): Material[] {
+  return [...MATERIAL_LIBRARY, ...SUPPLIER_MATERIALS, ...customMaterials.values()];
+}
+
+export function propertiesFor(material: Material, thicknessMm: number) {
+  return material.properties.find((p) => thicknessMm > p.minMm && thicknessMm <= p.maxMm);
+}
+
+// ---------------- Eurocode 5 factors (service class 1: heated interior) ----------------
+
+type CoveredClass = Exclude<Ec5Class, 'not_covered'>;
+
+/** EN 1995-1-1 Table 3.2, service class 1. */
+export const KDEF_SC1: Record<CoveredClass, number> = {
+  solid_timber: 0.6,
+  plywood: 0.8,
+  osb3: 1.5,
+  particleboard_p4: 2.25,
+  particleboard_p6: 1.5,
+  mdf_la: 2.25,
+};
+
+/** EN 1995-1-1 Table 3.1, service class 1, long-term action (storage loads per EC5 Table 2.2). */
+export const KMOD_LONG_TERM_SC1: Record<CoveredClass, number> = {
+  solid_timber: 0.7,
+  plywood: 0.7,
+  osb3: 0.5,
+  particleboard_p4: 0.45,
+  particleboard_p6: 0.5,
+  mdf_la: 0.4,
+};
+
+/** EN 1995-1-1 Table 2.3. */
+export const GAMMA_M: Record<CoveredClass, number> = {
+  solid_timber: 1.3,
+  plywood: 1.2,
+  osb3: 1.2,
+  particleboard_p4: 1.3,
+  particleboard_p6: 1.3,
+  mdf_la: 1.3,
+};
+
+export function ec5ClassFor(material: Material): { cls: CoveredClass; byAnalogy: boolean } | null {
+  if (material.ec5Class !== 'not_covered') return { cls: material.ec5Class, byAnalogy: false };
+  if (material.ec5AnalogyClass) return { cls: material.ec5AnalogyClass, byAnalogy: true };
+  return null;
+}

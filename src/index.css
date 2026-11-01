@@ -1,0 +1,184 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Every text/background pair below meets WCAG 2.2 AA (≥ 4.5:1) in both themes. */
+@theme {
+  --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans Hebrew', system-ui, sans-serif;
+  /*
+   * The type scale. Eight steps, each with one job, in rem so a person's own text-size setting is
+   * honoured. Screens use these names; a size written as a raw number is a size nobody decided on.
+   * Print documents (the assembly booklet, the print package) keep their own smaller sizes.
+   */
+  --text-caption: 0.75rem; /* 12 — the smallest text on a screen: counts, hints under a field */
+  --text-small: 0.8125rem; /* 13 — secondary text, explanations */
+  --text-body: 0.875rem; /* 14 — the text people read */
+  --text-control: 0.9375rem; /* 15 — buttons and section titles */
+  --text-title: 2rem; /* 32 — a page's main heading */
+  --text-display: 2.5rem; /* 40 — the home page headline */
+  --color-ink: #1c1a17;
+  --color-paper: #f6f3ee;
+  --color-panel: #ffffff;
+  --color-sunken: #efebe4;
+  --color-line: #e3ddd3;
+  --color-line-strong: #d6cec2;
+  /* The edge of something a person types into or picks from. Unlike a divider it has to be seen: ≥ 3:1. */
+  --color-field: #8c8275;
+  --color-muted: #6b6358;
+  --color-accent: #9a5b2e;
+  --color-accent-ink: #8a4f24;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: #f3e6da;
+  --color-ok: #2a6b43;
+  --color-ok-soft: #e4f2e9;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fbefd6;
+  --color-bad: #a3231b;
+  --color-bad-soft: #fbe3e1;
+  --color-unknown: #5f6368;
+  --color-unknown-soft: #eceef0;
+}
+
+[data-theme='dark'] {
+  --color-ink: #ece6dc;
+  --color-paper: #171512;
+  --color-panel: #211e1a;
+  --color-sunken: #1b1916;
+  --color-line: #36312b;
+  --color-line-strong: #4a443c;
+  --color-field: #857b6e;
+  --color-muted: #a89f92;
+  --color-accent: #d9955f;
+  --color-accent-ink: #e3a06b;
+  --color-on-accent: #1c1a17;
+  --color-accent-soft: #3b2a1c;
+  --color-ok: #7dd09d;
+  --color-ok-soft: #173323;
+  --color-warn: #e6b04f;
+  --color-warn-soft: #3a2d12;
+  --color-bad: #f2877d;
+  --color-bad-soft: #3f1c18;
+  --color-unknown: #b3b8bd;
+  --color-unknown-soft: #2b2e31;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* The page's content takes focus on navigation; it is a place to start reading, not a control to ring. */
+main:focus {
+  outline: none;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+input[type='number'] {
+  direction: ltr;
+  text-align: end;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/*
+ * On a phone, fingers and Safari set the rules, and they are set here once rather than per screen.
+ *
+ * A control is at least 44px tall, whatever height its own class gives it. And anything typed into is
+ * at least 16px: below that, iOS zooms the whole page in on every tap of a field and leaves it there.
+ * `pointer: coarse` is a touch screen; a mouse keeps the denser desktop sizes.
+ */
+@media (pointer: coarse) {
+  button,
+  summary,
+  select,
+  [role='button'],
+  a[class*='inline-flex'] {
+    min-height: 44px;
+  }
+  button,
+  [role='button'] {
+    min-width: 44px;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: max(16px, 1em);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
+
+/* Someone who has asked their device for less motion gets none that is only decoration. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  [data-theme='dark'] {
+    --color-ink: #1c1a17;
+    --color-paper: #ffffff;
+    --color-panel: #ffffff;
+    --color-sunken: #efebe4;
+    --color-line: #e3ddd3;
+    --color-muted: #6b6358;
+    --color-accent: #9a5b2e;
+    color-scheme: light;
+  }
+  body {
+    background: white;
+    color: #1c1a17;
+  }
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  .print-break {
+    break-before: page;
+  }
+}
