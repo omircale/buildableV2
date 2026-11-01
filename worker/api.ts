@@ -114,8 +114,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (!who) return new Response(null, { status: 302, headers: { location: `${url.origin}/#/login?error=google`, 'set-cookie': clear } });
 
     await db
-      .prepare('insert into users (id, email, name) values (?, ?, ?) on conflict (id) do update set email = excluded.email, name = excluded.name')
-      .bind(who.sub, who.email, who.name)
+      .prepare('insert into users (id, email) values (?, ?) on conflict (id) do update set email = excluded.email')
+      .bind(who.sub, who.email)
       .run();
     await admit(db, { id: who.sub, email: who.email }, env.BOOTSTRAP_ADMIN_EMAIL);
     const token = randomToken(32);
@@ -181,7 +181,13 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/admin/usage' && method === 'GET') {
       // Counts only. The admin learns how much is kept, never what.
       const count = async (table: string) => ((await db.prepare(`select count(*) as n from ${table}`).first<{ n: number }>())?.n ?? 0);
-      return json({ members: await count('app_users'), invited: await count('invited_emails'), places: await count('places'), bills: await count('bills') });
+      return json({
+        members: await count('app_users'),
+        invited: await count('invited_emails'),
+        places: await count('places'),
+        bills: await count('bills'),
+        studio: await count('studio_projects'),
+      });
     }
     return fail(404, 'not_found');
   }
@@ -274,6 +280,51 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (billId && method === 'DELETE') {
     const r = await db.prepare('delete from bills where id = ? and owner_id = ?').bind(billId, user.id).run();
+    return r.meta.changes ? json({ ok: true }) : fail(404, 'not_found');
+  }
+
+  /* -------------------------------------------------- design-studio projects */
+
+  // A save carries the version it started from. If another device saved in between, the save is
+  // refused with the version that is there now, and the person chooses which one to keep.
+  const STUDIO = 'id, name, version, updated_at';
+  if (path === '/api/studio' && method === 'GET') {
+    const { results } = await db.prepare(`select ${STUDIO} from studio_projects where owner_id = ? order by updated_at desc`).bind(user.id).all();
+    return json(results);
+  }
+  if (path === '/api/studio' && method === 'POST') {
+    const b = await body<{ name?: string; data?: unknown }>(request);
+    const name = cleanName(b?.name, 200);
+    const data = b?.data == null ? null : JSON.stringify(b.data);
+    if (!name || data == null) return fail(400, 'bad_project');
+    if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+    const id = crypto.randomUUID();
+    await db.prepare('insert into studio_projects (id, owner_id, name, data) values (?, ?, ?, ?)').bind(id, user.id, name, data).run();
+    return json(await db.prepare(`select ${STUDIO} from studio_projects where id = ?`).bind(id).first(), 201);
+  }
+  const studioId = path.match(/^\/api\/studio\/([^/]+)$/)?.[1];
+  if (studioId && method === 'GET') {
+    const row = await db.prepare(`select ${STUDIO}, data from studio_projects where id = ? and owner_id = ?`).bind(studioId, user.id).first<Record<string, unknown> & { data: string }>();
+    if (!row) return fail(404, 'not_found');
+    const { data, ...rest } = row;
+    return json({ row: rest, data: JSON.parse(data) });
+  }
+  if (studioId && method === 'PUT') {
+    const b = await body<{ name?: string; data?: unknown; baseVersion?: number; force?: boolean }>(request);
+    const name = cleanName(b?.name, 200);
+    const data = b?.data == null ? null : JSON.stringify(b.data);
+    if (!name || data == null || (!b?.force && !Number.isInteger(b?.baseVersion))) return fail(400, 'bad_project');
+    if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+    const r = await db
+      .prepare('update studio_projects set name = ?, data = ?, version = version + 1, updated_at = ? where id = ? and owner_id = ? and (? or version = ?)')
+      .bind(name, data, now(), studioId, user.id, b?.force ? 1 : 0, b?.baseVersion ?? 0)
+      .run();
+    const row = await db.prepare(`select ${STUDIO} from studio_projects where id = ? and owner_id = ?`).bind(studioId, user.id).first();
+    if (!row) return fail(404, 'not_found');
+    return r.meta.changes ? json(row) : json({ error: 'stale', row }, 409);
+  }
+  if (studioId && method === 'DELETE') {
+    const r = await db.prepare('delete from studio_projects where id = ? and owner_id = ?').bind(studioId, user.id).run();
     return r.meta.changes ? json({ ok: true }) : fail(404, 'not_found');
   }
 

@@ -153,12 +153,13 @@ function UsageTab() {
   return (
     <div className="space-y-4">
       {error && <p className="rounded bg-bad-soft px-3 py-2 text-sm text-bad">{error}</p>}
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {[
           ['חשבונות פעילים', usage?.members],
           ['הוזמנו', usage?.invited],
           ['תיקיות', usage?.places],
           ['כתבי כמויות שמורים', usage?.bills],
+          ['פרויקטים בסטודיו', usage?.studio],
         ].map(([label, value]) => (
           <div key={label as string} className="rounded-lg bg-panel p-4 ring-1 ring-line">
             <div className="text-xs text-muted">{label}</div>
@@ -167,7 +168,7 @@ function UsageTab() {
         ))}
       </div>
       <p className="max-w-prose text-xs text-muted">
-        מספרים בלבד. המנהל רואה כמה נשמר, לא מה נשמר: כתבי הכמויות של כל חשבון סגורים בפניו בשרת. החישובים רצים בדפדפן של המשתמש, והשרת והמסד הם של Cloudflare.
+        מספרים בלבד. המנהל רואה כמה נשמר, לא מה נשמר: כתבי הכמויות ופרויקטי הסטודיו של כל חשבון סגורים בפניו בשרת. החישובים רצים בדפדפן של המשתמש, והשרת והמסד הם של Cloudflare.
       </p>
     </div>
   );

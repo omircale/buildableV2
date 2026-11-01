@@ -83,6 +83,8 @@ export async function enabledProviders(): Promise<{ google: boolean }> {
 export interface ApiError extends Error {
   code?: string;
   status?: number;
+  /** The whole answer, when the server said more than an error code. */
+  body?: unknown;
 }
 
 async function call<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -94,14 +96,17 @@ async function call<T>(path: string, init: { method?: string; body?: unknown } =
   });
   if (!res.ok) {
     let code: string | undefined;
+    let body: unknown;
     try {
-      code = ((await res.json()) as { error?: string }).error;
+      body = await res.json();
+      code = (body as { error?: string }).error;
     } catch {
       // Not JSON: the status says enough.
     }
     const error: ApiError = new Error(code ?? `HTTP ${res.status}`);
     error.code = code;
     error.status = res.status;
+    error.body = body;
     throw error;
   }
   return (await res.json()) as T;
@@ -145,6 +150,29 @@ export async function loadBill(id: string): Promise<{ row: BillRow; data: unknow
   }
 }
 
+/* ---------------------------------------------------------------- design-studio projects */
+
+/** A studio project saved to the account. `version` goes up with every save, from any device. */
+export interface StudioRow {
+  id: string;
+  name: string;
+  version: number;
+  updated_at: string;
+}
+
+export const listStudio = () => call<StudioRow[]>('/api/studio');
+export const createStudio = (name: string, data: unknown) => call<StudioRow>('/api/studio', { method: 'POST', body: { name, data } });
+export const loadStudio = (id: string) => call<{ row: StudioRow; data: unknown }>(`/api/studio/${encodeURIComponent(id)}`);
+export const deleteStudio = async (id: string) => void (await call(`/api/studio/${encodeURIComponent(id)}`, { method: 'DELETE' }));
+
+/**
+ * Saves on top of `baseVersion`. If another device saved since, the server refuses: the error has
+ * status 409 and `body.row` is the version there now. `force` overwrites it, and is only for a person
+ * who chose to keep this device's version.
+ */
+export const saveStudio = (id: string, input: { name: string; data: unknown; baseVersion: number; force?: boolean }) =>
+  call<StudioRow>(`/api/studio/${encodeURIComponent(id)}`, { method: 'PUT', body: input });
+
 /* ---------------------------------------------------------------- the admin's screen */
 
 export interface MemberRow {
@@ -159,6 +187,7 @@ export interface Usage {
   invited: number;
   places: number;
   bills: number;
+  studio: number;
 }
 
 export const listMembers = () => call<MemberRow[]>('/api/admin/members');

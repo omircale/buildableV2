@@ -27,6 +27,8 @@ import {
 } from '../engine/studio/model';
 import { useStudioT } from '../i18n/studio';
 import { useStudio } from '../state/studioStore';
+import { startStudioSync } from '../state/studioSync';
+import { CloudChoice, CloudProjects, CloudStatus } from '../ui/studio/CloudSave';
 import { useUi } from '../state/uiStore';
 import { AppHeader } from '../ui/AppHeader';
 import { Button, buttonClass, downloadText, inputClass } from '../ui/common';
@@ -54,7 +56,7 @@ function useDesign() {
 
 type Unit = Exclude<DxfUnit, 'unknown'>;
 
-function StartStep() {
+function StartStep({ auth }: { auth: AuthState }) {
   const t = useStudioT();
   const s = t.start;
   const studio = useStudio();
@@ -149,6 +151,7 @@ function StartStep() {
         />
       </div>
       <p className="text-caption text-muted">{s.demoNote}</p>
+      <CloudProjects auth={auth} onOpened={() => go('plan')} />
       {error && (
         <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-small text-bad">
           {error}
@@ -801,6 +804,8 @@ export function StudioPage({ auth, step }: { auth: AuthState; step: StudioStep }
   const t = useStudioT();
   const reset = useStudio((s) => s.reset);
   const saveFailed = useStudio((s) => s.saveFailed);
+  const untitled = t.cloud.untitled;
+  useEffect(() => startStudioSync(untitled), [untitled]);
   return (
     <div className="flex min-h-full flex-col bg-paper">
       <AppHeader auth={auth} />
@@ -816,17 +821,19 @@ export function StudioPage({ auth, step }: { auth: AuthState; step: StudioStep }
             ))}
           </nav>
           <span className="flex-1" />
+          <CloudStatus auth={auth} />
           <Button size="sm" onClick={() => confirm(t.resetConfirm) && (reset(), go('start'))}>
             {t.reset}
           </Button>
         </div>
         <p className="no-print rounded-lg bg-warn-soft px-3 py-2 text-small">{t.demo}</p>
+        <CloudChoice />
         {saveFailed && (
           <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-small text-bad">
             {t.saveFailed}
           </p>
         )}
-        {step === 'start' && <StartStep />}
+        {step === 'start' && <StartStep auth={auth} />}
         {step === 'building' && <BuildingStep />}
         {step === 'plan' && <PlanStep auth={auth} />}
         {step === 'field' && <FieldStep />}

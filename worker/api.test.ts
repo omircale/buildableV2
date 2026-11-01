@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { handleApi } from './api';
@@ -9,7 +9,9 @@ import type { Db, Env, Stmt } from './db';
 function sqliteDb(): Db {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('pragma foreign_keys = on;');
-  sqlite.exec(readFileSync(new URL('../migrations/0001_accounts.sql', import.meta.url), 'utf8'));
+  // Every migration, in order, exactly as `wrangler d1 migrations apply` runs them.
+  const dir = new URL('../migrations/', import.meta.url);
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.sql')).sort()) sqlite.exec(readFileSync(new URL(f, dir), 'utf8'));
   const stmt = (sql: string, values: unknown[] = []): Stmt => {
     const args = values.map((v) => (v === undefined ? null : v)) as never[];
     return {
@@ -75,7 +77,7 @@ describe('signing in with Google', () => {
   const claims = (email: string, extra: Record<string, unknown> = {}) => ({ iss: 'https://accounts.google.com', aud: 'cid', exp: 4_000_000_000, sub: `g-${email}`, email, email_verified: true, ...extra });
 
   test('the ID token is checked: issuer, audience, expiry and a verified address', () => {
-    expect(identityFromIdToken(idToken(claims('a@x.com')), 'cid', 1)).toEqual({ sub: 'g-a@x.com', email: 'a@x.com', name: null });
+    expect(identityFromIdToken(idToken(claims('a@x.com')), 'cid', 1)).toEqual({ sub: 'g-a@x.com', email: 'a@x.com' });
     expect(identityFromIdToken(idToken(claims('a@x.com', { aud: 'other' })), 'cid', 1)).toBeNull();
     expect(identityFromIdToken(idToken(claims('a@x.com', { email_verified: false })), 'cid', 1)).toBeNull();
     expect(identityFromIdToken(idToken(claims('a@x.com', { iss: 'evil' })), 'cid', 1)).toBeNull();
@@ -178,3 +180,62 @@ describe('a member’s own work', () => {
   });
 });
 
+
+describe('design-studio projects', () => {
+  const project = (name: string) => ({ name, spaces: [], marks: [], revision: 1 });
+
+  test('saved from one device, opened on another, saved again on top of what it opened', async () => {
+    const t = await signIn('u1', 'a@x.com', 'member');
+    const created = await (await call('/api/studio', t, { method: 'POST', body: { name: 'מסעדה', data: project('מסעדה') } })).json();
+    expect(created).toMatchObject({ name: 'מסעדה', version: 1 });
+
+    // The phone lists and opens it.
+    expect((await (await call('/api/studio', t)).json()).map((r: { id: string }) => r.id)).toEqual([created.id]);
+    const opened = await (await call(`/api/studio/${created.id}`, t)).json();
+    expect(opened.data).toEqual(project('מסעדה'));
+
+    // A mark added on site, saved on top of version 1.
+    const saved = await call(`/api/studio/${created.id}`, t, { method: 'PUT', body: { name: 'מסעדה', data: { ...project('מסעדה'), marks: [1] }, baseVersion: 1 } });
+    expect(saved.status).toBe(200);
+    expect((await saved.json()).version).toBe(2);
+    expect((await (await call(`/api/studio/${created.id}`, t)).json()).data.marks).toEqual([1]);
+  });
+
+  test('a save from a device that has not seen the latest version is refused, not lost', async () => {
+    const t = await signIn('u1', 'a@x.com', 'member');
+    const { id } = await (await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: project('א') } })).json();
+    await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: project('office'), baseVersion: 1 } });
+
+    const stale = await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: project('phone'), baseVersion: 1 } });
+    expect(stale.status).toBe(409);
+    expect(await stale.json()).toMatchObject({ error: 'stale', row: { id, version: 2 } });
+    expect((await (await call(`/api/studio/${id}`, t)).json()).data.name).toBe('office');
+
+    // Keeping this device's version is a deliberate choice.
+    const forced = await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: project('phone'), force: true } });
+    expect((await forced.json()).version).toBe(3);
+    expect((await (await call(`/api/studio/${id}`, t)).json()).data.name).toBe('phone');
+  });
+
+  test("another account's project does not exist for you, the admin included", async () => {
+    const a = await signIn('u1', 'a@x.com', 'member');
+    const boss = await signIn('u2', 'boss@example.com', 'admin');
+    const { id } = await (await call('/api/studio', a, { method: 'POST', body: { name: 'א', data: project('א') } })).json();
+    expect(await (await call('/api/studio', boss)).json()).toEqual([]);
+    expect((await call(`/api/studio/${id}`, boss)).status).toBe(404);
+    expect((await call(`/api/studio/${id}`, boss, { method: 'PUT', body: { name: 'x', data: {}, force: true } })).status).toBe(404);
+    expect((await call(`/api/studio/${id}`, boss, { method: 'DELETE' })).status).toBe(404);
+    expect((await (await call('/api/admin/usage', boss)).json()).studio).toBe(1);
+    expect((await call(`/api/studio/${id}`, a, { method: 'DELETE' })).status).toBe(200);
+  });
+
+  test('not admitted, unnamed, or too large is refused', async () => {
+    const pending = await signIn('u0', 'p@x.com', null);
+    expect((await call('/api/studio', pending)).status).toBe(403);
+    const t = await signIn('u1', 'a@x.com', 'member');
+    expect((await call('/api/studio', t, { method: 'POST', body: { name: '  ', data: {} } })).status).toBe(400);
+    expect((await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: 'x'.repeat(5 * 1024 * 1024 + 1) } })).status).toBe(413);
+    const { id } = await (await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: {} } })).json();
+    expect((await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: {} } })).status).toBe(400);
+  });
+});
