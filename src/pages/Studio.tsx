@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { decodeDxf, layerSummary, likelyUnit, parseDxf, type DxfDrawing, type DxfUnit } from '../engine';
 import type { Pt } from '../engine/geometry';
 import { CITATIONS, type CitationId } from '../engine/studio/citations';

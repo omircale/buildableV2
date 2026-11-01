@@ -1,4 +1,4 @@
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { useT } from '../i18n';
 import { projectRooms, useSurvey } from '../state/spaceStore';
 import { AppHeader } from '../ui/AppHeader';

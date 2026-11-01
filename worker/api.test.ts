@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { handleApi } from './api';
+import { claimImported, handleApi } from './api';
 import { identityFromIdToken, safeReturn, sha256 } from './auth';
 import type { Db, Env, Stmt } from './db';
 
@@ -175,5 +175,28 @@ describe('a member’s own work', () => {
     expect(form.status).toBe(400);
     const big = 'x'.repeat(5 * 1024 * 1024 + 10);
     expect((await call('/api/bills', t, { method: 'POST', body: { name: 'גדול', data: big } })).status).toBe(413);
+  });
+});
+
+describe('work brought over from the old accounts service', () => {
+  test('moves to the real account the first time its address signs in, role and all', async () => {
+    await env.DB.prepare("insert into users (id, email) values ('legacy:a@x.com', 'a@x.com')").run();
+    await env.DB.prepare("insert into app_users (user_id, role) values ('legacy:a@x.com', 'member')").run();
+    await env.DB.prepare("insert into places (id, owner_id, name) values ('p1', 'legacy:a@x.com', 'מלון')").run();
+    await env.DB.prepare("insert into bills (id, owner_id, place_id, name, data) values ('b1', 'legacy:a@x.com', 'p1', 'קומה', '{\"k\":1}')").run();
+
+    await claimImported(env.DB, 'google-a', 'a@x.com');
+    const token = 'tok-a';
+    await env.DB.prepare('insert into sessions (token_hash, user_id, expires_at) values (?, ?, ?)').bind(await sha256(token), 'google-a', '2999-01-01T00:00:00Z').run();
+
+    expect((await (await call('/api/me', token)).json()).role).toBe('member');
+    expect((await (await call('/api/places', token)).json()).map((p: { id: string }) => p.id)).toEqual(['p1']);
+    expect((await (await call('/api/bills/b1', token)).json()).data).toEqual({ k: 1 });
+    expect(await env.DB.prepare("select 1 from users where id like 'legacy:%'").first()).toBeNull();
+  });
+
+  test('an address with nothing waiting is left alone', async () => {
+    await claimImported(env.DB, 'google-b', 'b@x.com');
+    expect(await env.DB.prepare('select count(*) as n from users').first()).toEqual({ n: 0 });
   });
 });

@@ -1,4 +1,4 @@
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { useT } from '../i18n';
 import { AppHeader } from '../ui/AppHeader';
 import { buttonClass } from '../ui/common';

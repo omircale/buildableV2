@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from './cloud/supabase';
+import { useAuth } from './cloud/api';
 import { useT } from './i18n';
 // The admin screen and the walkthrough (three.js) load only when they are opened.
 const AdminPage = lazy(() => import('./pages/Admin').then((m) => ({ default: m.AdminPage })));

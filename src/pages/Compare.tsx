@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { loadBill, type AuthState } from '../cloud/supabase';
+import { loadBill, type AuthState } from '../cloud/api';
 import { SERVICE_LABEL, SITE_CHECKS, branchNeed, evaluateChecks, floorAreaM2, propertySummary, type CheckStatus, type ServiceKind } from '../engine';
 import { useT } from '../i18n';
 import { projectRooms, reviveProject } from '../state/spaceStore';

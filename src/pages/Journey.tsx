@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { useT } from '../i18n';
 import { useSurvey } from '../state/spaceStore';
 import { useUi } from '../state/uiStore';

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { EDITION, hasArea } from '../edition';
 import { useT } from '../i18n';
 import { useStudioT } from '../i18n/studio';

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { AuthState } from '../cloud/supabase';
+import type { AuthState } from '../cloud/api';
 import { EQUIPMENT, OWNERS, SERVICE_LABEL, billWorkbook, branchNeed, evaluateChecks, landlordRequirements, openQuestions, propertySummary, type CheckAnswer, type EvaluatedCheck, type Owner, type ServiceKind } from '../engine';
 import { useT } from '../i18n';
 import { projectRooms, useSurvey } from '../state/spaceStore';

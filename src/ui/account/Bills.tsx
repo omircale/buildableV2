@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createBill, createPlace, deleteBill, deletePlace, listBills, listPlaces, loadBill, renamePlace, updateBill, type AuthState, type BillRow, type PlaceRow } from '../../cloud/supabase';
+import { createBill, createPlace, deleteBill, deletePlace, listBills, listPlaces, loadBill, renamePlace, updateBill, type AuthState, type BillRow, type PlaceRow } from '../../cloud/api';
 import { useT } from '../../i18n';
 import { useAccount } from '../../state/accountStore';
 import { projectRooms, useSurvey } from '../../state/spaceStore';
