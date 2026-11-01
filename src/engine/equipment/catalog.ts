@@ -283,6 +283,10 @@ export const EQUIPMENT: EquipmentItem[] = [
     en: 'A professional machine plumbed to the mains. A tank-fed machine needs neither water nor a drain.',
   }),
   bought('coffee_grinder', 'מטחנת קפה', 'Coffee grinder', 'beverage', ['restaurant', 'bar'], [NEED.power]),
+  bought('slush_machine', 'מכונת ברד', 'Slush machine', 'beverage', ['bar', 'hotel'], [NEED.power, NEED.heat], {
+    he: 'מים וניקוז לפי הדגם: בדף הנתונים של הדגם שנבדק (Ugolini NG) לא מופיע חיבור מים או ניקוז; לבדוק עם הספק. הספק, מתח ומעבה — בנתוני הדגם.',
+    en: 'Water and drain depend on the model: the data sheet checked (Ugolini NG) shows no water or drain connection; confirm with the supplier. Power, voltage and condenser are in the model’s data.',
+  }),
 
   // ---- An office ----
   bought('workstation', 'עמדת עבודה', 'Workstation', 'workplace', ['office'], [NEED.power, NEED.data], {

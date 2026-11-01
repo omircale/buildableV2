@@ -210,3 +210,7 @@ export { landlordRequirements, openQuestions } from './site/documents';
 export type { DocumentOptions } from './site/documents';
 export { MIN_ROOM_M2, MM_PER, cleanText, decodeDxf, dxfEncoding, layerSummary, likelyUnit, parseDxf, roomsFromDrawing } from './survey/dxf';
 export type { DxfDrawing, DxfPolyline, DxfText, DxfUnit, FoundRoom, LayerSummary } from './survey/dxf';
+export { ISRAEL_SUPPLY, serviceDemand } from './services/demand';
+export type { DemandReport, Finding, ProgramLine, SiteSupply, SpaceProgram } from './services/demand';
+export { PRODUCTS, productById } from './services/products';
+export type { Fact, ProductSpec } from './services/spec';

@@ -37,13 +37,15 @@ is not a secret and sits in `wrangler.jsonc`.
 
 ```
 src/edition.ts       which routes each edition has (fixed at build time by --mode)
-src/engine/          pure TypeScript, no React; studio/ is the design studio's model and drawings
+src/engine/          pure TypeScript, no React; studio/ is the design studio's model and drawings;
+                     services/ is what equipment asks of the building (model data, load, heat, points)
 src/state/           zustand stores, kept on the device under the signed-in account
 src/cloud/api.ts     the app's only server client: /api/me, places, bills, studio, admin
 src/pages, src/ui    screens
 worker/              the Worker: index.ts routes, api.ts endpoints, auth.ts Google sign-in
 migrations/          D1 schema, applied in order
 public/_headers      security headers (CSP, frame-ancestors none, HSTS)
+pwa/                 the offline copy: service worker and the build step that writes it
 ```
 
 ## Accounts
