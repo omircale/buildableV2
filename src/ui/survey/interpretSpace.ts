@@ -65,6 +65,7 @@ export const EQUIPMENT_TERMS: Record<string, string[][]> = {
   prep_counter_refrigerated: [['שולחן', 'קירור'], ['שולחנות', 'קירור'], ['סלטייה'], ['refrigerated', 'counter'], ['prep', 'counter']],
   espresso_machine: [['מכונת', 'אספרסו'], ['מכונות', 'אספרסו'], ['אספרסו'], ['espresso', 'machine'], ['espresso']],
   coffee_grinder: [['מטחנת', 'קפה'], ['מטחנות', 'קפה'], ['מטחנה'], ['coffee', 'grinder'], ['grinder']],
+  slush_machine: [['מכונת', 'ברד'], ['מכונות', 'ברד'], ['ברד'], ['גרניטה'], ['slush', 'machine'], ['slush'], ['granita']],
 
   workstation: [['עמדת', 'עבודה'], ['עמדות', 'עבודה'], ['עמדות'], ['workstation'], ['workstations'], ['desk'], ['desks']],
   meeting_room_screen: [['מסך', 'חדר', 'ישיבות'], ['מסך', 'ישיבות'], ['מסך'], ['מסכים'], ['meeting', 'room', 'screen'], ['screen'], ['screens']],
