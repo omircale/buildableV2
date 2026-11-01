@@ -61,26 +61,6 @@ async function admit(db: Db, user: { id: string; email: string }, bootstrap: str
   if (invited) await db.prepare("insert into app_users (user_id, role) values (?, 'member')").bind(user.id).run();
 }
 
-/**
- * Work brought over from the old accounts service waits under a placeholder account, `legacy:<address>`,
- * because nobody's Google id is known until they sign in. The first time that address signs in with
- * Google, its folders, bills and role move to the real account, in one transaction, and the
- * placeholder is gone.
- */
-export async function claimImported(db: Db, userId: string, email: string): Promise<void> {
-  const legacy = await db.prepare("select id from users where email = ? and id like 'legacy:%'").bind(email).first<{ id: string }>();
-  if (!legacy) return;
-  await db.batch([
-    // Free the address first: it is unique, and the real account is about to take it.
-    db.prepare('update users set email = id where id = ?').bind(legacy.id),
-    db.prepare('insert into users (id, email) values (?, ?) on conflict (id) do update set email = excluded.email').bind(userId, email),
-    db.prepare('update places set owner_id = ? where owner_id = ?').bind(userId, legacy.id),
-    db.prepare('update bills set owner_id = ? where owner_id = ?').bind(userId, legacy.id),
-    db.prepare('insert into app_users (user_id, role) select ?, role from app_users where user_id = ? on conflict (user_id) do nothing').bind(userId, legacy.id),
-    db.prepare('delete from users where id = ?').bind(legacy.id),
-  ]);
-}
-
 async function body<T>(request: Request): Promise<T | null> {
   // A mutation must say it is JSON: a form posted from another site cannot, so it never gets here.
   if (!(request.headers.get('content-type') ?? '').includes('application/json')) return null;
@@ -133,7 +113,6 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     const who = idToken && identityFromIdToken(idToken, env.GOOGLE_CLIENT_ID, Math.floor(Date.now() / 1000));
     if (!who) return new Response(null, { status: 302, headers: { location: `${url.origin}/#/login?error=google`, 'set-cookie': clear } });
 
-    await claimImported(db, who.sub, who.email);
     await db
       .prepare('insert into users (id, email, name) values (?, ?, ?) on conflict (id) do update set email = excluded.email, name = excluded.name')
       .bind(who.sub, who.email, who.name)
