@@ -26,7 +26,7 @@ The device's own format is offered first; the other stays available for sending 
 
 `blob:` URLs — files that exist only inside the browser tab — **do not work with AR Quick Look or Google Scene Viewer**. Both are separate system apps that fetch the file over the network. Placing the piece in the room directly from a web page therefore needs:
 
-1. the exported file uploaded to hosting with a public https address (Cloudflare or Supabase Storage),
+1. the exported file uploaded to hosting with a public https address (Cloudflare R2),
 2. `@google/model-viewer` bundled with the site (not from a CDN — external scripts are blocked by our security headers),
 3. a mobile-friendly page, and a QR code so the design can jump from desktop to phone.
 

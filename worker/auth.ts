@@ -53,7 +53,8 @@ export async function googleAuthUrl(clientId: string, redirectUri: string, state
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'openid email profile',
+    // The address and the account id are all the site needs; the name and picture are not asked for.
+    scope: 'openid email',
     state,
     code_challenge: challenge,
     code_challenge_method: 'S256',
@@ -65,7 +66,6 @@ export async function googleAuthUrl(clientId: string, redirectUri: string, state
 export interface GoogleIdentity {
   sub: string;
   email: string;
-  name: string | null;
 }
 
 /** The claims of an ID token received directly from Google, checked. Null when anything is off. */
@@ -84,7 +84,7 @@ export function identityFromIdToken(idToken: string, clientId: string, nowSecond
   if (claims.aud !== clientId) return null;
   if (typeof claims.exp !== 'number' || claims.exp < nowSeconds) return null;
   if (claims.email_verified !== true || typeof claims.email !== 'string' || typeof claims.sub !== 'string') return null;
-  return { sub: claims.sub, email: claims.email.toLowerCase(), name: typeof claims.name === 'string' ? claims.name : null };
+  return { sub: claims.sub, email: claims.email.toLowerCase() };
 }
 
 /** Exchanges the code for tokens at Google's token endpoint. */

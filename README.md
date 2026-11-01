@@ -1,53 +1,66 @@
 # Buildable
 
-From idea to buildable furniture. Phase 1 closes the loop for an **open shelf unit**:
-design → validate → visualize (3D) → manufacture (cut list, nesting, BOM, assembly) → order package.
+A Hebrew (RTL) web app built from one codebase into two sites:
+
+| Edition | Site | What it has |
+|---|---|---|
+| Contractors | https://buildable.buildable.workers.dev | The design studio: DXF plan → proposed plumbing → checks → approval → field marks → DXF/PDF |
+| Hospitality | https://buildable-hospitality.buildable.workers.dev | Property check, space bill of quantities, journey, compare, projects |
+
+Everything runs on Cloudflare: each site is a Worker that serves the built app and answers `/api/*`
+(accounts, folders, saved bills, studio projects) from one D1 database shared by both sites.
 
 ## Run
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm test         # engine tests (Vitest)
-npm run build
-npm run deploy   # tests + build + Cloudflare Pages (requires `npx wrangler login` once)
+npm run dev                 # http://localhost:5173 (no /api: signed-out, local-only)
+npm test                    # app, engine and Worker tests (Vitest)
+npx tsc -b && npm run lint
+npm run build               # contractors → dist
+npm run build:hospitality   # hospitality → dist-hospitality
 ```
 
-Environment: copy `.env.example` to `.env` and set the Supabase URL and publishable key.
-The publishable key is safe in the browser because every table is protected by RLS.
+Deploy (after `npx wrangler login` once):
 
-## Architecture
-
-```
-src/engine/          pure TypeScript, no React — the single source of truth
-  types.ts           model, sourced values, checks, design changes
-  materials.ts       material library; every number carries kind + source; EC5 factors
-  templates/         params → components (geometry) → parts → hardware
-  structural/beam.ts beam formulas
-  validation/        geometry, materials, structure (deflection + creep + bending), stability, manufacturing
-  manufacturing/     guillotine nesting (kerf, trim, grain), BOM, CSV
-  index.ts           runDesign(params) — the one pipeline used by UI, exports and tests
-src/state/           Zustand store: params, undo/redo, local autosave
-src/ui, src/pages    Designer (3D + panels), Login, Admin
-src/cloud/           Supabase client: auth, projects, append-only versions, usage events
-supabase/migrations  schema + RLS (applied to project `buildable`)
-public/_headers      Cloudflare security headers (CSP, frame-ancestors none, HSTS)
+```bash
+npm run build && npx wrangler deploy
+npm run build:hospitality && npx wrangler deploy --env hospitality
+npx wrangler d1 migrations apply buildable --remote   # when migrations/ has a new file
 ```
 
-Principles enforced in code:
+Secrets are set once per Worker with `npx wrangler secret put <NAME>` (add `--env hospitality` for the
+second site) and survive deploys: `GOOGLE_CLIENT_SECRET`, `BOOTSTRAP_ADMIN_EMAIL`. The Google client ID
+is not a secret and sits in `wrangler.jsonc`.
 
-- **Single source of geometry.** The 3D view, cut list, nesting and PDF all derive from `buildOpenShelf(params)`.
-- **No guessed engineering data.** A value without a source is `null` → status GREY. Assumptions are labelled and cap results at YELLOW.
-- **Fixes are re-validated.** Every suggested fix is a `DesignChange` that is run through the full engine before it is shown. The future AI assistant must produce the same `DesignChange` objects.
-- **Export is blocked** when geometry, materials, structure or manufacturing is RED.
+## Layout
+
+```
+src/edition.ts       which routes each edition has (fixed at build time by --mode)
+src/engine/          pure TypeScript, no React; studio/ is the design studio's model and drawings
+src/state/           zustand stores, kept on the device under the signed-in account
+src/cloud/api.ts     the app's only server client: /api/me, places, bills, studio, admin
+src/pages, src/ui    screens
+worker/              the Worker: index.ts routes, api.ts endpoints, auth.ts Google sign-in
+migrations/          D1 schema, applied in order
+public/_headers      security headers (CSP, frame-ancestors none, HSTS)
+```
+
+## Accounts
+
+- Sign-in is Google only, handled by the Worker (authorization code + PKCE). The session is an HttpOnly
+  cookie; the page never sees a token.
+- Signing in grants nothing. The admin invites an address; it becomes a member on its first sign-in.
+  The bootstrap address becomes admin only while there is no admin.
+- Every folder, bill and studio project has an owner, and every query in `worker/api.ts` is scoped to
+  the signed-in account. The admin sees counts, never anyone's work. `worker/api.test.ts` checks this
+  against a real SQLite database.
+
+## Principles
+
+- **No guessed engineering data.** A value without a source is `null` → GREY, with the reason shown.
+- **The proposal is derived.** Only decisions are stored; proposals and issues are recomputed from them,
+  and an approval is tied to the revision it approved.
 - **No "safe" / "compliant" claims.** Physical verification is always shown as required.
 
-## Security
-
-- RLS on every table. A signed-up user has **no access** until they have a row in `app_users`.
-- `orenmindcet@gmail.com` becomes admin automatically on sign-up (`bootstrap_admin_emails`).
-- RLS helper functions live in the non-exposed `private` schema.
-- `project_versions` is append-only (no update policy).
-- Verified with simulated users: strangers read 0 rows, cannot insert, cannot self-promote; anon is rejected.
-
-See [docs/ENGINEERING_DATA.md](docs/ENGINEERING_DATA.md) for every engineering value and its source.
+See [docs/ENGINEERING_DATA.md](docs/ENGINEERING_DATA.md) for engineering values and their sources.
