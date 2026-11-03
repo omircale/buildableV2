@@ -188,7 +188,12 @@ describe('the workbook', () => {
   it('carries the bill and every finding, most serious first, and never prints an unknown as a number', async () => {
     const { demandSheets } = await import('./sheet');
     const r = serviceDemand(SLUSH_KIOSK_EXAMPLE);
-    const [bill, findings] = demandSheets(SLUSH_KIOSK_EXAMPLE, r, 'he');
+    const [summary, bill, findings] = demandSheets(SLUSH_KIOSK_EXAMPLE, r, 'he');
+    // The totals first, and a partial one says so.
+    const row = (label: string) => summary.rows.find((x) => x[0] === label);
+    expect(row('עומס חשמל מחובר')?.[1]).toBe('לפחות 1792 W');
+    expect(row('זרם נקוב')?.[1]).toBe('לא ידוע');
+    expect(row('חום לחדר')?.[1]).toBe('לא ידוע');
     expect(bill.rows[0][0]).toBe('כתב כמויות — עמדת ברד בקיוסק');
     expect(bill.rows.find((row) => row[1] === 'מעגל חשמל ייעודי')?.[3]).toBe('לא ידוע');
     expect(findings.rows).toHaveLength(r.findings.length + 1);

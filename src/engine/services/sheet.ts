@@ -1,4 +1,5 @@
 import type { Sheet } from '../boq/workbook';
+import { SERVICE_LABEL } from '../equipment/catalog';
 import type { DemandReport, Discipline, Severity, SpaceProgram } from './demand';
 
 /**
@@ -28,6 +29,29 @@ export const DEMAND_DRAFT = {
 
 export function demandSheets(space: SpaceProgram, report: DemandReport, locale: 'he' | 'en'): Sheet[] {
   const he = locale === 'he';
+  const unknown = he ? 'לא ידוע' : 'unknown';
+  const atLeast = (n: number, complete: boolean, unit: string) => (complete ? `${n} ${unit}` : n > 0 ? `${he ? 'לפחות' : 'at least'} ${n} ${unit}` : unknown);
+  const e = report.electrical;
+  const count = (sev: Severity) => report.findings.filter((f) => f.severity === sev).length;
+  const enclosed = space.enclosed === null ? unknown : space.enclosed ? (he ? 'סגור' : 'closed') : he ? 'פתוח' : 'open';
+  // The totals first, each saying whether it is complete — a floor is never shown as a total.
+  const summary: Sheet = {
+    name: he ? 'סיכום' : 'Summary',
+    widths: [34, 30, 60],
+    rows: [
+      [he ? `סיכום — ${space.name || 'חלל'}` : `Summary — ${space.name || 'Space'}`],
+      [he ? DEMAND_DRAFT.he : DEMAND_DRAFT.en],
+      [],
+      [he ? 'החלל' : 'Space', enclosed],
+      [he ? 'עומס חשמל מחובר' : 'Connected electrical load', atLeast(e.connectedW, e.complete, 'W'), he ? 'סכום ההספקים, לא עומס תכנון' : 'Sum of ratings, not a design load'],
+      [he ? 'זרם נקוב' : 'Rated current', e.currentA === null ? unknown : `${e.currentA} A`],
+      [he ? 'מעגלים ייעודיים' : 'Dedicated circuits', e.dedicatedCircuits ?? unknown],
+      [he ? 'חום לחדר' : 'Heat into the room', atLeast(report.heat.toRoomW, report.heat.complete, 'W'), report.heat.toRoomW ? `${report.heat.btuPerHour} BTU/h` : ''],
+      ...report.points.map((p) => [he ? `נקודות ${SERVICE_LABEL[p.kind].he}` : `${SERVICE_LABEL[p.kind].en} points`, p.quantity]),
+      [],
+      [he ? 'ממצאים' : 'Findings', `${count('blocking')} ${he ? SEVERITY_LABEL.blocking.he : SEVERITY_LABEL.blocking.en} · ${count('warning')} ${he ? SEVERITY_LABEL.warning.he : SEVERITY_LABEL.warning.en} · ${count('info')} ${he ? SEVERITY_LABEL.info.he : SEVERITY_LABEL.info.en}`],
+    ],
+  };
   const unit = (u: 'unit' | 'point') => (u === 'unit' ? (he ? "יח'" : 'ea') : he ? "נק'" : 'pt');
   const title = space.name || (he ? 'חלל' : 'Space');
   const bill: Sheet = {
@@ -59,5 +83,5 @@ export function demandSheets(space: SpaceProgram, report: DemandReport, locale: 
       ),
     ],
   };
-  return [bill, findings];
+  return [summary, bill, findings];
 }

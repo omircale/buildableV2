@@ -527,6 +527,12 @@ export interface StudioSheet {
   widths: number[];
 }
 
+/** A run's length in the bill: along the route someone accepted, as drawn on the plan. */
+const LENGTH_NOTE = {
+  he: 'אורך לפי התוואי שאושר, נמדד על התוכנית — בלי קטעים אנכיים ובלי פחת',
+  en: 'Length along the accepted route, measured on the plan — without vertical runs or waste',
+};
+
 /** The plumbing bill, from accepted elements only. A proposal nobody accepted is not a quantity. */
 export function studioBill(project: StudioProject, elements: StudioElement[], locale: 'he' | 'en'): StudioSheet {
   const he = locale === 'he';
@@ -545,9 +551,9 @@ export function studioBill(project: StudioProject, elements: StudioElement[], lo
     diameter ? (he ? `${label('drain_run')} קוטר ${diameter.value} מ"מ` : `${label('drain_run')} ${diameter.value} mm`) : he ? `${label('drain_run')} — קוטר לפי תכנון` : `${label('drain_run')} — diameter by design`,
     he ? 'מ"א' : 'm',
     length('drain_run'),
-    he ? 'אורך לפי תוואי מוצע' : 'Length along the proposed route',
+    he ? LENGTH_NOTE.he : LENGTH_NOTE.en,
   );
-  add(he ? `${label('water_run')} — קוטר לפי תכנון` : `${label('water_run')} — diameter by design`, he ? 'מ"א' : 'm', length('water_run'), he ? 'אורך לפי תוואי מוצע' : 'Length along the proposed route');
+  add(he ? `${label('water_run')} — קוטר לפי תכנון` : `${label('water_run')} — diameter by design`, he ? 'מ"א' : 'm', length('water_run'), he ? LENGTH_NOTE.he : LENGTH_NOTE.en);
   add(label('grease_separator'), he ? "יח'" : 'ea', count('grease_separator'), he ? 'קיבולת לפי חישוב יועץ' : 'Capacity by a consultant’s calculation');
   add(label('backflow'), he ? "יח'" : 'ea', count('backflow'), he ? 'סוג לפי תכנון' : 'Type by design');
 

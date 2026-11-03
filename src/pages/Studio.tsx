@@ -293,12 +293,27 @@ function SourceChips({ ids }: { ids: CitationId[] }) {
   );
 }
 
-function ManualField({ label, unit, value, onSave }: { label: string; unit: string; value: Manual | null; onSave: (v: Manual | null) => void }) {
+function ManualField({
+  label,
+  unit,
+  value,
+  onSave,
+  reading,
+}: {
+  label: string;
+  unit: string;
+  value: Manual | null;
+  onSave: (v: Manual | null) => void;
+  /** What the number means in plain terms, shown while typing, so 0.02 is not mistaken for 2. */
+  reading?: (v: number) => string;
+}) {
   const s = useStudioT().plan;
   const [editing, setEditing] = useState(false);
   const [num, setNum] = useState(value ? String(value.value) : '');
   const [source, setSource] = useState(value?.source ?? '');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<'value' | 'source' | null>(null);
+  const typed = Number(num);
+  const valid = num !== '' && Number.isFinite(typed) && typed > 0;
   return (
     <div className="rounded-lg border border-line p-2">
       <div className="flex items-center justify-between gap-2">
@@ -316,18 +331,31 @@ function ManualField({ label, unit, value, onSave }: { label: string; unit: stri
       {value && !editing && <p className="mt-1 text-caption text-muted">{value.source}</p>}
       {editing ? (
         <div className="mt-2 space-y-2">
-          <input className={`${inputClass} h-9`} inputMode="decimal" aria-label={label} value={num} onChange={(e) => setNum(e.target.value.replace(/[^\d.]/g, ''))} />
-          <input className={`${inputClass} h-9`} aria-label={s.source} placeholder={s.sourceHint} value={source} maxLength={120} onChange={(e) => (setSource(e.target.value), setError(false))} />
-          {error && <p className="text-caption text-bad">{s.needSource}</p>}
+          <div className="flex items-center gap-2">
+            <input
+              className={`${inlineInput} h-9 min-w-0 flex-1`}
+              inputMode="decimal"
+              aria-label={`${label} (${unit})`}
+              value={num}
+              onChange={(e) => (setNum(e.target.value.replace(/[^\d.]/g, '')), setError(null))}
+            />
+            <span className="shrink-0 text-small text-muted">{unit}</span>
+          </div>
+          {valid && reading && <p className="text-caption text-muted">{reading(typed)}</p>}
+          <input className={`${inputClass} h-9`} aria-label={s.source} placeholder={s.sourceHint} value={source} maxLength={120} onChange={(e) => (setSource(e.target.value), setError(null))} />
+          {error && (
+            <p role="alert" className="text-caption text-bad">
+              {error === 'value' ? s.needValue : s.needSource}
+            </p>
+          )}
           <div className="flex gap-2">
             <Button
               size="sm"
               variant="primary"
               onClick={() => {
-                const v = Number(num);
-                if (!source.trim()) return setError(true);
-                if (!Number.isFinite(v) || v <= 0) return;
-                onSave({ value: v, source: source.trim() });
+                if (!valid) return setError('value');
+                if (!source.trim()) return setError('source');
+                onSave({ value: typed, source: source.trim() });
                 setEditing(false);
               }}
             >
@@ -358,7 +386,14 @@ function DesignValues() {
   return (
     <section className="space-y-2">
       <h3 className="text-small font-semibold">{s.design}</h3>
-      <ManualField label={s.slope} unit="%" value={studio.design.slopePct} onSave={(v) => studio.setManual('slopePct', v)} />
+      <ManualField
+        label={s.slope}
+        unit="%"
+        value={studio.design.slopePct}
+        onSave={(v) => studio.setManual('slopePct', v)}
+        // A slope in percent is that many centimetres per metre: 1 % = 10 mm/m.
+        reading={(pct) => s.slopeReading((pct * 10).toLocaleString(undefined, { maximumFractionDigits: 3 }))}
+      />
       <ManualField label={s.diameter} unit={s.mm} value={studio.design.diameterMm} onSave={(v) => studio.setManual('diameterMm', v)} />
     </section>
   );
@@ -512,6 +547,18 @@ function PlanStep({ auth }: { auth: AuthState }) {
   const [picking, setPicking] = useState(false);
   const [visible, setVisible] = useState<Visible>({ architecture: true, drainage: true, water: true, marks: true });
   const [approver, setApprover] = useState(auth.session?.user.email?.split('@')[0] ?? '');
+  // Choosing what is already chosen lets it go, and Escape lets go of anything — the overview, with
+  // "accept all", is one key or one click away.
+  const select = (id: string | null) => setSelected((cur) => (id !== null && cur === id ? null : id));
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setPicking(false);
+      setSelected(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   if (!project.spaces.length) return <p className="text-body text-muted">{t.building.empty}</p>;
 
   const check = approvalCheck(project, elements, issues);
@@ -538,7 +585,7 @@ function PlanStep({ auth }: { auth: AuthState }) {
       <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)_300px]">
         <aside className="order-2 space-y-2 lg:order-none" aria-label={s.issues}>
           <h2 className="text-body font-semibold">{s.issues}</h2>
-          <IssueList issues={issues} selected={selected} onSelect={setSelected} />
+          <IssueList issues={issues} selected={selected} onSelect={select} />
         </aside>
 
         <div className="order-1 space-y-2 lg:order-none">
@@ -581,12 +628,19 @@ function PlanStep({ auth }: { auth: AuthState }) {
               setPicking(false);
               setSelected('sewer_connection');
             }}
-            onSelect={setSelected}
+            onSelect={select}
           />
         </div>
 
         <aside className="order-3 rounded-xl border border-line bg-panel p-3 lg:order-none" aria-label={s.inspector}>
-          <h2 className="mb-2 text-body font-semibold">{s.inspector}</h2>
+          <div className="mb-2 flex items-center gap-2">
+            <h2 className="flex-1 text-body font-semibold">{s.inspector}</h2>
+            {selected && (
+              <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>
+                {s.clearSelection}
+              </Button>
+            )}
+          </div>
           <Inspector selected={selected} elements={elements} issues={issues} onPickConnection={() => setPicking(true)} />
         </aside>
       </div>
