@@ -70,7 +70,7 @@ export function designNotes(project: StudioProject, locale: 'he' | 'en'): string
     // The source is typed by a person in either language; isolating it keeps its brackets where they belong.
     v ? `${label}: ${v.value} ${unit} (${he ? 'מקור' : 'source'}: \u2068${v.source}\u2069)` : `${label}: ${he ? 'חסר' : 'missing'}`;
   return [
-    value(he ? 'קוטר שפכים' : 'Soil pipe diameter', d.diameterMm, he ? 'מ"מ' : 'mm'),
+    value(he ? 'קוטר פנימי שפכים' : 'Soil pipe inside diameter', d.diameterMm, he ? 'מ"מ' : 'mm'),
     value(he ? 'שיפוע שפכים' : 'Soil pipe slope', d.slopePct, '%'),
     d.connection ? (he ? 'נקודת החיבור לביוב סומנה בידי אדם' : 'Sewer connection marked by a person') : he ? 'נקודת החיבור לביוב משוערת — לאמת בשטח' : 'Sewer connection assumed — verify on site',
     he ? 'קו רציף — מאושר. שכבה נפרדת \u2066-PROP\u2069 — הצעה שלא אושרה.' : 'Solid — accepted. Separate -PROP layer — proposal not accepted.',

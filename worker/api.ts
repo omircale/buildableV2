@@ -35,7 +35,12 @@ interface Me {
   role: Role | null;
 }
 
-const MAX_BILL_BYTES = 5 * 1024 * 1024;
+/**
+ * The most a saved bill or studio project may weigh. D1 refuses a row over 2,000,000 bytes
+ * (developers.cloudflare.com/d1/platform/limits), and the row also holds the name and the dates, so the
+ * data stops short of that: past it the person is told "too large", not a bare server error.
+ */
+export const MAX_DATA_BYTES = 1_900_000;
 /** Wrong passwords in a row before an account stops accepting them for a while. */
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
@@ -234,9 +239,16 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     const memberId = path.match(/^\/api\/admin\/members\/([^/]+)$/)?.[1];
     if (memberId && method === 'DELETE') {
-      if (memberId === user.id) return fail(400, 'cannot_remove_self');
-      await db.prepare('delete from app_users where user_id = ?').bind(decodeURIComponent(memberId)).run();
-      await db.prepare('delete from sessions where user_id = ?').bind(decodeURIComponent(memberId)).run();
+      const id = decodeURIComponent(memberId);
+      if (id === user.id) return fail(400, 'cannot_remove_self');
+      // The invitation goes too, and any password link: otherwise the next sign-in would admit them again.
+      const removed = await db.prepare('select email from users where id = ?').bind(id).first<{ email: string }>();
+      await db.prepare('delete from app_users where user_id = ?').bind(id).run();
+      await db.prepare('delete from sessions where user_id = ?').bind(id).run();
+      if (removed) {
+        await db.prepare('delete from invited_emails where email = ?').bind(removed.email).run();
+        await db.prepare('delete from password_links where email = ?').bind(removed.email).run();
+      }
       return json({ ok: true });
     }
     if (path === '/api/admin/invites' && method === 'GET') {
@@ -330,7 +342,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     const name = cleanName(b?.name, 200);
     const data = b?.data === undefined ? null : JSON.stringify(b.data);
     if (!name || data == null) return fail(400, 'bad_bill');
-    if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+    if (new TextEncoder().encode(data).length > MAX_DATA_BYTES) return fail(413, 'too_large');
     if (!(await ownsPlace(db, user.id, b?.placeId))) return fail(403, 'not_your_place');
     const id = crypto.randomUUID();
     const rooms = Number.isInteger(b?.rooms) && (b!.rooms as number) >= 0 ? (b!.rooms as number) : 0;
@@ -362,7 +374,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     if (b.data !== undefined) {
       const data = JSON.stringify(b.data);
-      if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+      if (new TextEncoder().encode(data).length > MAX_DATA_BYTES) return fail(413, 'too_large');
       sets.push('data = ?');
       values.push(data);
     }
@@ -418,7 +430,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     const name = cleanName(b?.name, 200);
     const data = b?.data == null ? null : JSON.stringify(b.data);
     if (!name || data == null) return fail(400, 'bad_project');
-    if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+    if (new TextEncoder().encode(data).length > MAX_DATA_BYTES) return fail(413, 'too_large');
     const id = crypto.randomUUID();
     await db.prepare('insert into studio_projects (id, owner_id, name, data) values (?, ?, ?, ?)').bind(id, user.id, name, data).run();
     return json(await studioRow(id), 201);
@@ -438,7 +450,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     const name = cleanName(b?.name, 200);
     const data = b?.data == null ? null : JSON.stringify(b.data);
     if (!name || data == null || (!b?.force && !Number.isInteger(b?.baseVersion))) return fail(400, 'bad_project');
-    if (new TextEncoder().encode(data).length > MAX_BILL_BYTES) return fail(413, 'too_large');
+    if (new TextEncoder().encode(data).length > MAX_DATA_BYTES) return fail(413, 'too_large');
     const r = await db
       .prepare('update studio_projects set name = ?, data = ?, version = version + 1, updated_at = ? where id = ? and (? or version = ?)')
       .bind(name, data, now(), studioId, b?.force ? 1 : 0, b?.baseVersion ?? 0)

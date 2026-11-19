@@ -50,6 +50,6 @@ describe('the A3 sheet', () => {
     const { svg } = planSheet(p, proposePlumbing(p), 'he');
     expect(svg).toContain('מסעדה &lt;דמו&gt;');
     expect(svg).toContain('לא לביצוע');
-    expect(svg).toContain('קוטר שפכים: חסר');
+    expect(svg).toContain('קוטר פנימי שפכים: חסר');
   });
 });

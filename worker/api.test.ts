@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { handleApi } from './api';
+import { MAX_DATA_BYTES, handleApi } from './api';
 import { DUMMY_HASH, hashPassword, identityFromIdToken, safeReturn, sha256, verifyPassword } from './auth';
 import type { Db, Env, Stmt } from './db';
 
@@ -175,8 +175,11 @@ describe('a member’s own work', () => {
     const t = await signIn('u1', 'a@x.com', 'member');
     const form = await handleApi(new Request(`${ORIGIN}/api/places`, { method: 'POST', headers: { cookie: `bsid=${t}`, 'content-type': 'application/x-www-form-urlencoded' }, body: 'name=x' }), env);
     expect(form.status).toBe(400);
-    const big = 'x'.repeat(5 * 1024 * 1024 + 10);
-    expect((await call('/api/bills', t, { method: 'POST', body: { name: 'גדול', data: big } })).status).toBe(413);
+    // A JSON string is its characters and two quotes: this one is one byte over the limit, the next exactly at it.
+    expect((await call('/api/bills', t, { method: 'POST', body: { name: 'גדול', data: 'x'.repeat(MAX_DATA_BYTES - 1) } })).status).toBe(413);
+    expect((await call('/api/bills', t, { method: 'POST', body: { name: 'גבול', data: 'x'.repeat(MAX_DATA_BYTES - 2) } })).status).toBe(201);
+    // D1 refuses a row over 2,000,000 bytes, so the limit leaves room for the rest of the row.
+    expect(MAX_DATA_BYTES).toBeLessThan(2_000_000);
   });
 });
 
@@ -234,7 +237,7 @@ describe('design-studio projects', () => {
     expect((await call('/api/studio', pending)).status).toBe(403);
     const t = await signIn('u1', 'a@x.com', 'member');
     expect((await call('/api/studio', t, { method: 'POST', body: { name: '  ', data: {} } })).status).toBe(400);
-    expect((await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: 'x'.repeat(5 * 1024 * 1024 + 1) } })).status).toBe(413);
+    expect((await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: 'x'.repeat(MAX_DATA_BYTES) } })).status).toBe(413);
     const { id } = await (await call('/api/studio', t, { method: 'POST', body: { name: 'א', data: {} } })).json();
     expect((await call(`/api/studio/${id}`, t, { method: 'PUT', body: { name: 'א', data: {} } })).status).toBe(400);
   });
@@ -292,6 +295,21 @@ describe('signing in with an address and a password', () => {
     expect((await login('site@x.com', 'the right password')).status).toBe(429);
     await env.DB.prepare("update users set locked_until = '2000-01-01T00:00:00Z' where email = 'site@x.com'").run();
     expect((await login('site@x.com', 'the right password')).status).toBe(200);
+  });
+
+  test('a member the admin removes stays out: the next sign-in admits nothing', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    const set = await setPassword((await linkFor(admin, 'site@x.com')).token, 'the right password');
+    const { user } = await (await call('/api/me', session(set))).json();
+
+    // Only the member is removed here, as if the screen's second step never ran.
+    expect((await call(`/api/admin/members/${user.id}`, admin, { method: 'DELETE' })).status).toBe(200);
+    expect((await call('/api/me', session(set))).status).toBe(401);
+    const again = await login('site@x.com', 'the right password');
+    expect(again.status).toBe(200);
+    expect((await (await call('/api/me', session(again))).json()).role).toBeNull();
+    expect((await (await call('/api/admin/invites', admin)).json())).toEqual([]);
   });
 
   test('a reset link replaces the password and ends the sessions that used the old one', async () => {

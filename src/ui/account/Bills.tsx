@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createBill, createPlace, deleteBill, deletePlace, listBills, listPlaces, loadBill, renamePlace, updateBill, type AuthState, type BillRow, type PlaceRow } from '../../cloud/api';
+import { createBill, createPlace, deleteBill, deletePlace, listBills, listPlaces, loadBill, renamePlace, updateBill, type ApiError, type AuthState, type BillRow, type PlaceRow } from '../../cloud/api';
 import { useT } from '../../i18n';
 import { useAccount } from '../../state/accountStore';
 import { projectRooms, useSurvey } from '../../state/spaceStore';
@@ -58,7 +58,8 @@ export function CloudSave({ auth }: { auth: AuthState }) {
   const [name, setName] = useState('');
   const [placeId, setPlaceId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  /** Why the last save did not go through: too large for the account, or anything else. */
+  const [failed, setFailed] = useState<false | 'failed' | 'tooLarge'>(false);
 
   if (gate) {
     if (!gate.text) return null;
@@ -79,8 +80,8 @@ export function CloudSave({ auth }: { auth: AuthState }) {
     setFailed(false);
     try {
       await work();
-    } catch {
-      setFailed(true);
+    } catch (e) {
+      setFailed((e as ApiError).status === 413 ? 'tooLarge' : 'failed');
     }
     setBusy(false);
   };
@@ -96,7 +97,7 @@ export function CloudSave({ auth }: { auth: AuthState }) {
     setName(current ? current.name : roomName || '');
     setPlaceId(current?.placeId ?? null);
     setForm(true);
-    void listPlaces().then(setPlaces, () => setFailed(true));
+    void listPlaces().then(setPlaces, () => setFailed('failed'));
   };
 
   const saveNew = () =>
@@ -166,7 +167,7 @@ export function CloudSave({ auth }: { auth: AuthState }) {
 
       {failed && (
         <p role="alert" className="text-bad">
-          {b.failed}
+          {failed === 'tooLarge' ? b.tooLarge : b.failed}
         </p>
       )}
     </div>
