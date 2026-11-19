@@ -40,10 +40,13 @@ const KIND_LABEL: Record<ServiceKind, { he: string; en: string }> = {
   data: { he: 'תקשורת', en: 'data' },
 };
 
-/** The note every MEP line carries, so no reader can mistake a count for a design. */
+/**
+ * The note every MEP line carries, so no reader can mistake a count for a design. "Sizing", not
+ * "diameter": the same note sits on a cable, whose size is a cross-section, as on a pipe.
+ */
 const LICENSED_NOTE = {
-  he: 'כמות בלבד — קוטר, הגנה ותוואי נקבעים בתכנון של בעל מקצוע מוסמך',
-  en: 'Quantity only — diameter, protection and routing are set by a licensed professional’s design',
+  he: 'כמות בלבד — מידות, הגנה ותוואי נקבעים בתכנון של בעל מקצוע מוסמך',
+  en: 'Quantity only — sizing, protection and routing are set by a licensed professional’s design',
 };
 
 /**

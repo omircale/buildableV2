@@ -841,6 +841,7 @@ const he = {
     siteListEmpty: 'אין שאלות פתוחות. כל מה שהמסמך צריך מהשטח כבר נענה.',
     siteListDownload: 'הורדת הרשימה',
     siteFor: (names: string) => `עבור ${names}`,
+    notCounted: (what: string) => `לא נספר בכתב הכמויות: ${what}. לברר ולהוסיף לפני תמחור.`,
 
     roomsLeft: (n: number) => (n === 1 ? 'נשאר מקום לחדר אחד' : `נשאר מקום ל-${n} חדרים`),
     roomsFull: (max: number) => `כתב כמויות אחד מכיל עד ${max} חדרים`,
@@ -1940,6 +1941,7 @@ const en: Dict = {
     siteListEmpty: 'No open questions. Everything the document needs from the site has been answered.',
     siteListDownload: 'Download the list',
     siteFor: (names: string) => `for ${names}`,
+    notCounted: (what: string) => `Not counted in the bill: ${what}. Settle it and add it before pricing.`,
 
     roomsLeft: (n: number) => (n === 1 ? 'Room for one more' : `Room for ${n} more`),
     roomsFull: (max: number) => `One bill holds up to ${max} rooms`,

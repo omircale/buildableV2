@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptySpace } from '../../engine';
 import { dictFor } from '../../i18n';
 import type { Survey } from '../../state/spaceStore';
-import { askedBy, siteList, siteListText, siteQuestions } from './siteQuestions';
+import { askedBy, notCountedIn, siteList, siteListText, siteQuestions } from './siteQuestions';
 
 const dict = dictFor('he');
 
@@ -56,5 +56,14 @@ describe('the list a person takes to the site', () => {
     expect(text).toContain('מטבח');
     expect(text).toContain('[ ] מה המידות של החדר?');
     expect(text).toMatch(/\[ \] .*גז.*\(עבור כיריים גז\)/);
+  });
+
+  it('carries what the bill leaves to someone else, once per item, so nobody takes it for counted', () => {
+    const hotel = room({ space: { ...emptySpace('room_3', 'חדר אירוח', ''), heightMm: 2700 }, widthMm: 4000, depthMm: 3000, sector: 'hotel', equipmentIds: ['fan_coil', 'fan_coil', 'guest_tv'], answers: { open_sides: 'all_built' } });
+    expect(notCountedIn(hotel.equipmentIds).map((x) => x.id)).toEqual(['fan_coil']);
+    const text = siteListText(siteList([hotel], dict, true), dict);
+    expect(text.match(/לא נספר בכתב הכמויות/g)).toHaveLength(1);
+    expect(text).toContain('[ ] לא נספר בכתב הכמויות: חיבור צנרת המים של מערכת המיזוג');
+    expect(text).toContain('(עבור יחידת מיזוג חדרית (מפוח-נחשון))');
   });
 });

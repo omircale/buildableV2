@@ -53,6 +53,13 @@ export function questionText(q: Question, r: Dict['journey']['refine'], he: bool
   }
 }
 
+/** The items in a room that need a connection the bill leaves to someone else's design — each once. */
+export function notCountedIn(equipmentIds: string[]) {
+  return [...new Set(equipmentIds)]
+    .map((id) => ({ id, item: equipmentById(id) }))
+    .filter((x): x is { id: string; item: NonNullable<ReturnType<typeof equipmentById>> } => Boolean(x.item?.notCounted));
+}
+
 export interface SiteRoom {
   name: string;
   items: { id: string; text: string; for?: string }[];
@@ -62,11 +69,18 @@ export function siteList(rooms: Survey[], t: Dict, he: boolean): SiteRoom[] {
   return rooms
     .map((room) => ({
       name: (he ? room.space.nameHe : room.space.nameEn || room.space.nameHe) || t.survey.unnamed,
-      items: siteQuestions(room).map((q) => ({
-        id: `${room.space.id}:${q.id}`,
-        text: questionText(q, t.journey.refine, he),
-        for: q.type === 'supply' || q.type === 'capacity' ? askedBy(room.equipmentIds, q.service, he) || undefined : undefined,
-      })),
+      items: [
+        ...siteQuestions(room).map((q) => ({
+          id: `${room.space.id}:${q.id}`,
+          text: questionText(q, t.journey.refine, he),
+          for: q.type === 'supply' || q.type === 'capacity' ? askedBy(room.equipmentIds, q.service, he) || undefined : undefined,
+        })),
+        ...notCountedIn(room.equipmentIds).map(({ id, item }) => ({
+          id: `${room.space.id}:not_counted:${id}`,
+          text: t.survey.notCounted(he ? item.notCounted!.he : item.notCounted!.en),
+          for: he ? item.nameHe : item.nameEn,
+        })),
+      ],
     }))
     .filter((r) => r.items.length);
 }

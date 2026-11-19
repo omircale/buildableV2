@@ -86,6 +86,12 @@ export interface EquipmentItem {
   sources: Source[];
   noteHe?: string;
   noteEn?: string;
+  /**
+   * A connection the item needs that the bill does not count, because its design is someone else's.
+   * Said here so the room's site list carries it as an open question, and nobody reading only the bill
+   * takes it for counted.
+   */
+  notCounted?: { he: string; en: string };
 }
 
 const NO_SOURCE_YET: Source[] = [];
@@ -347,10 +353,13 @@ export const EQUIPMENT: EquipmentItem[] = [
   }),
   bought('mirror_light', 'מראה מוארת', 'Illuminated mirror', 'sanitary', ['hotel'], [NEED.power]),
   bought('hair_dryer', 'מייבש שיער קבוע', 'Fixed hair dryer', 'sanitary', ['hotel'], [NEED.power]),
-  bought('fan_coil', 'יחידת מיזוג חדרית (מפוח-נחשון)', 'Room fan-coil unit', 'climate', ['hotel', 'office'], [NEED.drain, NEED.power], {
-    he: 'ניקוז מי עיבוי והזנת חשמל. חיבור צנרת המים של מערכת המיזוג והתפוקה — לפי יועץ מיזוג, ולא נספרים כאן.',
-    en: 'Condensate drain and power. The HVAC water connections and the capacity are the HVAC consultant’s, and are not counted here.',
-  }),
+  {
+    ...bought('fan_coil', 'יחידת מיזוג חדרית (מפוח-נחשון)', 'Room fan-coil unit', 'climate', ['hotel', 'office'], [NEED.drain, NEED.power], {
+      he: 'ניקוז מי עיבוי והזנת חשמל. חיבור צנרת המים של מערכת המיזוג והתפוקה — לפי יועץ מיזוג, ולא נספרים כאן.',
+      en: 'Condensate drain and power. The HVAC water connections and the capacity are the HVAC consultant’s, and are not counted here.',
+    }),
+    notCounted: { he: 'חיבור צנרת המים של מערכת המיזוג והתפוקה — לפי יועץ מיזוג', en: 'The HVAC water connections and the capacity — per the HVAC consultant' },
+  },
   bought('bedside_station', 'עמדת מיטה (שני צדדים)', 'Bedside station (both sides)', 'guest_room', ['hotel'], [{ ...NEED.power, quantity: 2 }], {
     he: 'נקודת חשמל בכל צד של המיטה. השקעים, ה-USB ותאורת הקריאה בכל נקודה — לפי המתכנן.',
     en: 'A power point on each side of the bed. Sockets, USB and reading light at each — per the designer.',
