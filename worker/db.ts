@@ -18,9 +18,18 @@ export interface Assets {
   fetch(request: Request): Promise<Response>;
 }
 
+/** Cloudflare's rate limiting binding: whether one more request under `key` is within the limit. */
+export interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export interface Env {
   DB: Db;
   ASSETS: Assets;
+  /** Password sign-in attempts per address. Absent (tests, local runs without it) means no limit. */
+  LOGIN_BY_EMAIL?: RateLimit;
+  /** Requests to the password endpoints per network address. */
+  AUTH_BY_IP?: RateLimit;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   /** The address that becomes the admin on its first sign-in, while there is no admin yet. */

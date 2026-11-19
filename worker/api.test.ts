@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { MAX_DATA_BYTES, handleApi } from './api';
+import { MAX_DATA_BYTES, MAX_FAILED_LOGINS, handleApi } from './api';
 import { DUMMY_HASH, hashPassword, identityFromIdToken, safeReturn, sha256, verifyPassword } from './auth';
 import type { Db, Env, Stmt } from './db';
 
@@ -283,17 +283,70 @@ describe('signing in with an address and a password', () => {
     expect((await (await call('/api/admin/members', admin)).json()).find((m: { email: string }) => m.email === 'site@x.com').has_password).toBe(1);
   });
 
-  test('a wrong address and a wrong password get the same answer; repeated guesses lock the account', async () => {
+  test('a wrong address and a wrong password get the same answer; very many in a row rest the account', async () => {
     const admin = await signIn('adm', 'adm@x.com', 'admin');
     await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
     await setPassword((await linkFor(admin, 'site@x.com')).token, 'the right password');
 
     expect(await (await login('nobody@x.com', 'whatever it is')).json()).toEqual({ error: 'bad_credentials' });
-    for (let i = 0; i < 4; i++) expect((await login('site@x.com', 'a wrong password')).status).toBe(401);
-    expect(await (await login('site@x.com', 'a wrong password')).json()).toEqual({ error: 'locked' });
-    // Locked even for the right password, until the time is up.
+    // A few mistakes do not lock anyone out: that would let anyone lock a person out on purpose.
+    for (let i = 0; i < 5; i++) expect((await login('site@x.com', 'a wrong password')).status).toBe(401);
+    expect((await login('site@x.com', 'the right password')).status).toBe(200);
+
+    // The hundredth wrong one in a row rests the account, with the same answer the rate limits give.
+    await env.DB.prepare("update users set failed_logins = ? where email = 'site@x.com'").bind(MAX_FAILED_LOGINS - 1).run();
+    expect(await (await login('site@x.com', 'a wrong password')).json()).toEqual({ error: 'too_many' });
     expect((await login('site@x.com', 'the right password')).status).toBe(429);
     await env.DB.prepare("update users set locked_until = '2000-01-01T00:00:00Z' where email = 'site@x.com'").run();
+    expect((await login('site@x.com', 'the right password')).status).toBe(200);
+  });
+
+  /** Cloudflare's rate limiting binding, counting exactly: `max` requests per key, then refusals. */
+  const limiter = (max: number) => {
+    const seen = new Map<string, number>();
+    return {
+      keys: () => [...seen.keys()],
+      limit: async ({ key }: { key: string }) => {
+        seen.set(key, (seen.get(key) ?? 0) + 1);
+        return { success: seen.get(key)! <= max };
+      },
+    };
+  };
+  const loginFrom = (ip: string, email: string, password: string) =>
+    handleApi(
+      new Request(`${ORIGIN}/api/auth/password/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip }, body: JSON.stringify({ email, password }) }),
+      env,
+    );
+
+  test('each address is tried only so often, and an unknown one is refused the same way as a known one', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    await setPassword((await linkFor(admin, 'site@x.com')).token, 'the right password');
+    env.LOGIN_BY_EMAIL = limiter(3);
+
+    for (let i = 0; i < 3; i++) expect((await login(' Site@X.com ', 'a wrong password')).status).toBe(401);
+    // Past the limit even the right password waits: the limit is what slows guessing.
+    expect(await (await login('site@x.com', 'the right password')).json()).toEqual({ error: 'too_many' });
+    for (let i = 0; i < 3; i++) expect((await login('nobody@x.com', 'whatever it is')).status).toBe(401);
+    expect(await (await login('nobody@x.com', 'whatever it is')).json()).toEqual({ error: 'too_many' });
+    // Another address is not held up by these.
+    expect((await login('adm@x.com', 'anything at all')).status).toBe(401);
+  });
+
+  test('one network address trying many accounts is stopped, on every password endpoint', async () => {
+    env.AUTH_BY_IP = limiter(4);
+    for (let i = 0; i < 4; i++) expect((await loginFrom('203.0.113.7', `user${i}@x.com`, 'Summer2026!!')).status).toBe(401);
+    expect((await loginFrom('203.0.113.7', 'user9@x.com', 'Summer2026!!')).status).toBe(429);
+    expect((await loginFrom('198.51.100.2', 'user9@x.com', 'Summer2026!!')).status).toBe(401);
+    const link = await handleApi(new Request(`${ORIGIN}/api/auth/password/link`, { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.7' }, body: '{"token":"x"}' }), env);
+    expect(link.status).toBe(429);
+  });
+
+  test('without the binding, or when it fails, sign-in still works', async () => {
+    const admin = await signIn('adm', 'adm@x.com', 'admin');
+    await call('/api/admin/invites', admin, { method: 'POST', body: { email: 'site@x.com' } });
+    await setPassword((await linkFor(admin, 'site@x.com')).token, 'the right password');
+    env.LOGIN_BY_EMAIL = { limit: async () => { throw new Error('unavailable'); } };
     expect((await login('site@x.com', 'the right password')).status).toBe(200);
   });
 

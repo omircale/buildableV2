@@ -27,7 +27,7 @@ function useProblem() {
     const { code, status } = err as ApiError;
     if (status === undefined) return e.network;
     if (code === 'bad_credentials') return e.invalid;
-    if (code === 'locked') return e.locked;
+    if (code === 'too_many') return e.tooMany;
     if (code === 'weak_password') return e.weak(PASSWORD_MIN);
     return e.other;
   };

@@ -185,7 +185,7 @@ const he = {
     linkExpired: 'הקישור כבר לא בתוקף: הוא שומש, הוחלף בקישור חדש, או שעבר זמנו. בקשו קישור חדש ממנהל המערכת.',
     errors: {
       invalid: 'האימייל או הסיסמה שגויים.',
-      locked: 'יותר מדי ניסיונות שגויים. החשבון נח 15 דקות; אחר כך אפשר לנסות שוב.',
+      tooMany: 'יותר מדי ניסיונות בזמן קצר. אפשר לנסות שוב בעוד כמה דקות, או להיכנס עם Google.',
       weak: (min: number) => `הסיסמה קצרה מדי: צריך לפחות ${min} תווים.`,
       mismatch: 'שתי הסיסמאות לא זהות.',
       network: 'אין חיבור לשרת. בדקו את החיבור ונסו שוב.',
@@ -1284,7 +1284,7 @@ const en: Dict = {
     linkExpired: 'This link no longer works: it was used, replaced by a newer one, or it ran out. Ask the system admin for a new link.',
     errors: {
       invalid: 'The e-mail or password is wrong.',
-      locked: 'Too many wrong attempts. The account rests for 15 minutes; try again after that.',
+      tooMany: 'Too many attempts in a short time. Try again in a few minutes, or sign in with Google.',
       weak: (min: number) => `The password is too short: at least ${min} characters.`,
       mismatch: 'The two passwords are not the same.',
       network: 'No connection to the server. Check the connection and try again.',

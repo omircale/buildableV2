@@ -15,7 +15,7 @@ import {
   sha256,
   verifyPassword,
 } from './auth';
-import type { Db, Env } from './db';
+import type { Db, Env, RateLimit } from './db';
 
 /**
  * The app's API: who is signed in, their folders and bills, and the admin's member list.
@@ -41,9 +41,32 @@ interface Me {
  * data stops short of that: past it the person is told "too large", not a bare server error.
  */
 export const MAX_DATA_BYTES = 1_900_000;
-/** Wrong passwords in a row before an account stops accepting them for a while. */
-const MAX_FAILED_LOGINS = 5;
+/**
+ * Wrong passwords in a row before an account stops accepting them for a while: the most NIST
+ * SP 800-63B §5.2.2 allows. Guessing is slowed by the rate limits (wrangler.jsonc), not by this lock, so
+ * it stays high: a low one would let anyone lock a person out of their own account on purpose.
+ */
+export const MAX_FAILED_LOGINS = 100;
 const LOCK_MINUTES = 15;
+
+/**
+ * Whether one more request under `key` is within the limit. Without the binding, or if it fails, the
+ * request goes through: the limit slows guessing, and is not worth refusing a real person over.
+ */
+async function within(limiter: RateLimit | undefined, key: string): Promise<boolean> {
+  if (!limiter) return true;
+  try {
+    return (await limiter.limit({ key })).success;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * One answer for every refusal of this kind — the address's own limit, the network's, or an account
+ * resting after many wrong passwords — so none of them tells whether the address has an account.
+ */
+const tooMany = () => fail(429, 'too_many');
 /** How long a password link works: an invitation waits a week for its person, a reset a day. */
 const LINK_HOURS = { invite: 7 * 24, reset: 24 } as const;
 const now = () => new Date().toISOString();
@@ -166,12 +189,20 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), password: true });
   }
 
+  // The password endpoints answer a network address only so often, whatever it tries: one address
+  // trying one password on many accounts is stopped here.
+  if (path.startsWith('/api/auth/password/') && method === 'POST') {
+    if (!(await within(env.AUTH_BY_IP, `ip:${request.headers.get('cf-connecting-ip') ?? 'unknown'}`))) return tooMany();
+  }
+
   // An address and a password. A wrong address and a wrong password get the same answer, in the same
-  // time; after repeated wrong passwords the account rests for a while.
+  // time. Each address is tried only so often, known or not; after very many wrong passwords in a row
+  // the account rests for a while.
   if (path === '/api/auth/password/login' && method === 'POST') {
     const b = await body<{ email?: string; password?: string }>(request);
     const email = cleanEmail(b?.email);
     const password = typeof b?.password === 'string' ? b.password : '';
+    if (email && !(await within(env.LOGIN_BY_EMAIL, `email:${email}`))) return tooMany();
     const row = email
       ? await db.prepare('select id, email, password_hash, failed_logins, locked_until from users where email = ?').bind(email).first<{ id: string; email: string; password_hash: string | null; failed_logins: number; locked_until: string | null }>()
       : null;
@@ -179,12 +210,12 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       await verifyPassword(password, DUMMY_HASH);
       return fail(401, 'bad_credentials');
     }
-    if (row.locked_until && row.locked_until > now()) return fail(429, 'locked');
+    if (row.locked_until && row.locked_until > now()) return tooMany();
     if (!(await verifyPassword(password, row.password_hash))) {
       const failed = row.failed_logins + 1;
       const lock = failed >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null;
       await db.prepare('update users set failed_logins = ?, locked_until = ? where id = ?').bind(lock ? 0 : failed, lock, row.id).run();
-      return fail(lock ? 429 : 401, lock ? 'locked' : 'bad_credentials');
+      return lock ? tooMany() : fail(401, 'bad_credentials');
     }
     await db.prepare('update users set failed_logins = 0, locked_until = null where id = ?').bind(row.id).run();
     await admit(db, { id: row.id, email: row.email }, env.BOOTSTRAP_ADMIN_EMAIL);
