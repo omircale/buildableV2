@@ -42,7 +42,7 @@ src/engine/          pure TypeScript, no React; studio/ is the design studio's m
 src/state/           zustand stores, kept on the device under the signed-in account
 src/cloud/api.ts     the app's only server client: /api/me, places, bills, studio, admin
 src/pages, src/ui    screens
-worker/              the Worker: index.ts routes, api.ts endpoints, auth.ts Google sign-in
+worker/              the Worker: index.ts routes, api.ts endpoints, auth.ts sign-in (Google, passwords)
 migrations/          D1 schema, applied in order
 public/_headers      security headers (CSP, frame-ancestors none, HSTS)
 pwa/                 the offline copy: service worker and the build step that writes it
@@ -50,12 +50,16 @@ pwa/                 the offline copy: service worker and the build step that wr
 
 ## Accounts
 
-- Sign-in is Google only, handled by the Worker (authorization code + PKCE). The session is an HttpOnly
-  cookie; the page never sees a token.
+- Sign-in is with Google (authorization code + PKCE) or with an address and a password, both handled by
+  the Worker; the same address is one account either way. The session is an HttpOnly cookie; the page
+  never sees a token.
+- A password is set only through a one-time link the admin issues (an invitation, or a reset). It is
+  kept as a salted PBKDF2 hash. Password sign-in is rate-limited per address and per network address
+  (`ratelimits` in `wrangler.jsonc`), and an account rests after 100 wrong passwords in a row.
 - Signing in grants nothing. The admin invites an address; it becomes a member on its first sign-in.
   The bootstrap address becomes admin only while there is no admin.
 - Every folder, bill and studio project has an owner, and every query in `worker/api.ts` is scoped to
-  the signed-in account. The admin sees counts, never anyone's work. `worker/api.test.ts` checks this
+  the signed-in account; a studio project is also open to the team its owner shared it with. The admin sees counts, never anyone's work. `worker/api.test.ts` checks this
   against a real SQLite database.
 
 ## Principles
