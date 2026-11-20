@@ -91,3 +91,38 @@ describe('what the walk-through produces', () => {
     expect(doc).not.toContain('גודל חיבור החשמל');
   });
 });
+
+describe('a hotel working on its own building', () => {
+  const room = ['wc', 'basin', 'shower', 'fan_coil', 'guest_tv'];
+  const hotel = branchNeed([{ equipmentIds: room, count: 40, sector: 'hotel' }]);
+
+  it('is not asked about a landlord, a handover or a previous tenant', () => {
+    expect(hotel.hotelOnly).toBe(true);
+    const ids = evaluateChecks(hotel, {}).map((e) => e.check.id);
+    expect(ids).not.toContain('landlord_annex');
+    expect(ids).not.toContain('handover_date');
+    expect(ids).not.toContain('previous_tenant');
+    // What the rooms need is still asked.
+    expect(ids).toContain('electrical_supply');
+    expect(ids).toContain('water_supply');
+  });
+
+  it('gives no gap to a landlord it does not have', () => {
+    const evaluated = evaluateChecks(hotel, { electrical_supply: { answer: 'no', note: '' } });
+    expect(evaluated.find((e) => e.check.id === 'electrical_supply')?.owner).toBe('us');
+    expect(propertySummary(evaluated).byOwner.landlord).toEqual([]);
+  });
+
+  it('a property with any room that is not a hotel’s is still a lease, with every question', () => {
+    const mixed = branchNeed([{ equipmentIds: room, sector: 'hotel' }, { equipmentIds: ['workstation'], sector: 'office' }]);
+    expect(mixed.hotelOnly).toBe(false);
+    expect(evaluateChecks(mixed, {}).map((e) => e.check.id)).toContain('landlord_annex');
+    expect(branchNeed([]).hotelOnly).toBe(false);
+  });
+
+  it('only questions about renting are left out, and each of them is marked so', () => {
+    const lease = SITE_CHECKS.filter((c) => c.leaseOnly).map((c) => c.id);
+    expect(lease.sort()).toEqual(['handover_date', 'landlord_annex', 'previous_tenant']);
+  });
+});
+

@@ -6,10 +6,12 @@ import { AppHeader } from '../ui/AppHeader';
 import { buttonClass } from '../ui/common';
 
 /**
- * The front door: what the product does for a construction manager, and the way into it.
+ * The front door of the hospitality site: what it does for a hotel, and the way into it.
  *
- * One primary action — check a property — because that is the question a property arrives with. The
- * open property, if there is one, is offered back so a refresh or a second visit does not start over.
+ * One primary action — a room's bill of quantities — because a hotel renovates the building it already
+ * has. Checking a property before renting it is still there, as a secondary link, for a chain that
+ * takes a new site. The open project, if there is one, is offered back so a refresh or a second visit
+ * does not start over.
  */
 export function HomePage({ auth }: { auth: AuthState }) {
   const equipmentLink = useServicesT().homeLink;
@@ -30,17 +32,17 @@ export function HomePage({ auth }: { auth: AuthState }) {
             <p className="text-lg leading-relaxed text-muted">{h.hotelBody}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <a href="#/check/start" className={buttonClass('primary', 'lg')}>
-              {h.checkStart}
+            <a href="#/space" className={buttonClass('primary', 'lg')}>
+              {h.roomStart}
             </a>
             <a href="#/journey" className={buttonClass('secondary', 'lg')}>
               {h.hotelStart}
             </a>
-            <a href="#/space" className="text-body font-medium text-accent-ink underline underline-offset-2">
-              {h.hotelDirect}
-            </a>
             <a href="#/equipment" className="text-body font-medium text-accent-ink underline underline-offset-2">
               {equipmentLink}
+            </a>
+            <a href="#/check/start" className="text-body font-medium text-accent-ink underline underline-offset-2">
+              {h.checkLease}
             </a>
 
           </div>
@@ -54,9 +56,14 @@ export function HomePage({ auth }: { auth: AuthState }) {
               <div className="text-lg font-semibold">{survey.propertyName || h.unnamedProperty}</div>
               <div className="text-small text-muted">{h.openFacts(rooms.length, answered)}</div>
             </div>
-            <a href="#/check/tour" className={buttonClass('primary', 'md')}>
-              {h.continueCheck}
+            <a href="#/space" className={buttonClass('primary', 'md')}>
+              {h.continueProject}
             </a>
+            {answered > 0 && (
+              <a href="#/check/tour" className="text-small text-accent-ink underline underline-offset-2">
+                {h.continueCheck}
+              </a>
+            )}
             <a href="#/projects" className="text-small text-muted underline underline-offset-2">
               {t.header.projects}
             </a>

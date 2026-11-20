@@ -233,6 +233,8 @@ function GapsStep() {
   const c = t.check;
   const he = useUi((s) => s.locale) === 'he';
   const { evaluated, summary, need } = useProperty();
+  // A hotel working on its own building has no landlord to hand a gap to.
+  const owners = need.hotelOnly ? OWNERS.filter((o) => o !== 'landlord') : OWNERS;
   const setCheck = useSurvey((s) => s.setCheck);
   const siteChecks = useSurvey((s) => s.siteChecks);
 
@@ -257,7 +259,7 @@ function GapsStep() {
 
       {summary.gaps + summary.unknown === 0 && evaluated.length > 0 && <p className="rounded-xl bg-ok-soft px-4 py-3 text-body">{c.allFine}</p>}
 
-      {OWNERS.map((owner) => {
+      {owners.map((owner) => {
         const items = summary.byOwner[owner];
         return (
           <section key={owner} className="space-y-2">
@@ -285,7 +287,7 @@ function GapsStep() {
                         value={e.owner}
                         onChange={(ev) => setCheck(e.check.id, { owner: ev.target.value as Owner, answer: siteChecks[e.check.id]?.answer ?? 'unknown' })}
                       >
-                        {OWNERS.map((o) => (
+                        {owners.map((o) => (
                           <option key={o} value={o}>
                             {c.owners[o]}
                           </option>
@@ -354,7 +356,7 @@ function DocsStep({ auth }: { auth: AuthState }) {
     <div className="space-y-6">
       <p className="max-w-prose text-small text-muted">{c.docsIntro}</p>
       <ul className="space-y-3">
-        {doc(c.docLandlord, c.docLandlordHint, () => downloadText(`${fileBase} - landlord.txt`, landlordRequirements(evaluated, need, o), 'text/plain;charset=utf-8'))}
+        {!need.hotelOnly && doc(c.docLandlord, c.docLandlordHint, () => downloadText(`${fileBase} - landlord.txt`, landlordRequirements(evaluated, need, o), 'text/plain;charset=utf-8'))}
         {doc(c.docQuestions, c.docQuestionsHint, () => downloadText(`${fileBase} - questions.txt`, openQuestions(evaluated, need, o, extra), 'text/plain;charset=utf-8'))}
         {doc(c.docBill, c.docBillHint, () => void downloadWorkbook(`${fileBase} - boq.xlsx`, billWorkbook(bill.lines, { locale, roomName: bill.roomName }), he))}
       </ul>
