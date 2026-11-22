@@ -40,7 +40,8 @@ function useProperty() {
 /** Whether the building is rented or one's own: the one thing that decides if the lease questions are asked. */
 function TenureChoice() {
   const c = useT().check;
-  const tenure = useSurvey((s) => s.tenure) ?? 'lease';
+  // Nobody has said: neither is marked. It is asked everything, as a rented property is, and says so.
+  const tenure = useSurvey((s) => s.tenure);
   const setTenure = useSurvey((s) => s.setTenure);
   return (
     <div className="space-y-1.5">
@@ -51,6 +52,7 @@ function TenureChoice() {
             {c.tenures[k]}
           </Chip>
         ))}
+        {tenure == null && <span className="text-small text-warn">{c.tenureUnsaid}</span>}
       </div>
       <p className="max-w-prose text-caption text-muted">{c.tenureHint}</p>
     </div>
