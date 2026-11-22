@@ -92,37 +92,31 @@ describe('what the walk-through produces', () => {
   });
 });
 
-describe('a hotel working on its own building', () => {
-  const room = ['wc', 'basin', 'shower', 'fan_coil', 'guest_tv'];
-  const hotel = branchNeed([{ equipmentIds: room, count: 40, sector: 'hotel' }]);
+describe('a building of one’s own', () => {
+  const room = ['wc', 'vanity_basin', 'shower', 'fan_coil', 'guest_tv'];
+  const own = branchNeed([{ equipmentIds: room, count: 40 }], 'own');
 
   it('is not asked about a landlord, a handover or a previous tenant', () => {
-    expect(hotel.hotelOnly).toBe(true);
-    const ids = evaluateChecks(hotel, {}).map((e) => e.check.id);
-    expect(ids).not.toContain('landlord_annex');
-    expect(ids).not.toContain('handover_date');
-    expect(ids).not.toContain('previous_tenant');
+    const ids = evaluateChecks(own, {}).map((e) => e.check.id);
+    for (const id of ['landlord_annex', 'handover_date', 'previous_tenant']) expect(ids).not.toContain(id);
     // What the rooms need is still asked.
-    expect(ids).toContain('electrical_supply');
-    expect(ids).toContain('water_supply');
+    expect(ids).toEqual(expect.arrayContaining(['electrical_supply', 'water_supply']));
   });
 
-  it('gives no gap to a landlord it does not have', () => {
-    const evaluated = evaluateChecks(hotel, { electrical_supply: { answer: 'no', note: '' } });
-    expect(evaluated.find((e) => e.check.id === 'electrical_supply')?.owner).toBe('us');
-    expect(propertySummary(evaluated).byOwner.landlord).toEqual([]);
+  it('gives no gap to a landlord it does not have, not even one moved there while it was rented', () => {
+    const evaluated = evaluateChecks(own, { electrical_supply: { answer: 'no', note: '' }, water_supply: { answer: 'no', note: '', owner: 'landlord' } });
+    const { byOwner, gaps } = propertySummary(evaluated);
+    expect(byOwner.landlord).toEqual([]);
+    // Moved, not lost: every gap is still on somebody's list.
+    expect(gaps).toBe(2);
+    expect(byOwner.us.map((e) => e.check.id)).toEqual(expect.arrayContaining(['electrical_supply', 'water_supply']));
   });
 
-  it('a property with any room that is not a hotel’s is still a lease, with every question', () => {
-    const mixed = branchNeed([{ equipmentIds: room, sector: 'hotel' }, { equipmentIds: ['workstation'], sector: 'office' }]);
-    expect(mixed.hotelOnly).toBe(false);
-    expect(evaluateChecks(mixed, {}).map((e) => e.check.id)).toContain('landlord_annex');
-    expect(branchNeed([]).hotelOnly).toBe(false);
+  it('a property is rented unless it is said not to be, whatever its rooms hold', () => {
+    for (const ids of [room, kitchen, []]) expect(evaluateChecks(branchNeed([{ equipmentIds: ids }]), {}).map((e) => e.check.id)).toContain('landlord_annex');
   });
 
   it('only questions about renting are left out, and each of them is marked so', () => {
-    const lease = SITE_CHECKS.filter((c) => c.leaseOnly).map((c) => c.id);
-    expect(lease.sort()).toEqual(['handover_date', 'landlord_annex', 'previous_tenant']);
+    expect(SITE_CHECKS.filter((c) => c.leaseOnly).map((c) => c.id).sort()).toEqual(['handover_date', 'landlord_annex', 'previous_tenant']);
   });
 });
-

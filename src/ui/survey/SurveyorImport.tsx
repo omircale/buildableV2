@@ -4,6 +4,7 @@ import { useT } from '../../i18n';
 import { useSurvey } from '../../state/spaceStore';
 import { useUi } from '../../state/uiStore';
 import { Button, inputClass } from '../common';
+import { defaultEquipmentRoom } from './equipmentRoom';
 
 /** A floor's DXF is a few megabytes. Far beyond this, it is a whole building and reading it would freeze the page. */
 const MAX_MB = 40;
@@ -49,6 +50,8 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
   const s = t.surveyor;
   const he = useUi((st) => st.locale) === 'he';
   const importSurvey = useSurvey((st) => st.importSurvey);
+  const equipmentIds = useSurvey((st) => st.equipmentIds);
+  const openName = useSurvey((st) => st.space.nameHe);
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<string | null>(null);
   const [drawing, setDrawing] = useState<DxfDrawing | null>(null);
@@ -58,12 +61,19 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
   const [unit, setUnit] = useState<Unit>('mm');
   const [names, setNames] = useState<Record<number, string>>({});
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
-  const [equipmentRoom, setEquipmentRoom] = useState(0);
+  /** The room the person chose for the equipment, 'none' for no room, or null while they have not chosen. */
+  const [picked, setPicked] = useState<number | 'none' | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   const layers = useMemo(() => (drawing ? layerSummary(drawing).filter((l) => l.closed > 0) : []), [drawing]);
   const rooms = useMemo(() => (drawing && layer ? roomsFromDrawing(drawing, layer, unit) : []), [drawing, layer, unit]);
   const guessed = drawing?.units === 'unknown';
+
+  // A room left out of the import cannot take the equipment, whether it was chosen or suggested.
+  const suggested = useMemo(() => defaultEquipmentRoom(rooms, openName, equipmentIds), [rooms, openName, equipmentIds]);
+  const wanted = picked ?? suggested;
+  const equipmentRoom = typeof wanted === 'number' && excluded.has(wanted) ? null : wanted;
+  const hasEquipment = equipmentIds.length > 0;
 
   const read = async (f: File) => {
     setError(null);
@@ -88,10 +98,7 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
       setUnit(d.units !== 'unknown' ? d.units : (likelyUnit(d, first) ?? 'mm'));
       setNames({});
       setExcluded(new Set());
-      // The branch's equipment goes, by default, to the room labelled a kitchen — or else the largest.
-      const found = roomsFromDrawing(d, first, d.units !== 'unknown' ? d.units : (likelyUnit(d, first) ?? 'mm'));
-      const kitchen = found.findIndex((r) => r.name != null && /מטבח|kitchen/i.test(r.name));
-      setEquipmentRoom(kitchen >= 0 ? kitchen : found.reduce((best, r, i) => (r.areaM2 > found[best].areaM2 ? i : best), 0));
+      setPicked(null);
     } catch {
       setError(s.notDxf);
     } finally {
@@ -151,7 +158,7 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
                   setLayer(e.target.value);
                   setNames({});
                   setExcluded(new Set());
-                  setEquipmentRoom(0);
+                  setPicked(null);
                 }}
               >
                 {layers.map((l) => (
@@ -164,7 +171,10 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
             </label>
             <label className="block">
               <span className="mb-1 block text-small font-medium">{s.unit}</span>
-              <select className={inputClass} value={unit} onChange={(e) => setUnit(e.target.value as Unit)}>
+              <select className={inputClass} value={unit} onChange={(e) => {
+                setUnit(e.target.value as Unit);
+                setPicked(null);
+              }}>
                 {(['mm', 'cm', 'm'] as const).map((u) => (
                   <option key={u} value={u}>
                     {s.units[u]}
@@ -205,23 +215,37 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
                     <input className={`${inputClass} h-9 min-w-0 flex-1 basis-40 sm:max-w-[16rem]`} aria-label={s.roomName} value={nameOf(i)} maxLength={80} onChange={(e) => setNames((n) => ({ ...n, [i]: e.target.value }))} />
                     <span className="text-small tabular-nums">{s.area(fmt(r.areaM2))}</span>
                     <span className="text-small text-muted">{s.corners(r.footprintMm.length)}</span>
-                    <label className="flex items-center gap-1.5 text-small">
-                      <input type="radio" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRoom === i} disabled={excluded.has(i)} onChange={() => setEquipmentRoom(i)} />
-                      {s.equipmentHere}
-                    </label>
+                    {hasEquipment && (
+                      <label className="flex items-center gap-1.5 text-small">
+                        <input type="radio" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRoom === i} disabled={excluded.has(i)} onChange={() => setPicked(i)} />
+                        {s.equipmentHere}
+                      </label>
+                    )}
                     {r.hadArcs && <span className="basis-full text-caption text-warn">{s.arcs}</span>}
                   </li>
                 ))}
               </ol>
+              {hasEquipment && (
+                <label className="flex items-center gap-1.5 text-small">
+                  <input type="radio" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRoom === 'none'} onChange={() => setPicked('none')} />
+                  {s.equipmentNowhere}
+                </label>
+              )}
               <p className="text-caption text-muted">{s.replaceWarning}</p>
+              {hasEquipment && equipmentRoom == null && (
+                <p role="status" className="text-small text-warn">
+                  {s.equipmentChoose}
+                </p>
+              )}
               <Button
                 variant="primary"
-                disabled={chosen.length === 0}
+                // Importing replaces the rooms, so equipment nobody placed would be lost without a word.
+                disabled={chosen.length === 0 || (hasEquipment && equipmentRoom == null)}
                 onClick={() => {
-                  const target = Math.max(0, chosen.findIndex((r) => r.index === equipmentRoom));
+                  const at = chosen.findIndex((r) => r.index === equipmentRoom);
                   importSurvey(
                     chosen.map((r) => ({ name: nameOf(r.index).trim() || s.unnamed(r.index + 1), footprintMm: r.footprintMm })),
-                    { equipmentRoom: target, fileName: file ?? 'DXF' },
+                    { equipmentRoom: at >= 0 ? at : null, fileName: file ?? 'DXF' },
                   );
                   setDone(s.done(chosen.length, file ?? 'DXF'));
                   onImported?.();

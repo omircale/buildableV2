@@ -32,8 +32,8 @@ export interface SiteCheck {
   /** When the check applies. A property for a shop has no hood to vent. */
   appliesWhen: (need: BranchNeed) => boolean;
   /**
-   * A question about renting a property — a landlord, a handover, a previous tenant. A hotel working on
-   * its own building has none of them, so it is not asked them.
+   * A question about renting a property — a landlord, a handover, a previous tenant. Someone working on
+   * their own building has none of them, so they are not asked.
    */
   leaseOnly?: true;
   sources: Source[];
@@ -43,9 +43,15 @@ export interface SiteCheck {
 export interface BranchNeed {
   points: Partial<Record<ServiceKind, number>>;
   equipmentIds: string[];
-  /** Every room is a hotel's: the work is in the hotel's own building, with no landlord to deal with. */
-  hotelOnly?: boolean;
+  /** The work is in a building of one's own, as a hotel's refresh is: there is no landlord to deal with. */
+  ownBuilding?: boolean;
 }
+
+/**
+ * Whether the property is rented or one's own. Recorded on the property itself and changed only by
+ * saying so: what kind of equipment someone happens to be browsing says nothing about the building.
+ */
+export type Tenure = 'lease' | 'own';
 
 const UNIFORM_SPEC_FOOD: Source = {
   title: 'מפרט אחיד לבתי אוכל, פריט 4.2 — משרד הפנים',
@@ -223,21 +229,21 @@ export interface EvaluatedCheck {
 }
 
 /** What a set of rooms needs: every room's equipment, multiplied by how many identical rooms it stands for. */
-export function branchNeed(rooms: { equipmentIds: string[]; count?: number; sector?: string }[]): BranchNeed {
+export function branchNeed(rooms: { equipmentIds: string[]; count?: number }[], tenure: Tenure = 'lease'): BranchNeed {
   const points: Partial<Record<ServiceKind, number>> = {};
   const ids = new Set<string>();
   for (const room of rooms) {
     for (const id of room.equipmentIds) ids.add(id);
     for (const s of servicesFor(room.equipmentIds)) points[s.kind] = (points[s.kind] ?? 0) + s.quantity * (room.count ?? 1);
   }
-  return { points, equipmentIds: [...ids], hotelOnly: rooms.length > 0 && rooms.every((r) => r.sector === 'hotel') };
+  return { points, equipmentIds: [...ids], ownBuilding: tenure === 'own' };
 }
 
 /**
- * Whose a gap is by default. In a hotel's own building there is no landlord: what would be the
- * landlord's to prepare is the hotel's own work.
+ * Whose a gap is. In a building of one's own there is no landlord: what would be the landlord's to
+ * prepare — by default, or because someone moved it there while the property was rented — is our own.
  */
-export const defaultOwner = (check: SiteCheck, need: BranchNeed): Owner => (need.hotelOnly && check.owner === 'landlord' ? 'us' : check.owner);
+const ownerIn = (owner: Owner, need: BranchNeed): Owner => (need.ownBuilding && owner === 'landlord' ? 'us' : owner);
 
 /**
  * Every check that applies to this branch, with what was found.
@@ -246,11 +252,11 @@ export const defaultOwner = (check: SiteCheck, need: BranchNeed): Owner => (need
  * are the same thing. The difference is kept in `answered` for the screen that asks.
  */
 export function evaluateChecks(need: BranchNeed, states: Record<string, CheckState>): EvaluatedCheck[] {
-  return SITE_CHECKS.filter((c) => c.appliesWhen(need) && !(c.leaseOnly && need.hotelOnly)).map((check) => {
+  return SITE_CHECKS.filter((c) => c.appliesWhen(need) && !(c.leaseOnly && need.ownBuilding)).map((check) => {
     const s = states[check.id];
     const answer = s?.answer ?? 'unknown';
     const status: CheckStatus = answer === 'unknown' ? 'unknown' : answer === check.good ? 'ok' : 'gap';
-    return { check, status, owner: s?.owner ?? defaultOwner(check, need), note: s?.note ?? '', answered: s != null && s.answer !== 'unknown' };
+    return { check, status, owner: ownerIn(s?.owner ?? check.owner, need), note: s?.note ?? '', answered: s != null && s.answer !== 'unknown' };
   });
 }
 

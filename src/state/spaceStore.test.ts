@@ -783,3 +783,64 @@ describe('rooms from a surveyor’s drawing', () => {
     expect(useSurvey.getState().space.nameHe).toBe('לפני');
   });
 });
+
+describe('rented, or one’s own building', () => {
+  const asked = async () => {
+    const { branchNeed, evaluateChecks, propertySummary } = await import('../engine');
+    const st = useSurvey.getState();
+    const evaluated = evaluateChecks(branchNeed(projectRooms(st as never), st.tenure), st.siteChecks);
+    return { ids: evaluated.map((e) => e.check.id), landlord: propertySummary(evaluated).byOwner.landlord.map((e) => e.check.id) };
+  };
+
+  it('browsing the equipment of any kind of place changes neither the questions nor whose the gaps are', async () => {
+    const { SECTORS } = await import('../engine');
+    for (const start of [
+      { sector: 'hotel' as const, equipmentIds: ['wc', 'guest_tv'], roomName: 'חדר אירוח', tenure: 'own' as const },
+      { sector: 'restaurant' as const, equipmentIds: ['range_gas', 'extraction_hood'], roomName: 'מטבח' },
+    ]) {
+      useSurvey.getState().startFromTemplate(start, '');
+      useSurvey.getState().setCheck('landlord_annex', { answer: 'no' });
+      const before = await asked();
+      expect(before.ids.includes('landlord_annex')).toBe(start.tenure !== 'own');
+      for (const sector of ['all', ...SECTORS] as const) {
+        useSurvey.getState().setSector(sector);
+        expect(await asked()).toEqual(before);
+      }
+    }
+  });
+
+  it('is changed by saying so, and an answer left unasked comes back', async () => {
+    useSurvey.getState().startFromTemplate({ sector: 'restaurant', equipmentIds: ['range_gas'], roomName: 'מטבח' }, '');
+    useSurvey.getState().setCheck('landlord_annex', { answer: 'no' });
+    useSurvey.getState().setTenure('own');
+    expect((await asked()).ids).not.toContain('landlord_annex');
+    useSurvey.getState().setTenure('lease');
+    expect((await asked()).landlord).toContain('landlord_annex');
+  });
+
+  it('survives a refresh, a backup, an undo and an import; an older project is rented', async () => {
+    useSurvey.getState().startFromTemplate({ sector: 'hotel', equipmentIds: ['wc'], roomName: 'חדר אירוח', tenure: 'own' }, '');
+    const backup = useSurvey.getState().exportProject();
+    vi.resetModules();
+    expect((await import('./spaceStore')).useSurvey.getState().tenure).toBe('own');
+    useSurvey.getState().importSurvey([{ name: 'א', footprintMm: [{ x: 0, y: 0 }, { x: 3000, y: 0 }, { x: 3000, y: 3000 }] }], { equipmentRoom: null, fileName: 'a.dxf' });
+    expect(useSurvey.getState().tenure).toBe('own');
+    useSurvey.getState().startFromTemplate({ sector: 'restaurant', equipmentIds: ['range_gas'], roomName: 'מטבח' }, '');
+    expect(useSurvey.getState().tenure).toBe('lease');
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().tenure).toBe('own');
+    const { tenure: _gone, ...older } = JSON.parse(backup);
+    for (const saved of [older, { ...older, tenure: 'squat' }]) {
+      useSurvey.getState().restoreProject(JSON.stringify(saved));
+      expect(useSurvey.getState().tenure).toBe('lease');
+    }
+  });
+
+  it('equipment given no room in an import goes into none, and the import can be undone', () => {
+    useSurvey.getState().startFromTemplate({ sector: 'hotel', equipmentIds: ['wc'], roomName: 'חדר אירוח' }, '');
+    useSurvey.getState().importSurvey([{ name: 'מסדרון', footprintMm: [{ x: 0, y: 0 }, { x: 3000, y: 0 }, { x: 3000, y: 3000 }] }], { equipmentRoom: null, fileName: 'a.dxf' });
+    expect(projectRooms(useSurvey.getState() as never).every((r) => r.equipmentIds.length === 0)).toBe(true);
+    useSurvey.getState().undo();
+    expect(useSurvey.getState().equipmentIds).toEqual(['wc']);
+  });
+});

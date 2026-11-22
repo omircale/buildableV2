@@ -7,7 +7,7 @@ import { allTemplates, useTemplates, type BranchTemplate } from '../state/templa
 import { useUi } from '../state/uiStore';
 import { CloudSave } from '../ui/account/Bills';
 import { AppHeader } from '../ui/AppHeader';
-import { Button, buttonClass, downloadText, inputClass } from '../ui/common';
+import { Button, Chip, buttonClass, downloadText, inputClass } from '../ui/common';
 import { IconCheck } from '../ui/icons';
 import { NullableCm } from '../ui/survey/SurveyEditor';
 import { SurveyorImport } from '../ui/survey/SurveyorImport';
@@ -32,9 +32,29 @@ const STATUS_STYLE = { ok: 'bg-ok-soft', gap: 'bg-bad-soft text-bad', unknown: '
 function useProperty() {
   const survey = useSurvey();
   const rooms = projectRooms(survey);
-  const need = useMemo(() => branchNeed(rooms), [rooms]);
+  const need = useMemo(() => branchNeed(rooms, survey.tenure), [rooms, survey.tenure]);
   const evaluated = useMemo(() => evaluateChecks(need, survey.siteChecks), [need, survey.siteChecks]);
   return { survey, rooms, need, evaluated, summary: propertySummary(evaluated) };
+}
+
+/** Whether the building is rented or one's own: the one thing that decides if the lease questions are asked. */
+function TenureChoice() {
+  const c = useT().check;
+  const tenure = useSurvey((s) => s.tenure);
+  const setTenure = useSurvey((s) => s.setTenure);
+  return (
+    <div className="space-y-1.5">
+      <div role="group" aria-label={c.tenureLabel} className="flex flex-wrap items-center gap-2">
+        <span className="text-small font-medium">{c.tenureLabel}</span>
+        {(['lease', 'own'] as const).map((k) => (
+          <Chip key={k} selected={tenure === k} onClick={() => setTenure(k)}>
+            {c.tenures[k]}
+          </Chip>
+        ))}
+      </div>
+      <p className="max-w-prose text-caption text-muted">{c.tenureHint}</p>
+    </div>
+  );
 }
 
 function StartStep({ onStarted }: { onStarted: () => void }) {
@@ -49,7 +69,7 @@ function StartStep({ onStarted }: { onStarted: () => void }) {
 
   const start = (tpl: BranchTemplate) => {
     if (hasWork && !confirm(c.startConfirm(tpl.name))) return;
-    survey.startFromTemplate({ sector: tpl.sector, equipmentIds: tpl.equipmentIds, roomName: tpl.roomName ?? (tpl.example ? 'מטבח' : tpl.name) }, name.trim());
+    survey.startFromTemplate({ sector: tpl.sector, equipmentIds: tpl.equipmentIds, roomName: tpl.roomName ?? (tpl.example ? 'מטבח' : tpl.name), tenure: tpl.tenure }, name.trim());
     onStarted();
   };
 
@@ -116,7 +136,7 @@ function StartStep({ onStarted }: { onStarted: () => void }) {
         </ul>
       </section>
 
-      {hasWork && <SurveyorImport />}
+      <SurveyorImport />
 
       {hasWork && !survey.surveyFile && (
         <div className="max-w-xl">
@@ -212,9 +232,16 @@ function TourStep() {
   const { evaluated } = useProperty();
   const siteChecks = useSurvey((s) => s.siteChecks);
   const answered = evaluated.filter((e) => siteChecks[e.check.id] != null).length;
-  if (!evaluated.length) return <p className="text-body text-muted">{c.noChecks}</p>;
+  if (!evaluated.length)
+    return (
+      <div className="space-y-4">
+        <TenureChoice />
+        <p className="text-body text-muted">{c.noChecks}</p>
+      </div>
+    );
   return (
     <div className="space-y-4">
+      <TenureChoice />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <p className="max-w-prose text-small text-muted">{c.tourIntro}</p>
         <span className="ms-auto text-small font-medium tabular-nums">{c.answered(answered, evaluated.length)}</span>
@@ -233,8 +260,8 @@ function GapsStep() {
   const c = t.check;
   const he = useUi((s) => s.locale) === 'he';
   const { evaluated, summary, need } = useProperty();
-  // A hotel working on its own building has no landlord to hand a gap to.
-  const owners = need.hotelOnly ? OWNERS.filter((o) => o !== 'landlord') : OWNERS;
+  // Someone working on their own building has no landlord to hand a gap to.
+  const owners = need.ownBuilding ? OWNERS.filter((o) => o !== 'landlord') : OWNERS;
   const setCheck = useSurvey((s) => s.setCheck);
   const siteChecks = useSurvey((s) => s.siteChecks);
 
@@ -356,7 +383,7 @@ function DocsStep({ auth }: { auth: AuthState }) {
     <div className="space-y-6">
       <p className="max-w-prose text-small text-muted">{c.docsIntro}</p>
       <ul className="space-y-3">
-        {!need.hotelOnly && doc(c.docLandlord, c.docLandlordHint, () => downloadText(`${fileBase} - landlord.txt`, landlordRequirements(evaluated, need, o), 'text/plain;charset=utf-8'))}
+        {!need.ownBuilding && doc(c.docLandlord, c.docLandlordHint, () => downloadText(`${fileBase} - landlord.txt`, landlordRequirements(evaluated, need, o), 'text/plain;charset=utf-8'))}
         {doc(c.docQuestions, c.docQuestionsHint, () => downloadText(`${fileBase} - questions.txt`, openQuestions(evaluated, need, o, extra), 'text/plain;charset=utf-8'))}
         {doc(c.docBill, c.docBillHint, () => void downloadWorkbook(`${fileBase} - boq.xlsx`, billWorkbook(bill.lines, { locale, roomName: bill.roomName }), he))}
       </ul>
@@ -374,7 +401,7 @@ function DocsStep({ auth }: { auth: AuthState }) {
             e.preventDefault();
             const name = tplName.trim();
             if (!name) return;
-            saveTemplate({ name, sector: survey.sector, equipmentIds: survey.equipmentIds });
+            saveTemplate({ name, sector: survey.sector, equipmentIds: survey.equipmentIds, tenure: survey.tenure });
             setSaved(name);
             setTplName('');
           }}

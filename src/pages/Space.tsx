@@ -7,6 +7,7 @@ import { FinishSchedule } from '../ui/survey/FinishSchedule';
 import { ProjectBackup } from '../ui/survey/ProjectBackup';
 import { RoomSwitcher } from '../ui/survey/RoomSwitcher';
 import { SampleBanner, SurveyEditor } from '../ui/survey/SurveyEditor';
+import { SurveyorImport } from '../ui/survey/SurveyorImport';
 import { UndoToast } from '../ui/survey/UndoToast';
 import { useRoomBill } from '../ui/survey/useRoomBill';
 
@@ -23,6 +24,12 @@ export function SpacePage({ auth }: { auth: AuthState }) {
         <p className="max-w-2xl text-body leading-relaxed text-muted">{t.survey.intro}</p>
         <SampleBanner />
         <RoomSwitcher bill={bill} />
+        <details className="rounded-xl border border-line bg-panel px-4 py-3">
+          <summary className="cursor-pointer text-control font-medium">{t.surveyor.openTitle}</summary>
+          <div className="mt-3">
+            <SurveyorImport />
+          </div>
+        </details>
         <CloudSave auth={auth} />
         <ProjectBackup />
 

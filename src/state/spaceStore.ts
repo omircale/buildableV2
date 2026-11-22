@@ -1,4 +1,4 @@
-import { OWNERS, type CheckAnswer, type CheckState, type Owner } from '../engine';
+import { OWNERS, type CheckAnswer, type CheckState, type Owner, type Tenure } from '../engine';
 import { onOwnerChange, ownedKey } from './owner';
 import { create } from 'zustand';
 import { emptySpace, type ConnectionPoint, type Space } from '../engine';
@@ -135,6 +135,11 @@ export interface ProjectExtras {
   propertyName: string;
   /** What was found on the walk-through, by check id. */
   siteChecks: Record<string, CheckState>;
+  /**
+   * Whether the property is rented or one's own, which decides whether the questions about renting are
+   * asked. Set by the template the property started from and by the person — never by the equipment filter.
+   */
+  tenure: Tenure;
 }
 
 export interface ManualPrice {
@@ -185,7 +190,7 @@ function blank(): Survey {
 
 function blankProject(): Survey & ProjectExtras {
   const room = blank();
-  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {}, propertyName: '', siteChecks: {} };
+  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {}, propertyName: '', siteChecks: {}, tenure: 'lease' };
 }
 
 /** A saved room read back into today's shape, whatever version wrote it. */
@@ -254,6 +259,8 @@ export function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null 
     prices: revivePrices(saved.prices),
     propertyName: typeof saved.propertyName === 'string' ? saved.propertyName : '',
     siteChecks: reviveChecks(saved.siteChecks),
+    // A project from before this was recorded asks everything: a question too many is seen, one hidden is not.
+    tenure: saved.tenure === 'own' ? 'own' : 'lease',
   };
 }
 
@@ -322,18 +329,20 @@ export interface SurveyState extends Survey, ProjectExtras {
   setPropertyName: (name: string) => void;
   /**
    * Replaces the property's rooms with the outlines read from a surveyor's file. The equipment of the
-   * open room — usually a branch template — goes into the room chosen for it.
+   * open room — usually a branch template — goes into the room chosen for it, or into none.
    */
-  importSurvey: (rooms: { name: string; footprintMm: { x: number; y: number }[] }[], options: { equipmentRoom: number; fileName: string }) => void;
+  importSurvey: (rooms: { name: string; footprintMm: { x: number; y: number }[] }[], options: { equipmentRoom: number | null; fileName: string }) => void;
   /** Puts the open room back to typed-in dimensions, leaving the surveyor's outline. */
   dropSurveyOutline: () => void;
+  /** Says whether the property is rented or one's own. Answers already given are kept either way. */
+  setTenure: (tenure: Tenure) => void;
   /** Records what was found for one walk-through check. */
   setCheck: (id: string, patch: Partial<CheckState>) => void;
   /**
    * Starts a new property from a branch template: one room of the template's kind, holding its
    * equipment, and nothing else carried over from whatever was open before.
    */
-  startFromTemplate: (template: { sector: Sector | 'all'; equipmentIds: string[]; roomName: string }, propertyName: string) => void;
+  startFromTemplate: (template: { sector: Sector | 'all'; equipmentIds: string[]; roomName: string; tenure?: Tenure }, propertyName: string) => void;
   /** A price for one line of the bill, with its source — or null to take the price off. */
   setPrice: (lineId: string, price: { unitPriceIls: number; source: string } | null) => void;
   /** The last thing that was refused, shown until dismissed. Not saved. */
@@ -390,8 +399,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
   const persist = () => {
     const updatedAt = Date.now();
     set({ updatedAt });
-    const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
-    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices, propertyName, siteChecks };
+    const { others, order, finishes, describeText, prices, propertyName, siteChecks, tenure } = get();
+    const next: Survey & ProjectExtras = { ...snapshot(get()), updatedAt, others, order, finishes, describeText, prices, propertyName, siteChecks, tenure };
     try {
       localStorage.setItem(storageKey(), JSON.stringify(next));
       if (get().saveFailed) set({ saveFailed: false });
@@ -404,8 +413,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
 
   /** The project as it stands, taken before an action that destroys something, so it can be put back. */
   const remember = (kind: UndoKind) => {
-    const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
-    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks }) } });
+    const { others, order, finishes, describeText, prices, propertyName, siteChecks, tenure } = get();
+    set({ undoable: { kind, snapshot: JSON.stringify({ ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks, tenure }) } });
   };
 
   const patchSpace = (patch: Partial<Space>) => {
@@ -430,8 +439,8 @@ export const useSurvey = create<SurveyState>((set, get) => {
     dismissUndo: () => set({ undoable: null }),
 
     exportProject: () => {
-      const { others, order, finishes, describeText, prices, propertyName, siteChecks } = get();
-      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks }, null, 2);
+      const { others, order, finishes, describeText, prices, propertyName, siteChecks, tenure } = get();
+      return JSON.stringify({ format: 'buildable-project', version: 1, ...snapshot(get()), others, order, finishes, describeText, prices, propertyName, siteChecks, tenure }, null, 2);
     },
 
     restoreProject: (text) => {
@@ -543,6 +552,11 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
+    setTenure: (tenure) => {
+      set({ tenure });
+      persist();
+    },
+
     setCheck: (id, patch) => {
       const was = get().siteChecks[id] ?? { answer: 'unknown' as CheckAnswer, note: '' };
       set({ siteChecks: { ...get().siteChecks, [id]: { ...was, ...patch } } });
@@ -555,7 +569,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
       if (st.equipmentIds.length || st.others.length || st.finishes.length || Object.keys(st.siteChecks).length) remember('template_started');
       const fresh = blankProject();
       fresh.space = { ...fresh.space, nameHe: template.roomName, nameEn: template.roomName };
-      set({ ...fresh, sector: template.sector, equipmentIds: [...template.equipmentIds], propertyName, refusal: null });
+      set({ ...fresh, sector: template.sector, equipmentIds: [...template.equipmentIds], tenure: template.tenure ?? 'lease', propertyName, refusal: null });
       persist();
     },
 

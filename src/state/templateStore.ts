@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Sector } from '../engine';
+import type { Sector, Tenure } from '../engine';
 import { onOwnerChange, ownedKey } from './owner';
 
 /**
@@ -19,6 +19,8 @@ export interface BranchTemplate {
   example?: boolean;
   /** What the room the template fills is called. */
   roomName?: string;
+  /** Whether a property of this kind is rented or one's own. Rented when not said. */
+  tenure?: Tenure;
 }
 
 /**
@@ -99,6 +101,8 @@ export const HOTEL_ROOM_TEMPLATE: BranchTemplate = {
   sector: 'hotel',
   example: true,
   roomName: 'חדר אירוח',
+  // A hotel refreshes the building it has.
+  tenure: 'own',
   equipmentIds: [
     'wc',
     'vanity_basin',
