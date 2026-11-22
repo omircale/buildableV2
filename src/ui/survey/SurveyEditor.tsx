@@ -165,7 +165,7 @@ export function SurveyEditor() {
             <Button
               size="sm"
               onClick={() => {
-                survey.addEquipment(HOTEL_ROOM_TEMPLATE.equipmentIds);
+                survey.addEquipment(HOTEL_ROOM_TEMPLATE.equipmentIds, HOTEL_ROOM_TEMPLATE);
                 // A room still carrying the placeholder name takes the template's, so the bill reads "guest room ×120".
                 if (/^(חלל חדש|חלל \d+|New space|Space \d+)$/.test(survey.space.nameHe) && HOTEL_ROOM_TEMPLATE.roomName) survey.setName(HOTEL_ROOM_TEMPLATE.roomName);
               }}

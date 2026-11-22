@@ -154,7 +154,9 @@ const he = {
     arcs: 'יש בו קשת — נקראה כקו ישר. לבדוק את השטח.',
     equipmentHere: 'הציוד של החדר הפתוח נכנס לכאן',
     equipmentNowhere: 'לא להכניס את הציוד לאף חדר',
-    equipmentChoose: 'לבחור לאיזה חדר נכנס הציוד של החדר הפתוח, או שלא להכניס אותו.',
+    equipmentChoose: 'לבחור לאילו חדרים נכנס הציוד של החדר הפתוח, או שלא להכניס אותו.',
+    equipmentWhole: (items: number, rooms: number) =>
+      `${items === 1 ? 'פריט הציוד נכנס' : `כל ${items} פריטי הציוד נכנסים`} ${rooms === 1 ? 'לחדר שנבחר' : `לכל אחד מ-${rooms} החדרים שנבחרו, ${items * rooms} פריטים בסך הכול`}. אם חדר השינה וחדר הרחצה משורטטים בנפרד, הציוד לא מתחלק ביניהם: מורידים אחרי הייבוא את מה שלא שייך לכל חדר.`,
     openTitle: 'ייבוא מתוכנית מודד',
     replaceWarning: 'הייבוא מחליף את החדרים של הנכס הפתוח. אפשר לבטל מיד אחרי.',
     import: (n: number) => `ייבוא ${n === 1 ? 'חדר אחד' : `${n} חדרים`}`,
@@ -1263,7 +1265,9 @@ const en: Dict = {
     arcs: 'It has an arc — read as a straight line. Check the area.',
     equipmentHere: 'The open room’s equipment goes here',
     equipmentNowhere: 'Put the equipment in no room',
-    equipmentChoose: 'Choose which room takes the open room’s equipment, or none.',
+    equipmentChoose: 'Choose which rooms take the open room’s equipment, or none.',
+    equipmentWhole: (items: number, rooms: number) =>
+      `${items === 1 ? 'The one item goes' : `All ${items} items go`} into ${rooms === 1 ? 'the room chosen' : `each of the ${rooms} rooms chosen, ${items * rooms} items in all`}. Where a bedroom and its bathroom are drawn apart the equipment is not divided between them: after the import, take out of each room what is not in it.`,
     openTitle: 'Import from a surveyor’s plan',
     replaceWarning: 'Importing replaces the rooms of the open property. You can undo right after.',
     import: (n: number) => `Import ${n === 1 ? '1 room' : `${n} rooms`}`,

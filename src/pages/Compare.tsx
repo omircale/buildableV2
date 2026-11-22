@@ -23,7 +23,7 @@ export function sideOf(name: string, data: unknown): Side | null {
   const project = reviveProject(data);
   if (!project) return null;
   const rooms = projectRooms(project);
-  const need = branchNeed(rooms, project.tenure);
+  const need = branchNeed(rooms, project.tenure ?? 'lease');
   const evaluated = evaluateChecks(need, project.siteChecks);
   const areas = rooms.map((r) => floorAreaM2(r.space));
   return {

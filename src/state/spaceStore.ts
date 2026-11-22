@@ -138,8 +138,9 @@ export interface ProjectExtras {
   /**
    * Whether the property is rented or one's own, which decides whether the questions about renting are
    * asked. Set by the template the property started from and by the person — never by the equipment filter.
+   * Null while nobody has said, which asks everything, as a rented one does.
    */
-  tenure: Tenure;
+  tenure: Tenure | null;
 }
 
 export interface ManualPrice {
@@ -190,7 +191,7 @@ function blank(): Survey {
 
 function blankProject(): Survey & ProjectExtras {
   const room = blank();
-  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {}, propertyName: '', siteChecks: {}, tenure: 'lease' };
+  return { ...room, others: [], order: [room.space.id], finishes: [], describeText: '', prices: {}, propertyName: '', siteChecks: {}, tenure: null };
 }
 
 /** A saved room read back into today's shape, whatever version wrote it. */
@@ -260,7 +261,7 @@ export function reviveProject(parsed: unknown): (Survey & ProjectExtras) | null 
     propertyName: typeof saved.propertyName === 'string' ? saved.propertyName : '',
     siteChecks: reviveChecks(saved.siteChecks),
     // A project from before this was recorded asks everything: a question too many is seen, one hidden is not.
-    tenure: saved.tenure === 'own' ? 'own' : 'lease',
+    tenure: saved.tenure === 'own' || saved.tenure === null ? saved.tenure : 'lease',
   };
 }
 
@@ -322,16 +323,19 @@ export interface SurveyState extends Survey, ProjectExtras {
   /** Adds one of an item, or takes every one of it out if it is already there. */
   toggleEquipment: (id: string) => void;
   setEquipmentCount: (id: string, count: number) => void;
-  /** Adds a set of items to the open room, on top of what is there. */
-  addEquipment: (ids: string[]) => void;
+  /**
+   * Adds a set of items to the open room, on top of what is there. A set that says whose building it goes
+   * into — a hotel's guest room — says it for a new property too: one nobody has spoken for or walked yet.
+   */
+  addEquipment: (ids: string[], from?: { tenure?: Tenure }) => void;
   /** How many identical rooms the open room stands for. */
   setRoomCount: (count: number) => void;
   setPropertyName: (name: string) => void;
   /**
    * Replaces the property's rooms with the outlines read from a surveyor's file. The equipment of the
-   * open room — usually a branch template — goes into the room chosen for it, or into none.
+   * open room — usually a branch template — goes, whole, into each of the rooms chosen for it, or into none.
    */
-  importSurvey: (rooms: { name: string; footprintMm: { x: number; y: number }[] }[], options: { equipmentRoom: number | null; fileName: string }) => void;
+  importSurvey: (rooms: { name: string; footprintMm: { x: number; y: number }[] }[], options: { equipmentRooms: number[]; fileName: string }) => void;
   /** Puts the open room back to typed-in dimensions, leaving the surveyor's outline. */
   dropSurveyOutline: () => void;
   /** Says whether the property is rented or one's own. Answers already given are kept either way. */
@@ -501,10 +505,13 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
-    addEquipment: (ids) => {
-      const next = [...get().equipmentIds, ...ids];
+    addEquipment: (ids, from) => {
+      const st = get();
+      const next = [...st.equipmentIds, ...ids];
       if (next.length > MAX_ITEM_COUNT) return set({ refusal: { code: 'item_count', asked: next.length, limit: MAX_ITEM_COUNT } });
-      set({ refusal: null, equipmentIds: next });
+      // Never over a choice already made, and never hiding an answer already given.
+      const tenure = st.tenure == null && from?.tenure && !Object.keys(st.siteChecks).length ? from.tenure : st.tenure;
+      set({ refusal: null, equipmentIds: next, tenure });
       persist();
     },
 
@@ -521,7 +528,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
       persist();
     },
 
-    importSurvey: (rooms, { equipmentRoom, fileName }) => {
+    importSurvey: (rooms, { equipmentRooms, fileName }) => {
       if (!rooms.length) return;
       remember('survey_imported');
       const st = get();
@@ -532,7 +539,7 @@ export const useSurvey = create<SurveyState>((set, get) => {
         room.buildingId = st.buildingId;
         room.levelId = st.levelId;
         room.surveyFile = fileName;
-        if (i === equipmentRoom) room.equipmentIds = [...st.equipmentIds];
+        if (equipmentRooms.includes(i)) room.equipmentIds = [...st.equipmentIds];
         return room;
       });
       const [open, ...others] = made;

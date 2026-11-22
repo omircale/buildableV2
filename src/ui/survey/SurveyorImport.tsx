@@ -61,8 +61,8 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
   const [unit, setUnit] = useState<Unit>('mm');
   const [names, setNames] = useState<Record<number, string>>({});
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
-  /** The room the person chose for the equipment, 'none' for no room, or null while they have not chosen. */
-  const [picked, setPicked] = useState<number | 'none' | null>(null);
+  /** The rooms the person chose for the equipment, 'none' for no room, or null while they have not touched it. */
+  const [picked, setPicked] = useState<number[] | 'none' | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   const layers = useMemo(() => (drawing ? layerSummary(drawing).filter((l) => l.closed > 0) : []), [drawing]);
@@ -71,8 +71,8 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
 
   // A room left out of the import cannot take the equipment, whether it was chosen or suggested.
   const suggested = useMemo(() => defaultEquipmentRoom(rooms, openName, equipmentIds), [rooms, openName, equipmentIds]);
-  const wanted = picked ?? suggested;
-  const equipmentRoom = typeof wanted === 'number' && excluded.has(wanted) ? null : wanted;
+  const equipmentRooms = (picked === 'none' ? [] : (picked ?? (suggested == null ? [] : [suggested]))).filter((i) => !excluded.has(i));
+  const nowhere = picked === 'none';
   const hasEquipment = equipmentIds.length > 0;
 
   const read = async (f: File) => {
@@ -217,7 +217,7 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
                     <span className="text-small text-muted">{s.corners(r.footprintMm.length)}</span>
                     {hasEquipment && (
                       <label className="flex items-center gap-1.5 text-small">
-                        <input type="radio" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRoom === i} disabled={excluded.has(i)} onChange={() => setPicked(i)} />
+                        <input type="checkbox" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRooms.includes(i)} disabled={excluded.has(i)} onChange={(e) => setPicked(e.target.checked ? [...equipmentRooms, i] : equipmentRooms.filter((x) => x !== i))} />
                         {s.equipmentHere}
                       </label>
                     )}
@@ -227,12 +227,17 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
               </ol>
               {hasEquipment && (
                 <label className="flex items-center gap-1.5 text-small">
-                  <input type="radio" name="equipment-room" className="h-5 w-5 accent-[var(--color-accent)]" checked={equipmentRoom === 'none'} onChange={() => setPicked('none')} />
+                  <input type="checkbox" name="equipment-nowhere" className="h-5 w-5 accent-[var(--color-accent)]" checked={nowhere} onChange={(e) => setPicked(e.target.checked ? 'none' : [])} />
                   {s.equipmentNowhere}
                 </label>
               )}
               <p className="text-caption text-muted">{s.replaceWarning}</p>
-              {hasEquipment && equipmentRoom == null && (
+              {equipmentRooms.length > 0 && hasEquipment && (
+                <p role="status" className="text-small text-muted">
+                  {s.equipmentWhole(equipmentIds.length, equipmentRooms.length)}
+                </p>
+              )}
+              {hasEquipment && !nowhere && equipmentRooms.length === 0 && (
                 <p role="status" className="text-small text-warn">
                   {s.equipmentChoose}
                 </p>
@@ -240,12 +245,11 @@ export function SurveyorImport({ onImported }: { onImported?: () => void }) {
               <Button
                 variant="primary"
                 // Importing replaces the rooms, so equipment nobody placed would be lost without a word.
-                disabled={chosen.length === 0 || (hasEquipment && equipmentRoom == null)}
+                disabled={chosen.length === 0 || (hasEquipment && !nowhere && equipmentRooms.length === 0)}
                 onClick={() => {
-                  const at = chosen.findIndex((r) => r.index === equipmentRoom);
                   importSurvey(
                     chosen.map((r) => ({ name: nameOf(r.index).trim() || s.unnamed(r.index + 1), footprintMm: r.footprintMm })),
-                    { equipmentRoom: at >= 0 ? at : null, fileName: file ?? 'DXF' },
+                    { equipmentRooms: hasEquipment ? chosen.flatMap((r, at) => (equipmentRooms.includes(r.index) ? [at] : [])) : [], fileName: file ?? 'DXF' },
                   );
                   setDone(s.done(chosen.length, file ?? 'DXF'));
                   onImported?.();

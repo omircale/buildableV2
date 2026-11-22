@@ -32,7 +32,7 @@ const STATUS_STYLE = { ok: 'bg-ok-soft', gap: 'bg-bad-soft text-bad', unknown: '
 function useProperty() {
   const survey = useSurvey();
   const rooms = projectRooms(survey);
-  const need = useMemo(() => branchNeed(rooms, survey.tenure), [rooms, survey.tenure]);
+  const need = useMemo(() => branchNeed(rooms, survey.tenure ?? 'lease'), [rooms, survey.tenure]);
   const evaluated = useMemo(() => evaluateChecks(need, survey.siteChecks), [need, survey.siteChecks]);
   return { survey, rooms, need, evaluated, summary: propertySummary(evaluated) };
 }
@@ -40,7 +40,7 @@ function useProperty() {
 /** Whether the building is rented or one's own: the one thing that decides if the lease questions are asked. */
 function TenureChoice() {
   const c = useT().check;
-  const tenure = useSurvey((s) => s.tenure);
+  const tenure = useSurvey((s) => s.tenure) ?? 'lease';
   const setTenure = useSurvey((s) => s.setTenure);
   return (
     <div className="space-y-1.5">
@@ -401,7 +401,7 @@ function DocsStep({ auth }: { auth: AuthState }) {
             e.preventDefault();
             const name = tplName.trim();
             if (!name) return;
-            saveTemplate({ name, sector: survey.sector, equipmentIds: survey.equipmentIds, tenure: survey.tenure });
+            saveTemplate({ name, sector: survey.sector, equipmentIds: survey.equipmentIds, tenure: survey.tenure ?? undefined });
             setSaved(name);
             setTplName('');
           }}
